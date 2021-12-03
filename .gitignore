@@ -1,0 +1,13 @@
+# Binary Files
+./bin/volcago
+statik/
+
+# etc
+.idea/
+.DS_Store
+bin/
+firebase.json
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+firebase-emulators-data/
