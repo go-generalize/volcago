@@ -62,6 +62,13 @@ func newStructGenerator(typ *types.Object, structName, appVersion string, opt Ge
 		}
 		return pn
 	}()
+	g.param.CollectionName = func() string {
+		cn := g.opt.CollectionName
+		if cn == "" {
+			return g.structName
+		}
+		return cn
+	}()
 
 	g.param.MockGenPath = g.opt.MockGenPath
 	g.param.MockOutputPath = func() string {

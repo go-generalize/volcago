@@ -92,19 +92,19 @@ type {{ .RepositoryStructName }} struct {
 // New{{ .RepositoryInterfaceName }} - constructor
 func New{{ .RepositoryInterfaceName }}(firestoreClient *firestore.Client{{ if eq .IsSubCollection true }}, parentDocument *firestore.DocumentRef{{ end }}, middleware ...{{ $middlewareName }}) {{ .RepositoryInterfaceName }} {
 	return &{{ .RepositoryStructName }}{
-		collectionName:   "{{ .StructName }}",
+		collectionName:   "{{ .CollectionName }}",
 		firestoreClient:  firestoreClient,{{ if eq .IsSubCollection true }}
 		parentDocument:   parentDocument,{{ end }}
 		middleware:       middleware,
-		uniqueRepository: newUniqueRepository(firestoreClient, "{{ .StructName }}"),
+		uniqueRepository: newUniqueRepository(firestoreClient, "{{ .CollectionName }}"),
 	}
 }{{ if eq .IsSubCollection true }}
 
 // New{{ .StructName }}CollectionGroupRepository - constructor
 func New{{ .StructName }}CollectionGroupRepository(firestoreClient *firestore.Client) {{ .RepositoryInterfaceName }} {
 	return &{{ .RepositoryStructName }}{
-		collectionName:  "{{ .StructName }}",
-		collectionGroup: firestoreClient.CollectionGroup("{{ .StructName }}"),
+		collectionName:  "{{ .CollectionName }}",
+		collectionGroup: firestoreClient.CollectionGroup("{{ .CollectionName }}"),
 	}
 }{{ end }}
 {{ if .MetaFieldsEnabled }}

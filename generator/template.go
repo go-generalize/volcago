@@ -29,6 +29,7 @@ type FieldInfo struct {
 type templateParameter struct {
 	AppVersion        string
 	PackageName       string
+	CollectionName    string
 	ImportName        string
 	GeneratedFileName string
 	FileName          string

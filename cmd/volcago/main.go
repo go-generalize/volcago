@@ -14,6 +14,7 @@ var (
 	disableMeta     = flag.Bool("disable-meta", false, "Disable meta embed")
 	outputDir       = flag.String("o", "./", "Specify directory to generate code in")
 	packageName     = flag.String("p", "", "Specify the package name, default is the same as the original package")
+	collectionName  = flag.String("c", "", "Specify the collection name, default is the same as the struct name")
 	mockGenPath     = flag.String("mockgen", "mockgen", "Specify mockgen path")
 	mockOutputPath  = flag.String("mock-output", "mock/mock_{{ .GeneratedFileName }}/mock_{{ .GeneratedFileName }}.go", "Specify directory to generate mock code in")
 )
@@ -45,6 +46,7 @@ func main() {
 	err = gen.Generate(structName, generator.GenerateOption{
 		OutputDir:      *outputDir,
 		PackageName:    *packageName,
+		CollectionName: *collectionName,
 		MockGenPath:    *mockGenPath,
 		MockOutputPath: *mockOutputPath,
 		UseMetaField:   !*disableMeta,
