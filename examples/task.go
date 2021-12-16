@@ -2,7 +2,7 @@ package examples
 
 import "time"
 
-//go:generate ../bin/volcago Task
+//go:generate ../bin/volcago -disable-meta Task
 
 type Inner struct {
 	A string `firestore:"a"`

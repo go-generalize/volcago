@@ -44,6 +44,7 @@ func NewGenerator(dir string) (*Generator, error) {
 type GenerateOption struct {
 	OutputDir      string
 	PackageName    string
+	CollectionName string
 	MockGenPath    string
 	MockOutputPath string
 	UseMetaField   bool
