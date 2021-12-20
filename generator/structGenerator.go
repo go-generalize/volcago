@@ -116,29 +116,35 @@ func isIgnoredField(tags *structtag.Tags) bool {
 }
 
 func (g *structGenerator) hasMetaFields() bool {
+	const (
+		stringType = "string"
+		timeType   = "time.Time"
+		intType    = "int"
+	)
+
 	expectedFields := map[string]struct {
 		Type string
 	}{
 		"CreatedAt": {
-			Type: "time.Time",
+			Type: timeType,
 		},
 		"CreatedBy": {
-			Type: "string",
+			Type: stringType,
 		},
 		"UpdatedAt": {
-			Type: "time.Time",
+			Type: timeType,
 		},
 		"UpdatedBy": {
-			Type: "string",
+			Type: stringType,
 		},
 		"DeletedAt": {
-			Type: "*time.Time",
+			Type: "*" + timeType,
 		},
 		"DeletedBy": {
-			Type: "string",
+			Type: stringType,
 		},
 		"Version": {
-			Type: "int",
+			Type: intType,
 		},
 	}
 
@@ -153,13 +159,13 @@ func (g *structGenerator) hasMetaFields() bool {
 			}
 			return "*" + s
 		case *types.String:
-			return "string"
+			return stringType
 		case *types.Date:
-			return "time.Time"
+			return timeType
 		case *types.Number:
 			switch t.RawType {
 			case gotypes.Int:
-				return "int"
+				return intType
 			}
 		}
 
