@@ -43,11 +43,17 @@ func newStructGenerator(typ *types.Object, structName, appVersion string, opt Ge
 		return nil, xerrors.Errorf("failed to call IsSamePath: %w", err)
 	}
 
+	hasMetaFields, err := g.hasMetaFields()
+
+	if err != nil {
+		return nil, xerrors.Errorf("meta fields are invalid: %w", err)
+	}
+
 	name := g.typ.Position.Filename
 
 	g.param.FileName = strings.TrimSuffix(filepath.Base(name), ".go")
 	g.param.GeneratedFileName = g.param.FileName + "_gen"
-	g.param.MetaFieldsEnabled = g.hasMetaFields()
+	g.param.MetaFieldsEnabled = hasMetaFields
 	g.param.IsSubCollection = g.opt.Subcollection
 
 	g.param.AppVersion = appVersion
@@ -115,7 +121,7 @@ func isIgnoredField(tags *structtag.Tags) bool {
 	return strings.Split(fsTag.Value(), ",")[0] == "-"
 }
 
-func (g *structGenerator) hasMetaFields() bool {
+func (g *structGenerator) hasMetaFields() (bool, error) {
 	const (
 		stringType = "string"
 		timeType   = "time.Time"
@@ -193,14 +199,14 @@ func (g *structGenerator) hasMetaFields() bool {
 	}
 
 	if len(expectedFields) == 0 {
-		return true
+		return true, nil
 	}
 
 	if deleted {
-		log.Printf("meta fields are incomplete and skipped")
+		return false, xerrors.Errorf("meta fields are incomplete")
 	}
 
-	return false
+	return false, nil
 }
 
 func (g *structGenerator) parseIndexesField(tags *structtag.Tags) error {
