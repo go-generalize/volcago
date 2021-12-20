@@ -43,10 +43,13 @@ func newStructGenerator(typ *types.Object, structName, appVersion string, opt Ge
 		return nil, xerrors.Errorf("failed to call IsSamePath: %w", err)
 	}
 
-	hasMetaFields, err := g.hasMetaFields()
+	var hasMetaFields bool
+	if !opt.DisableMetaFieldsDetection {
+		hasMetaFields, err = g.hasMetaFields()
 
-	if err != nil {
-		return nil, xerrors.Errorf("meta fields are invalid: %w", err)
+		if err != nil {
+			return nil, xerrors.Errorf("meta fields are invalid: %w", err)
+		}
 	}
 
 	name := g.typ.Position.Filename
