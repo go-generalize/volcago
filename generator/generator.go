@@ -57,7 +57,7 @@ func NewDefaultGenerateOption() GenerateOption {
 		OutputDir:                  ".",
 		MockGenPath:                "mockgen",
 		MockOutputPath:             "mock/mock_{{ .GeneratedFileName }}/mock_{{ .GeneratedFileName }}.go",
-		DisableMetaFieldsDetection: true,
+		DisableMetaFieldsDetection: false,
 	}
 }
 
