@@ -1,6 +1,7 @@
 package generator
 
 import (
+	gotypes "go/types"
 	"log"
 	"path/filepath"
 	"sort"
@@ -46,7 +47,7 @@ func newStructGenerator(typ *types.Object, structName, appVersion string, opt Ge
 
 	g.param.FileName = strings.TrimSuffix(filepath.Base(name), ".go")
 	g.param.GeneratedFileName = g.param.FileName + "_gen"
-	g.param.MetaFieldsEnabled = g.opt.UseMetaField
+	g.param.MetaFieldsEnabled = g.hasMetaFields()
 	g.param.IsSubCollection = g.opt.Subcollection
 
 	g.param.AppVersion = appVersion
@@ -112,6 +113,88 @@ func isIgnoredField(tags *structtag.Tags) bool {
 	}
 
 	return strings.Split(fsTag.Value(), ",")[0] == "-"
+}
+
+func (g *structGenerator) hasMetaFields() bool {
+	expectedFields := map[string]struct {
+		Type string
+	}{
+		"CreatedAt": {
+			Type: "time.Time",
+		},
+		"CreatedBy": {
+			Type: "string",
+		},
+		"UpdatedAt": {
+			Type: "time.Time",
+		},
+		"UpdatedBy": {
+			Type: "string",
+		},
+		"DeletedAt": {
+			Type: "*time.Time",
+		},
+		"DeletedBy": {
+			Type: "string",
+		},
+		"Version": {
+			Type: "int",
+		},
+	}
+
+	var getStringRepresentation func(t types.Type) string
+	getStringRepresentation = func(t types.Type) string {
+		switch t := t.(type) {
+		case *types.Nullable:
+			s := getStringRepresentation(t.Inner)
+
+			if s == "" {
+				return ""
+			}
+			return "*" + s
+		case *types.String:
+			return "string"
+		case *types.Date:
+			return "time.Time"
+		case *types.Number:
+			switch t.RawType {
+			case gotypes.Int:
+				return "int"
+			}
+		}
+
+		return ""
+	}
+
+	deleted := false
+	for _, v := range g.typ.Entries {
+		matched, ok := expectedFields[v.RawName]
+
+		if !ok {
+			continue
+		}
+
+		expectedType := getStringRepresentation(v.Type)
+
+		if expectedType != matched.Type {
+			log.Printf("%s in meta fields should be %s, but got %s", v.RawName, expectedType, matched.Type)
+
+			continue
+		}
+
+		delete(expectedFields, v.RawName)
+		deleted = true
+	}
+
+	if len(expectedFields) == 0 {
+		return true
+	}
+
+	if deleted {
+		log.Printf("meta fields are incomplete and skipped")
+	}
+
+	return false
 }
 
 func (g *structGenerator) parseIndexesField(tags *structtag.Tags) error {

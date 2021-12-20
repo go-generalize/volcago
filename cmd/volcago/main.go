@@ -11,7 +11,6 @@ import (
 var (
 	isShowVersion   = flag.Bool("v", false, "print version")
 	isSubCollection = flag.Bool("sub-collection", false, "is SubCollection")
-	disableMeta     = flag.Bool("disable-meta", false, "Disable meta embed")
 	outputDir       = flag.String("o", "./", "Specify directory to generate code in")
 	packageName     = flag.String("p", "", "Specify the package name, default is the same as the original package")
 	collectionName  = flag.String("c", "", "Specify the collection name, default is the same as the struct name")
@@ -49,7 +48,6 @@ func main() {
 		CollectionName: *collectionName,
 		MockGenPath:    *mockGenPath,
 		MockOutputPath: *mockOutputPath,
-		UseMetaField:   !*disableMeta,
 		Subcollection:  *isSubCollection,
 	})
 

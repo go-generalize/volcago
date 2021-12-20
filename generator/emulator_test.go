@@ -20,7 +20,7 @@ func execTest(t *testing.T) {
 	}
 }
 
-func run(t *testing.T, structName string, useMeta, subCollection bool) {
+func run(t *testing.T, structName string, subCollection bool) {
 	t.Helper()
 
 	gen, err := NewGenerator(".")
@@ -30,7 +30,6 @@ func run(t *testing.T, structName string, useMeta, subCollection bool) {
 	}
 
 	opt := NewDefaultGenerateOption()
-	opt.UseMetaField = useMeta
 	opt.Subcollection = subCollection
 
 	if err := gen.Generate(structName, opt); err != nil {
@@ -50,8 +49,8 @@ func TestGenerator(t *testing.T) {
 			tr.Fatalf("chdir failed: %+v", err)
 		}
 
-		run(t, "Task", false, false)
-		run(t, "Lock", true, false)
+		run(t, "Task", false)
+		run(t, "Lock", false)
 
 		execTest(tr)
 	})
@@ -61,9 +60,9 @@ func TestGenerator(t *testing.T) {
 			tr.Fatalf("chdir failed: %+v", err)
 		}
 
-		run(t, "Task", false, false)
+		run(t, "Task", false)
 
-		run(t, "SubTask", false, true)
+		run(t, "SubTask", true)
 
 		execTest(tr)
 	})

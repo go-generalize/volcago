@@ -47,7 +47,6 @@ type GenerateOption struct {
 	CollectionName string
 	MockGenPath    string
 	MockOutputPath string
-	UseMetaField   bool
 	Subcollection  bool
 }
 
@@ -57,7 +56,6 @@ func NewDefaultGenerateOption() GenerateOption {
 		OutputDir:      ".",
 		MockGenPath:    "mockgen",
 		MockOutputPath: "mock/mock_{{ .GeneratedFileName }}/mock_{{ .GeneratedFileName }}.go",
-		UseMetaField:   true,
 	}
 }
 
