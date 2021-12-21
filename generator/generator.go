@@ -42,22 +42,22 @@ func NewGenerator(dir string) (*Generator, error) {
 
 // GenerateOption is a parameter to generate repository
 type GenerateOption struct {
-	OutputDir      string
-	PackageName    string
-	CollectionName string
-	MockGenPath    string
-	MockOutputPath string
-	UseMetaField   bool
-	Subcollection  bool
+	OutputDir                  string
+	PackageName                string
+	CollectionName             string
+	MockGenPath                string
+	MockOutputPath             string
+	DisableMetaFieldsDetection bool
+	Subcollection              bool
 }
 
 // NewDefaultGenerateOption returns a default GenerateOption
 func NewDefaultGenerateOption() GenerateOption {
 	return GenerateOption{
-		OutputDir:      ".",
-		MockGenPath:    "mockgen",
-		MockOutputPath: "mock/mock_{{ .GeneratedFileName }}/mock_{{ .GeneratedFileName }}.go",
-		UseMetaField:   true,
+		OutputDir:                  ".",
+		MockGenPath:                "mockgen",
+		MockOutputPath:             "mock/mock_{{ .GeneratedFileName }}/mock_{{ .GeneratedFileName }}.go",
+		DisableMetaFieldsDetection: false,
 	}
 }
 

@@ -1,6 +1,7 @@
 package generator
 
 import (
+	gotypes "go/types"
 	"log"
 	"path/filepath"
 	"sort"
@@ -42,11 +43,20 @@ func newStructGenerator(typ *types.Object, structName, appVersion string, opt Ge
 		return nil, xerrors.Errorf("failed to call IsSamePath: %w", err)
 	}
 
+	var hasMetaFields bool
+	if !opt.DisableMetaFieldsDetection {
+		hasMetaFields, err = g.hasMetaFields()
+
+		if err != nil {
+			return nil, xerrors.Errorf("meta fields are invalid: %w", err)
+		}
+	}
+
 	name := g.typ.Position.Filename
 
 	g.param.FileName = strings.TrimSuffix(filepath.Base(name), ".go")
 	g.param.GeneratedFileName = g.param.FileName + "_gen"
-	g.param.MetaFieldsEnabled = g.opt.UseMetaField
+	g.param.MetaFieldsEnabled = hasMetaFields
 	g.param.IsSubCollection = g.opt.Subcollection
 
 	g.param.AppVersion = appVersion
@@ -112,6 +122,94 @@ func isIgnoredField(tags *structtag.Tags) bool {
 	}
 
 	return strings.Split(fsTag.Value(), ",")[0] == "-"
+}
+
+func (g *structGenerator) hasMetaFields() (bool, error) {
+	const (
+		stringType = "string"
+		timeType   = "time.Time"
+		intType    = "int"
+	)
+
+	expectedFields := map[string]struct {
+		Type string
+	}{
+		"CreatedAt": {
+			Type: timeType,
+		},
+		"CreatedBy": {
+			Type: stringType,
+		},
+		"UpdatedAt": {
+			Type: timeType,
+		},
+		"UpdatedBy": {
+			Type: stringType,
+		},
+		"DeletedAt": {
+			Type: "*" + timeType,
+		},
+		"DeletedBy": {
+			Type: stringType,
+		},
+		"Version": {
+			Type: intType,
+		},
+	}
+
+	var getStringRepresentation func(t types.Type) string
+	getStringRepresentation = func(t types.Type) string {
+		switch t := t.(type) {
+		case *types.Nullable:
+			s := getStringRepresentation(t.Inner)
+
+			if s == "" {
+				return ""
+			}
+			return "*" + s
+		case *types.String:
+			return stringType
+		case *types.Date:
+			return timeType
+		case *types.Number:
+			switch t.RawType {
+			case gotypes.Int:
+				return intType
+			}
+		}
+
+		return ""
+	}
+
+	deleted := false
+	for _, v := range g.typ.Entries {
+		matched, ok := expectedFields[v.RawName]
+
+		if !ok {
+			continue
+		}
+
+		expectedType := getStringRepresentation(v.Type)
+
+		if expectedType != matched.Type {
+			log.Printf("%s in meta fields should be %s, but got %s", v.RawName, expectedType, matched.Type)
+
+			continue
+		}
+
+		delete(expectedFields, v.RawName)
+		deleted = true
+	}
+
+	if len(expectedFields) == 0 {
+		return true, nil
+	}
+
+	if deleted {
+		return false, xerrors.Errorf("meta fields are incomplete")
+	}
+
+	return false, nil
 }
 
 func (g *structGenerator) parseIndexesField(tags *structtag.Tags) error {

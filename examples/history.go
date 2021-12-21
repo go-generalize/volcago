@@ -1,6 +1,6 @@
 package examples
 
-//go:generate ../bin/volcago -disable-meta -sub-collection -c histories History
+//go:generate ../bin/volcago -sub-collection -c histories History
 
 // History - Task sub-collection
 type History struct {
