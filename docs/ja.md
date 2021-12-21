@@ -34,7 +34,8 @@ type Task struct {
 SubCollectionで利用される場合は `-sub-collection` という引数を追加する。  
 
 Meta情報(CreatedAtや楽観排他ロックで使用するVersionなど)を併用したい場合は  
-Metaという構造体を埋め込むことで利用できる。
+`-disable-meta` を引数で渡すことで無効化できる。  
+
 Meta構造体のフォーマットは↓
 ```go
 type Meta struct {
