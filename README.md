@@ -35,8 +35,8 @@ By writing a line starting with `go:generate`, the model for firestore will be a
 
 When used in SubCollection, add the argument `-sub-collection`.  
 
-If you want to use Meta information (such as CreatedAt and Version used in optimistic exclusive lock) together,  
-you can use it by embedding a structure whose suffix is Meta.  
+If you want to use Meta information (such as CreatedAt and Version used in optimistic exclusive lock) together,
+you can invalidate it by removing the argument `-disable-meta`.  
 
 The format of the Meta structure is as follows.
 ```go
