@@ -6,7 +6,7 @@ Cloud Firestoreで利用されるコードを自動生成する。
 リリースからバイナリを落としてきて使用する事をオススメする。  
 go installでも可能↓
 ```console
-$ go install github.com/go-generalize/volcago
+$ go install github.com/go-generalize/volcago/cmd/volcago@latest
 ```
 
 # 使用方法
