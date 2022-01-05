@@ -49,7 +49,7 @@ func main() {
 		CollectionName:             *collectionName,
 		MockGenPath:                *mockGenPath,
 		MockOutputPath:             *mockOutputPath,
-		DisableMetaFieldsDetection: !*disableMeta,
+		DisableMetaFieldsDetection: *disableMeta,
 		Subcollection:              *isSubCollection,
 	})
 

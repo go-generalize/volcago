@@ -231,8 +231,6 @@ func (g *structGenerator) parseTypeImpl(rawKey, firestoreKey string, obj *types.
 		if typeName == "" {
 			obj := e.Type.(*types.Object)
 
-			rawKey = strings.Join(sliceutil.RemoveEmpty([]string{rawKey, e.RawName}), ".")
-
 			tags, err := structtag.Parse(e.RawTag)
 			if err != nil {
 				firestoreKey = strings.Join(sliceutil.RemoveEmpty([]string{firestoreKey, e.RawName}), ".")
@@ -242,7 +240,8 @@ func (g *structGenerator) parseTypeImpl(rawKey, firestoreKey string, obj *types.
 				firestoreKey = strings.Join(sliceutil.RemoveEmpty([]string{firestoreKey, t.Name}), ".")
 			}
 
-			if err := g.parseTypeImpl(rawKey, firestoreKey, obj); err != nil {
+			fieldRawKey := strings.Join(sliceutil.RemoveEmpty([]string{rawKey, e.RawName}), ".")
+			if err := g.parseTypeImpl(fieldRawKey, firestoreKey, obj); err != nil {
 				return xerrors.Errorf("failed to parse %s: %w", e.RawName, err)
 			}
 			continue
