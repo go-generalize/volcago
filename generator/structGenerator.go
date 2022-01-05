@@ -1,7 +1,6 @@
 package generator
 
 import (
-	gotypes "go/types"
 	"log"
 	"path/filepath"
 	"sort"
@@ -157,30 +156,6 @@ func (g *structGenerator) hasMetaFields() (bool, error) {
 		},
 	}
 
-	var getStringRepresentation func(t types.Type) string
-	getStringRepresentation = func(t types.Type) string {
-		switch t := t.(type) {
-		case *types.Nullable:
-			s := getStringRepresentation(t.Inner)
-
-			if s == "" {
-				return ""
-			}
-			return "*" + s
-		case *types.String:
-			return stringType
-		case *types.Date:
-			return timeType
-		case *types.Number:
-			switch t.RawType {
-			case gotypes.Int:
-				return intType
-			}
-		}
-
-		return ""
-	}
-
 	deleted := false
 	for _, v := range g.typ.Entries {
 		matched, ok := expectedFields[v.RawName]
@@ -189,7 +164,7 @@ func (g *structGenerator) hasMetaFields() (bool, error) {
 			continue
 		}
 
-		expectedType := getStringRepresentation(v.Type)
+		expectedType := getGoTypeFromEPTypes(v.Type)
 
 		if expectedType != matched.Type {
 			log.Printf("%s in meta fields should be %s, but got %s", v.RawName, expectedType, matched.Type)
