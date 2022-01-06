@@ -15,7 +15,7 @@ goimports:
 
 .PHONY: code_clean
 code_clean:
-	cd testfiles && rm -rf */*_gen.go
+	cd generator/testfiles && rm -rf */*_gen.go
 
 .PHONY: lint
 lint:
