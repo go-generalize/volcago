@@ -208,8 +208,11 @@ func (repo *lockRepository) RunInTransaction() func(ctx context.Context, f func(
 
 // LockSearchParam - params for search
 type LockSearchParam struct {
-	Text      *QueryChainer
-	Flag      *QueryChainer
+	Text   *QueryChainer
+	Flag   *QueryChainer
+	Nested struct {
+		Name *QueryChainer
+	}
 	CreatedAt *QueryChainer
 	CreatedBy *QueryChainer
 	UpdatedAt *QueryChainer
@@ -224,7 +227,10 @@ type LockSearchParam struct {
 
 // LockUpdateParam - params for strict updates
 type LockUpdateParam struct {
-	Flag      interface{}
+	Flag   interface{}
+	Nested struct {
+		Name interface{}
+	}
 	CreatedAt interface{}
 	CreatedBy interface{}
 	UpdatedAt interface{}
@@ -1126,6 +1132,15 @@ func (repo *lockRepository) search(v interface{}, param *LockSearchParam, q *fir
 				for key, value := range items {
 					query = query.WherePath(firestore.FieldPath{"flag", key}, chain.Operator, value)
 				}
+			}
+		}
+		if param.Nested.Name != nil {
+			for _, chain := range param.Nested.Name.QueryGroup {
+				query = query.Where("nested.name", chain.Operator, chain.Value)
+			}
+			if direction := param.Nested.Name.OrderByDirection; direction > 0 {
+				query = query.OrderBy("nested.name", direction)
+				query = param.Nested.Name.BuildCursorQuery(query)
 			}
 		}
 		if param.CreatedAt != nil {
