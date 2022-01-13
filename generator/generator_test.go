@@ -5,20 +5,9 @@ package generator
 
 import (
 	"os"
-	"os/exec"
 	"path/filepath"
 	"testing"
 )
-
-func execTest(t *testing.T) {
-	t.Helper()
-
-	b, err := exec.Command("go", "test", "./tests", "-v", "-tags", "internal").CombinedOutput()
-
-	if err != nil {
-		t.Fatalf("go test failed: %+v(%s)", err, string(b))
-	}
-}
 
 func run(t *testing.T, structName string, subCollection bool) {
 	t.Helper()
