@@ -11,7 +11,7 @@ test: goimports
 
 .PHONY: goimports
 goimports:
-	cd /tmp && go get golang.org/x/tools/cmd/goimports
+	cd /tmp && go install golang.org/x/tools/cmd/goimports@latest
 
 .PHONY: code_clean
 code_clean:
@@ -24,3 +24,8 @@ lint:
 .PHONY: build
 build:
 	go build -o ./bin/volcago ./cmd/volcago
+
+.PHONY: gen_samples
+gen_samples: build bootstrap
+	go generate ./examples
+	go test ./generator
