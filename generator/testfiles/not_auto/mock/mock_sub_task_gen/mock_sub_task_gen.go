@@ -9,7 +9,7 @@ import (
 	reflect "reflect"
 
 	firestore "cloud.google.com/go/firestore"
-	not_auto "github.com/go-generalize/volcago/generator/testfiles/not_auto"
+	model "github.com/go-generalize/volcago/generator/testfiles/not_auto"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -37,7 +37,7 @@ func (m *MockSubTaskRepository) EXPECT() *MockSubTaskRepositoryMockRecorder {
 }
 
 // Delete mocks base method.
-func (m *MockSubTaskRepository) Delete(ctx context.Context, subject *not_auto.SubTask, opts ...not_auto.DeleteOption) error {
+func (m *MockSubTaskRepository) Delete(ctx context.Context, subject *model.SubTask, opts ...model.DeleteOption) error {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, subject}
 	for _, a := range opts {
@@ -56,7 +56,7 @@ func (mr *MockSubTaskRepositoryMockRecorder) Delete(ctx, subject interface{}, op
 }
 
 // DeleteByID mocks base method.
-func (m *MockSubTaskRepository) DeleteByID(ctx context.Context, id string, opts ...not_auto.DeleteOption) error {
+func (m *MockSubTaskRepository) DeleteByID(ctx context.Context, id string, opts ...model.DeleteOption) error {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, id}
 	for _, a := range opts {
@@ -75,7 +75,7 @@ func (mr *MockSubTaskRepositoryMockRecorder) DeleteByID(ctx, id interface{}, opt
 }
 
 // DeleteByIDWithTx mocks base method.
-func (m *MockSubTaskRepository) DeleteByIDWithTx(ctx context.Context, tx *firestore.Transaction, id string, opts ...not_auto.DeleteOption) error {
+func (m *MockSubTaskRepository) DeleteByIDWithTx(ctx context.Context, tx *firestore.Transaction, id string, opts ...model.DeleteOption) error {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, tx, id}
 	for _, a := range opts {
@@ -94,7 +94,7 @@ func (mr *MockSubTaskRepositoryMockRecorder) DeleteByIDWithTx(ctx, tx, id interf
 }
 
 // DeleteMulti mocks base method.
-func (m *MockSubTaskRepository) DeleteMulti(ctx context.Context, subjects []*not_auto.SubTask, opts ...not_auto.DeleteOption) error {
+func (m *MockSubTaskRepository) DeleteMulti(ctx context.Context, subjects []*model.SubTask, opts ...model.DeleteOption) error {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, subjects}
 	for _, a := range opts {
@@ -113,7 +113,7 @@ func (mr *MockSubTaskRepositoryMockRecorder) DeleteMulti(ctx, subjects interface
 }
 
 // DeleteMultiByIDs mocks base method.
-func (m *MockSubTaskRepository) DeleteMultiByIDs(ctx context.Context, ids []string, opts ...not_auto.DeleteOption) error {
+func (m *MockSubTaskRepository) DeleteMultiByIDs(ctx context.Context, ids []string, opts ...model.DeleteOption) error {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, ids}
 	for _, a := range opts {
@@ -132,7 +132,7 @@ func (mr *MockSubTaskRepositoryMockRecorder) DeleteMultiByIDs(ctx, ids interface
 }
 
 // DeleteMultiByIDsWithTx mocks base method.
-func (m *MockSubTaskRepository) DeleteMultiByIDsWithTx(ctx context.Context, tx *firestore.Transaction, ids []string, opts ...not_auto.DeleteOption) error {
+func (m *MockSubTaskRepository) DeleteMultiByIDsWithTx(ctx context.Context, tx *firestore.Transaction, ids []string, opts ...model.DeleteOption) error {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, tx, ids}
 	for _, a := range opts {
@@ -151,7 +151,7 @@ func (mr *MockSubTaskRepositoryMockRecorder) DeleteMultiByIDsWithTx(ctx, tx, ids
 }
 
 // DeleteMultiWithTx mocks base method.
-func (m *MockSubTaskRepository) DeleteMultiWithTx(ctx context.Context, tx *firestore.Transaction, subjects []*not_auto.SubTask, opts ...not_auto.DeleteOption) error {
+func (m *MockSubTaskRepository) DeleteMultiWithTx(ctx context.Context, tx *firestore.Transaction, subjects []*model.SubTask, opts ...model.DeleteOption) error {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, tx, subjects}
 	for _, a := range opts {
@@ -170,7 +170,7 @@ func (mr *MockSubTaskRepositoryMockRecorder) DeleteMultiWithTx(ctx, tx, subjects
 }
 
 // DeleteWithTx mocks base method.
-func (m *MockSubTaskRepository) DeleteWithTx(ctx context.Context, tx *firestore.Transaction, subject *not_auto.SubTask, opts ...not_auto.DeleteOption) error {
+func (m *MockSubTaskRepository) DeleteWithTx(ctx context.Context, tx *firestore.Transaction, subject *model.SubTask, opts ...model.DeleteOption) error {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, tx, subject}
 	for _, a := range opts {
@@ -201,14 +201,14 @@ func (mr *MockSubTaskRepositoryMockRecorder) Free() *gomock.Call {
 }
 
 // Get mocks base method.
-func (m *MockSubTaskRepository) Get(ctx context.Context, id string, opts ...not_auto.GetOption) (*not_auto.SubTask, error) {
+func (m *MockSubTaskRepository) Get(ctx context.Context, id string, opts ...model.GetOption) (*model.SubTask, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, id}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "Get", varargs...)
-	ret0, _ := ret[0].(*not_auto.SubTask)
+	ret0, _ := ret[0].(*model.SubTask)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -263,14 +263,14 @@ func (mr *MockSubTaskRepositoryMockRecorder) GetDocRef(id interface{}) *gomock.C
 }
 
 // GetMulti mocks base method.
-func (m *MockSubTaskRepository) GetMulti(ctx context.Context, ids []string, opts ...not_auto.GetOption) ([]*not_auto.SubTask, error) {
+func (m *MockSubTaskRepository) GetMulti(ctx context.Context, ids []string, opts ...model.GetOption) ([]*model.SubTask, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, ids}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetMulti", varargs...)
-	ret0, _ := ret[0].([]*not_auto.SubTask)
+	ret0, _ := ret[0].([]*model.SubTask)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -283,14 +283,14 @@ func (mr *MockSubTaskRepositoryMockRecorder) GetMulti(ctx, ids interface{}, opts
 }
 
 // GetMultiWithTx mocks base method.
-func (m *MockSubTaskRepository) GetMultiWithTx(tx *firestore.Transaction, ids []string, opts ...not_auto.GetOption) ([]*not_auto.SubTask, error) {
+func (m *MockSubTaskRepository) GetMultiWithTx(tx *firestore.Transaction, ids []string, opts ...model.GetOption) ([]*model.SubTask, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{tx, ids}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetMultiWithTx", varargs...)
-	ret0, _ := ret[0].([]*not_auto.SubTask)
+	ret0, _ := ret[0].([]*model.SubTask)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -303,14 +303,14 @@ func (mr *MockSubTaskRepositoryMockRecorder) GetMultiWithTx(tx, ids interface{},
 }
 
 // GetWithDoc mocks base method.
-func (m *MockSubTaskRepository) GetWithDoc(ctx context.Context, doc *firestore.DocumentRef, opts ...not_auto.GetOption) (*not_auto.SubTask, error) {
+func (m *MockSubTaskRepository) GetWithDoc(ctx context.Context, doc *firestore.DocumentRef, opts ...model.GetOption) (*model.SubTask, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, doc}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetWithDoc", varargs...)
-	ret0, _ := ret[0].(*not_auto.SubTask)
+	ret0, _ := ret[0].(*model.SubTask)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -323,14 +323,14 @@ func (mr *MockSubTaskRepositoryMockRecorder) GetWithDoc(ctx, doc interface{}, op
 }
 
 // GetWithDocWithTx mocks base method.
-func (m *MockSubTaskRepository) GetWithDocWithTx(tx *firestore.Transaction, doc *firestore.DocumentRef, opts ...not_auto.GetOption) (*not_auto.SubTask, error) {
+func (m *MockSubTaskRepository) GetWithDocWithTx(tx *firestore.Transaction, doc *firestore.DocumentRef, opts ...model.GetOption) (*model.SubTask, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{tx, doc}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetWithDocWithTx", varargs...)
-	ret0, _ := ret[0].(*not_auto.SubTask)
+	ret0, _ := ret[0].(*model.SubTask)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -343,14 +343,14 @@ func (mr *MockSubTaskRepositoryMockRecorder) GetWithDocWithTx(tx, doc interface{
 }
 
 // GetWithTx mocks base method.
-func (m *MockSubTaskRepository) GetWithTx(tx *firestore.Transaction, id string, opts ...not_auto.GetOption) (*not_auto.SubTask, error) {
+func (m *MockSubTaskRepository) GetWithTx(tx *firestore.Transaction, id string, opts ...model.GetOption) (*model.SubTask, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{tx, id}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetWithTx", varargs...)
-	ret0, _ := ret[0].(*not_auto.SubTask)
+	ret0, _ := ret[0].(*model.SubTask)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -363,7 +363,7 @@ func (mr *MockSubTaskRepositoryMockRecorder) GetWithTx(tx, id interface{}, opts 
 }
 
 // Insert mocks base method.
-func (m *MockSubTaskRepository) Insert(ctx context.Context, subject *not_auto.SubTask) (string, error) {
+func (m *MockSubTaskRepository) Insert(ctx context.Context, subject *model.SubTask) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Insert", ctx, subject)
 	ret0, _ := ret[0].(string)
@@ -378,7 +378,7 @@ func (mr *MockSubTaskRepositoryMockRecorder) Insert(ctx, subject interface{}) *g
 }
 
 // InsertMulti mocks base method.
-func (m *MockSubTaskRepository) InsertMulti(ctx context.Context, subjects []*not_auto.SubTask) ([]string, error) {
+func (m *MockSubTaskRepository) InsertMulti(ctx context.Context, subjects []*model.SubTask) ([]string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "InsertMulti", ctx, subjects)
 	ret0, _ := ret[0].([]string)
@@ -393,7 +393,7 @@ func (mr *MockSubTaskRepositoryMockRecorder) InsertMulti(ctx, subjects interface
 }
 
 // InsertMultiWithTx mocks base method.
-func (m *MockSubTaskRepository) InsertMultiWithTx(ctx context.Context, tx *firestore.Transaction, subjects []*not_auto.SubTask) ([]string, error) {
+func (m *MockSubTaskRepository) InsertMultiWithTx(ctx context.Context, tx *firestore.Transaction, subjects []*model.SubTask) ([]string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "InsertMultiWithTx", ctx, tx, subjects)
 	ret0, _ := ret[0].([]string)
@@ -408,7 +408,7 @@ func (mr *MockSubTaskRepositoryMockRecorder) InsertMultiWithTx(ctx, tx, subjects
 }
 
 // InsertWithTx mocks base method.
-func (m *MockSubTaskRepository) InsertWithTx(ctx context.Context, tx *firestore.Transaction, subject *not_auto.SubTask) (string, error) {
+func (m *MockSubTaskRepository) InsertWithTx(ctx context.Context, tx *firestore.Transaction, subject *model.SubTask) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "InsertWithTx", ctx, tx, subject)
 	ret0, _ := ret[0].(string)
@@ -437,10 +437,10 @@ func (mr *MockSubTaskRepositoryMockRecorder) RunInTransaction() *gomock.Call {
 }
 
 // Search mocks base method.
-func (m *MockSubTaskRepository) Search(ctx context.Context, param *not_auto.SubTaskSearchParam, q *firestore.Query) ([]*not_auto.SubTask, error) {
+func (m *MockSubTaskRepository) Search(ctx context.Context, param *model.SubTaskSearchParam, q *firestore.Query) ([]*model.SubTask, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Search", ctx, param, q)
-	ret0, _ := ret[0].([]*not_auto.SubTask)
+	ret0, _ := ret[0].([]*model.SubTask)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -452,10 +452,10 @@ func (mr *MockSubTaskRepositoryMockRecorder) Search(ctx, param, q interface{}) *
 }
 
 // SearchWithTx mocks base method.
-func (m *MockSubTaskRepository) SearchWithTx(tx *firestore.Transaction, param *not_auto.SubTaskSearchParam, q *firestore.Query) ([]*not_auto.SubTask, error) {
+func (m *MockSubTaskRepository) SearchWithTx(tx *firestore.Transaction, param *model.SubTaskSearchParam, q *firestore.Query) ([]*model.SubTask, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SearchWithTx", tx, param, q)
-	ret0, _ := ret[0].([]*not_auto.SubTask)
+	ret0, _ := ret[0].([]*model.SubTask)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -479,7 +479,7 @@ func (mr *MockSubTaskRepositoryMockRecorder) SetParentDoc(doc interface{}) *gomo
 }
 
 // StrictUpdate mocks base method.
-func (m *MockSubTaskRepository) StrictUpdate(ctx context.Context, id string, param *not_auto.SubTaskUpdateParam, opts ...firestore.Precondition) error {
+func (m *MockSubTaskRepository) StrictUpdate(ctx context.Context, id string, param *model.SubTaskUpdateParam, opts ...firestore.Precondition) error {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, id, param}
 	for _, a := range opts {
@@ -498,7 +498,7 @@ func (mr *MockSubTaskRepositoryMockRecorder) StrictUpdate(ctx, id, param interfa
 }
 
 // StrictUpdateWithTx mocks base method.
-func (m *MockSubTaskRepository) StrictUpdateWithTx(tx *firestore.Transaction, id string, param *not_auto.SubTaskUpdateParam, opts ...firestore.Precondition) error {
+func (m *MockSubTaskRepository) StrictUpdateWithTx(tx *firestore.Transaction, id string, param *model.SubTaskUpdateParam, opts ...firestore.Precondition) error {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{tx, id, param}
 	for _, a := range opts {
@@ -517,7 +517,7 @@ func (mr *MockSubTaskRepositoryMockRecorder) StrictUpdateWithTx(tx, id, param in
 }
 
 // Update mocks base method.
-func (m *MockSubTaskRepository) Update(ctx context.Context, subject *not_auto.SubTask) error {
+func (m *MockSubTaskRepository) Update(ctx context.Context, subject *model.SubTask) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Update", ctx, subject)
 	ret0, _ := ret[0].(error)
@@ -531,7 +531,7 @@ func (mr *MockSubTaskRepositoryMockRecorder) Update(ctx, subject interface{}) *g
 }
 
 // UpdateMulti mocks base method.
-func (m *MockSubTaskRepository) UpdateMulti(ctx context.Context, subjects []*not_auto.SubTask) error {
+func (m *MockSubTaskRepository) UpdateMulti(ctx context.Context, subjects []*model.SubTask) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateMulti", ctx, subjects)
 	ret0, _ := ret[0].(error)
@@ -545,7 +545,7 @@ func (mr *MockSubTaskRepositoryMockRecorder) UpdateMulti(ctx, subjects interface
 }
 
 // UpdateMultiWithTx mocks base method.
-func (m *MockSubTaskRepository) UpdateMultiWithTx(ctx context.Context, tx *firestore.Transaction, subjects []*not_auto.SubTask) error {
+func (m *MockSubTaskRepository) UpdateMultiWithTx(ctx context.Context, tx *firestore.Transaction, subjects []*model.SubTask) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateMultiWithTx", ctx, tx, subjects)
 	ret0, _ := ret[0].(error)
@@ -559,7 +559,7 @@ func (mr *MockSubTaskRepositoryMockRecorder) UpdateMultiWithTx(ctx, tx, subjects
 }
 
 // UpdateWithTx mocks base method.
-func (m *MockSubTaskRepository) UpdateWithTx(ctx context.Context, tx *firestore.Transaction, subject *not_auto.SubTask) error {
+func (m *MockSubTaskRepository) UpdateWithTx(ctx context.Context, tx *firestore.Transaction, subject *model.SubTask) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateWithTx", ctx, tx, subject)
 	ret0, _ := ret[0].(error)
@@ -596,7 +596,7 @@ func (m *MockSubTaskRepositoryMiddleware) EXPECT() *MockSubTaskRepositoryMiddlew
 }
 
 // BeforeDelete mocks base method.
-func (m *MockSubTaskRepositoryMiddleware) BeforeDelete(ctx context.Context, subject *not_auto.SubTask, opts ...not_auto.DeleteOption) (bool, error) {
+func (m *MockSubTaskRepositoryMiddleware) BeforeDelete(ctx context.Context, subject *model.SubTask, opts ...model.DeleteOption) (bool, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, subject}
 	for _, a := range opts {
@@ -616,7 +616,7 @@ func (mr *MockSubTaskRepositoryMiddlewareMockRecorder) BeforeDelete(ctx, subject
 }
 
 // BeforeDeleteByID mocks base method.
-func (m *MockSubTaskRepositoryMiddleware) BeforeDeleteByID(ctx context.Context, ids []string, opts ...not_auto.DeleteOption) (bool, error) {
+func (m *MockSubTaskRepositoryMiddleware) BeforeDeleteByID(ctx context.Context, ids []string, opts ...model.DeleteOption) (bool, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, ids}
 	for _, a := range opts {
@@ -636,7 +636,7 @@ func (mr *MockSubTaskRepositoryMiddlewareMockRecorder) BeforeDeleteByID(ctx, ids
 }
 
 // BeforeInsert mocks base method.
-func (m *MockSubTaskRepositoryMiddleware) BeforeInsert(ctx context.Context, subject *not_auto.SubTask) (bool, error) {
+func (m *MockSubTaskRepositoryMiddleware) BeforeInsert(ctx context.Context, subject *model.SubTask) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "BeforeInsert", ctx, subject)
 	ret0, _ := ret[0].(bool)
@@ -651,7 +651,7 @@ func (mr *MockSubTaskRepositoryMiddlewareMockRecorder) BeforeInsert(ctx, subject
 }
 
 // BeforeUpdate mocks base method.
-func (m *MockSubTaskRepositoryMiddleware) BeforeUpdate(ctx context.Context, old, subject *not_auto.SubTask) (bool, error) {
+func (m *MockSubTaskRepositoryMiddleware) BeforeUpdate(ctx context.Context, old, subject *model.SubTask) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "BeforeUpdate", ctx, old, subject)
 	ret0, _ := ret[0].(bool)

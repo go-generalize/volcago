@@ -9,8 +9,8 @@ import (
 	reflect "reflect"
 
 	firestore "cloud.google.com/go/firestore"
-	auto "github.com/go-generalize/volcago/generator/testfiles/auto"
-	different_dir "github.com/go-generalize/volcago/generator/testfiles/auto/different_dir"
+	model "github.com/go-generalize/volcago/generator/testfiles/auto"
+	model0 "github.com/go-generalize/volcago/generator/testfiles/auto/different_dir"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -38,7 +38,7 @@ func (m *MockLockMetaRepository) EXPECT() *MockLockMetaRepositoryMockRecorder {
 }
 
 // Delete mocks base method.
-func (m *MockLockMetaRepository) Delete(ctx context.Context, subject *auto.LockMeta, opts ...different_dir.DeleteOption) error {
+func (m *MockLockMetaRepository) Delete(ctx context.Context, subject *model.LockMeta, opts ...model0.DeleteOption) error {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, subject}
 	for _, a := range opts {
@@ -57,7 +57,7 @@ func (mr *MockLockMetaRepositoryMockRecorder) Delete(ctx, subject interface{}, o
 }
 
 // DeleteByID mocks base method.
-func (m *MockLockMetaRepository) DeleteByID(ctx context.Context, id string, opts ...different_dir.DeleteOption) error {
+func (m *MockLockMetaRepository) DeleteByID(ctx context.Context, id string, opts ...model0.DeleteOption) error {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, id}
 	for _, a := range opts {
@@ -76,7 +76,7 @@ func (mr *MockLockMetaRepositoryMockRecorder) DeleteByID(ctx, id interface{}, op
 }
 
 // DeleteByIDWithTx mocks base method.
-func (m *MockLockMetaRepository) DeleteByIDWithTx(ctx context.Context, tx *firestore.Transaction, id string, opts ...different_dir.DeleteOption) error {
+func (m *MockLockMetaRepository) DeleteByIDWithTx(ctx context.Context, tx *firestore.Transaction, id string, opts ...model0.DeleteOption) error {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, tx, id}
 	for _, a := range opts {
@@ -95,7 +95,7 @@ func (mr *MockLockMetaRepositoryMockRecorder) DeleteByIDWithTx(ctx, tx, id inter
 }
 
 // DeleteMulti mocks base method.
-func (m *MockLockMetaRepository) DeleteMulti(ctx context.Context, subjects []*auto.LockMeta, opts ...different_dir.DeleteOption) error {
+func (m *MockLockMetaRepository) DeleteMulti(ctx context.Context, subjects []*model.LockMeta, opts ...model0.DeleteOption) error {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, subjects}
 	for _, a := range opts {
@@ -114,7 +114,7 @@ func (mr *MockLockMetaRepositoryMockRecorder) DeleteMulti(ctx, subjects interfac
 }
 
 // DeleteMultiByIDs mocks base method.
-func (m *MockLockMetaRepository) DeleteMultiByIDs(ctx context.Context, ids []string, opts ...different_dir.DeleteOption) error {
+func (m *MockLockMetaRepository) DeleteMultiByIDs(ctx context.Context, ids []string, opts ...model0.DeleteOption) error {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, ids}
 	for _, a := range opts {
@@ -133,7 +133,7 @@ func (mr *MockLockMetaRepositoryMockRecorder) DeleteMultiByIDs(ctx, ids interfac
 }
 
 // DeleteMultiByIDsWithTx mocks base method.
-func (m *MockLockMetaRepository) DeleteMultiByIDsWithTx(ctx context.Context, tx *firestore.Transaction, ids []string, opts ...different_dir.DeleteOption) error {
+func (m *MockLockMetaRepository) DeleteMultiByIDsWithTx(ctx context.Context, tx *firestore.Transaction, ids []string, opts ...model0.DeleteOption) error {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, tx, ids}
 	for _, a := range opts {
@@ -152,7 +152,7 @@ func (mr *MockLockMetaRepositoryMockRecorder) DeleteMultiByIDsWithTx(ctx, tx, id
 }
 
 // DeleteMultiWithTx mocks base method.
-func (m *MockLockMetaRepository) DeleteMultiWithTx(ctx context.Context, tx *firestore.Transaction, subjects []*auto.LockMeta, opts ...different_dir.DeleteOption) error {
+func (m *MockLockMetaRepository) DeleteMultiWithTx(ctx context.Context, tx *firestore.Transaction, subjects []*model.LockMeta, opts ...model0.DeleteOption) error {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, tx, subjects}
 	for _, a := range opts {
@@ -171,7 +171,7 @@ func (mr *MockLockMetaRepositoryMockRecorder) DeleteMultiWithTx(ctx, tx, subject
 }
 
 // DeleteWithTx mocks base method.
-func (m *MockLockMetaRepository) DeleteWithTx(ctx context.Context, tx *firestore.Transaction, subject *auto.LockMeta, opts ...different_dir.DeleteOption) error {
+func (m *MockLockMetaRepository) DeleteWithTx(ctx context.Context, tx *firestore.Transaction, subject *model.LockMeta, opts ...model0.DeleteOption) error {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, tx, subject}
 	for _, a := range opts {
@@ -190,14 +190,14 @@ func (mr *MockLockMetaRepositoryMockRecorder) DeleteWithTx(ctx, tx, subject inte
 }
 
 // Get mocks base method.
-func (m *MockLockMetaRepository) Get(ctx context.Context, id string, opts ...different_dir.GetOption) (*auto.LockMeta, error) {
+func (m *MockLockMetaRepository) Get(ctx context.Context, id string, opts ...model0.GetOption) (*model.LockMeta, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, id}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "Get", varargs...)
-	ret0, _ := ret[0].(*auto.LockMeta)
+	ret0, _ := ret[0].(*model.LockMeta)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -252,14 +252,14 @@ func (mr *MockLockMetaRepositoryMockRecorder) GetDocRef(id interface{}) *gomock.
 }
 
 // GetMulti mocks base method.
-func (m *MockLockMetaRepository) GetMulti(ctx context.Context, ids []string, opts ...different_dir.GetOption) ([]*auto.LockMeta, error) {
+func (m *MockLockMetaRepository) GetMulti(ctx context.Context, ids []string, opts ...model0.GetOption) ([]*model.LockMeta, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, ids}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetMulti", varargs...)
-	ret0, _ := ret[0].([]*auto.LockMeta)
+	ret0, _ := ret[0].([]*model.LockMeta)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -272,14 +272,14 @@ func (mr *MockLockMetaRepositoryMockRecorder) GetMulti(ctx, ids interface{}, opt
 }
 
 // GetMultiWithTx mocks base method.
-func (m *MockLockMetaRepository) GetMultiWithTx(tx *firestore.Transaction, ids []string, opts ...different_dir.GetOption) ([]*auto.LockMeta, error) {
+func (m *MockLockMetaRepository) GetMultiWithTx(tx *firestore.Transaction, ids []string, opts ...model0.GetOption) ([]*model.LockMeta, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{tx, ids}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetMultiWithTx", varargs...)
-	ret0, _ := ret[0].([]*auto.LockMeta)
+	ret0, _ := ret[0].([]*model.LockMeta)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -292,14 +292,14 @@ func (mr *MockLockMetaRepositoryMockRecorder) GetMultiWithTx(tx, ids interface{}
 }
 
 // GetWithDoc mocks base method.
-func (m *MockLockMetaRepository) GetWithDoc(ctx context.Context, doc *firestore.DocumentRef, opts ...different_dir.GetOption) (*auto.LockMeta, error) {
+func (m *MockLockMetaRepository) GetWithDoc(ctx context.Context, doc *firestore.DocumentRef, opts ...model0.GetOption) (*model.LockMeta, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, doc}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetWithDoc", varargs...)
-	ret0, _ := ret[0].(*auto.LockMeta)
+	ret0, _ := ret[0].(*model.LockMeta)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -312,14 +312,14 @@ func (mr *MockLockMetaRepositoryMockRecorder) GetWithDoc(ctx, doc interface{}, o
 }
 
 // GetWithDocWithTx mocks base method.
-func (m *MockLockMetaRepository) GetWithDocWithTx(tx *firestore.Transaction, doc *firestore.DocumentRef, opts ...different_dir.GetOption) (*auto.LockMeta, error) {
+func (m *MockLockMetaRepository) GetWithDocWithTx(tx *firestore.Transaction, doc *firestore.DocumentRef, opts ...model0.GetOption) (*model.LockMeta, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{tx, doc}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetWithDocWithTx", varargs...)
-	ret0, _ := ret[0].(*auto.LockMeta)
+	ret0, _ := ret[0].(*model.LockMeta)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -332,14 +332,14 @@ func (mr *MockLockMetaRepositoryMockRecorder) GetWithDocWithTx(tx, doc interface
 }
 
 // GetWithTx mocks base method.
-func (m *MockLockMetaRepository) GetWithTx(tx *firestore.Transaction, id string, opts ...different_dir.GetOption) (*auto.LockMeta, error) {
+func (m *MockLockMetaRepository) GetWithTx(tx *firestore.Transaction, id string, opts ...model0.GetOption) (*model.LockMeta, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{tx, id}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetWithTx", varargs...)
-	ret0, _ := ret[0].(*auto.LockMeta)
+	ret0, _ := ret[0].(*model.LockMeta)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -352,7 +352,7 @@ func (mr *MockLockMetaRepositoryMockRecorder) GetWithTx(tx, id interface{}, opts
 }
 
 // Insert mocks base method.
-func (m *MockLockMetaRepository) Insert(ctx context.Context, subject *auto.LockMeta) (string, error) {
+func (m *MockLockMetaRepository) Insert(ctx context.Context, subject *model.LockMeta) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Insert", ctx, subject)
 	ret0, _ := ret[0].(string)
@@ -367,7 +367,7 @@ func (mr *MockLockMetaRepositoryMockRecorder) Insert(ctx, subject interface{}) *
 }
 
 // InsertMulti mocks base method.
-func (m *MockLockMetaRepository) InsertMulti(ctx context.Context, subjects []*auto.LockMeta) ([]string, error) {
+func (m *MockLockMetaRepository) InsertMulti(ctx context.Context, subjects []*model.LockMeta) ([]string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "InsertMulti", ctx, subjects)
 	ret0, _ := ret[0].([]string)
@@ -382,7 +382,7 @@ func (mr *MockLockMetaRepositoryMockRecorder) InsertMulti(ctx, subjects interfac
 }
 
 // InsertMultiWithTx mocks base method.
-func (m *MockLockMetaRepository) InsertMultiWithTx(ctx context.Context, tx *firestore.Transaction, subjects []*auto.LockMeta) ([]string, error) {
+func (m *MockLockMetaRepository) InsertMultiWithTx(ctx context.Context, tx *firestore.Transaction, subjects []*model.LockMeta) ([]string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "InsertMultiWithTx", ctx, tx, subjects)
 	ret0, _ := ret[0].([]string)
@@ -397,7 +397,7 @@ func (mr *MockLockMetaRepositoryMockRecorder) InsertMultiWithTx(ctx, tx, subject
 }
 
 // InsertWithTx mocks base method.
-func (m *MockLockMetaRepository) InsertWithTx(ctx context.Context, tx *firestore.Transaction, subject *auto.LockMeta) (string, error) {
+func (m *MockLockMetaRepository) InsertWithTx(ctx context.Context, tx *firestore.Transaction, subject *model.LockMeta) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "InsertWithTx", ctx, tx, subject)
 	ret0, _ := ret[0].(string)
@@ -426,10 +426,10 @@ func (mr *MockLockMetaRepositoryMockRecorder) RunInTransaction() *gomock.Call {
 }
 
 // Search mocks base method.
-func (m *MockLockMetaRepository) Search(ctx context.Context, param *different_dir.LockMetaSearchParam, q *firestore.Query) ([]*auto.LockMeta, error) {
+func (m *MockLockMetaRepository) Search(ctx context.Context, param *model0.LockMetaSearchParam, q *firestore.Query) ([]*model.LockMeta, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Search", ctx, param, q)
-	ret0, _ := ret[0].([]*auto.LockMeta)
+	ret0, _ := ret[0].([]*model.LockMeta)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -441,10 +441,10 @@ func (mr *MockLockMetaRepositoryMockRecorder) Search(ctx, param, q interface{}) 
 }
 
 // SearchWithTx mocks base method.
-func (m *MockLockMetaRepository) SearchWithTx(tx *firestore.Transaction, param *different_dir.LockMetaSearchParam, q *firestore.Query) ([]*auto.LockMeta, error) {
+func (m *MockLockMetaRepository) SearchWithTx(tx *firestore.Transaction, param *model0.LockMetaSearchParam, q *firestore.Query) ([]*model.LockMeta, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SearchWithTx", tx, param, q)
-	ret0, _ := ret[0].([]*auto.LockMeta)
+	ret0, _ := ret[0].([]*model.LockMeta)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -456,7 +456,7 @@ func (mr *MockLockMetaRepositoryMockRecorder) SearchWithTx(tx, param, q interfac
 }
 
 // StrictUpdate mocks base method.
-func (m *MockLockMetaRepository) StrictUpdate(ctx context.Context, id string, param *different_dir.LockMetaUpdateParam, opts ...firestore.Precondition) error {
+func (m *MockLockMetaRepository) StrictUpdate(ctx context.Context, id string, param *model0.LockMetaUpdateParam, opts ...firestore.Precondition) error {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, id, param}
 	for _, a := range opts {
@@ -475,7 +475,7 @@ func (mr *MockLockMetaRepositoryMockRecorder) StrictUpdate(ctx, id, param interf
 }
 
 // StrictUpdateWithTx mocks base method.
-func (m *MockLockMetaRepository) StrictUpdateWithTx(tx *firestore.Transaction, id string, param *different_dir.LockMetaUpdateParam, opts ...firestore.Precondition) error {
+func (m *MockLockMetaRepository) StrictUpdateWithTx(tx *firestore.Transaction, id string, param *model0.LockMetaUpdateParam, opts ...firestore.Precondition) error {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{tx, id, param}
 	for _, a := range opts {
@@ -494,7 +494,7 @@ func (mr *MockLockMetaRepositoryMockRecorder) StrictUpdateWithTx(tx, id, param i
 }
 
 // Update mocks base method.
-func (m *MockLockMetaRepository) Update(ctx context.Context, subject *auto.LockMeta) error {
+func (m *MockLockMetaRepository) Update(ctx context.Context, subject *model.LockMeta) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Update", ctx, subject)
 	ret0, _ := ret[0].(error)
@@ -508,7 +508,7 @@ func (mr *MockLockMetaRepositoryMockRecorder) Update(ctx, subject interface{}) *
 }
 
 // UpdateMulti mocks base method.
-func (m *MockLockMetaRepository) UpdateMulti(ctx context.Context, subjects []*auto.LockMeta) error {
+func (m *MockLockMetaRepository) UpdateMulti(ctx context.Context, subjects []*model.LockMeta) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateMulti", ctx, subjects)
 	ret0, _ := ret[0].(error)
@@ -522,7 +522,7 @@ func (mr *MockLockMetaRepositoryMockRecorder) UpdateMulti(ctx, subjects interfac
 }
 
 // UpdateMultiWithTx mocks base method.
-func (m *MockLockMetaRepository) UpdateMultiWithTx(ctx context.Context, tx *firestore.Transaction, subjects []*auto.LockMeta) error {
+func (m *MockLockMetaRepository) UpdateMultiWithTx(ctx context.Context, tx *firestore.Transaction, subjects []*model.LockMeta) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateMultiWithTx", ctx, tx, subjects)
 	ret0, _ := ret[0].(error)
@@ -536,7 +536,7 @@ func (mr *MockLockMetaRepositoryMockRecorder) UpdateMultiWithTx(ctx, tx, subject
 }
 
 // UpdateWithTx mocks base method.
-func (m *MockLockMetaRepository) UpdateWithTx(ctx context.Context, tx *firestore.Transaction, subject *auto.LockMeta) error {
+func (m *MockLockMetaRepository) UpdateWithTx(ctx context.Context, tx *firestore.Transaction, subject *model.LockMeta) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateWithTx", ctx, tx, subject)
 	ret0, _ := ret[0].(error)
@@ -573,7 +573,7 @@ func (m *MockLockMetaRepositoryMiddleware) EXPECT() *MockLockMetaRepositoryMiddl
 }
 
 // BeforeDelete mocks base method.
-func (m *MockLockMetaRepositoryMiddleware) BeforeDelete(ctx context.Context, subject *auto.LockMeta, opts ...different_dir.DeleteOption) (bool, error) {
+func (m *MockLockMetaRepositoryMiddleware) BeforeDelete(ctx context.Context, subject *model.LockMeta, opts ...model0.DeleteOption) (bool, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, subject}
 	for _, a := range opts {
@@ -593,7 +593,7 @@ func (mr *MockLockMetaRepositoryMiddlewareMockRecorder) BeforeDelete(ctx, subjec
 }
 
 // BeforeDeleteByID mocks base method.
-func (m *MockLockMetaRepositoryMiddleware) BeforeDeleteByID(ctx context.Context, ids []string, opts ...different_dir.DeleteOption) (bool, error) {
+func (m *MockLockMetaRepositoryMiddleware) BeforeDeleteByID(ctx context.Context, ids []string, opts ...model0.DeleteOption) (bool, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, ids}
 	for _, a := range opts {
@@ -613,7 +613,7 @@ func (mr *MockLockMetaRepositoryMiddlewareMockRecorder) BeforeDeleteByID(ctx, id
 }
 
 // BeforeInsert mocks base method.
-func (m *MockLockMetaRepositoryMiddleware) BeforeInsert(ctx context.Context, subject *auto.LockMeta) (bool, error) {
+func (m *MockLockMetaRepositoryMiddleware) BeforeInsert(ctx context.Context, subject *model.LockMeta) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "BeforeInsert", ctx, subject)
 	ret0, _ := ret[0].(bool)
@@ -628,7 +628,7 @@ func (mr *MockLockMetaRepositoryMiddlewareMockRecorder) BeforeInsert(ctx, subjec
 }
 
 // BeforeUpdate mocks base method.
-func (m *MockLockMetaRepositoryMiddleware) BeforeUpdate(ctx context.Context, old, subject *auto.LockMeta) (bool, error) {
+func (m *MockLockMetaRepositoryMiddleware) BeforeUpdate(ctx context.Context, old, subject *model.LockMeta) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "BeforeUpdate", ctx, old, subject)
 	ret0, _ := ret[0].(bool)
