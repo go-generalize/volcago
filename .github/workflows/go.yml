@@ -38,8 +38,8 @@ jobs:
       - name: Ensure samples are generated
         env:
           TZ: Asia/Tokyo
-          PATH: ./bin:$PATH
         run: |
+          export PATH=$PATH:$PWD/bin
           make gen_samples
           
           clean=$(git status | grep "nothing to commit" || true)
