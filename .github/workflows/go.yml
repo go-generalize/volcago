@@ -38,6 +38,7 @@ jobs:
       - name: Ensure samples are generated
         env:
           TZ: Asia/Tokyo
+          PATH: ./bin:$PATH
         run: |
           make gen_samples
           

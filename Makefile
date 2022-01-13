@@ -26,6 +26,6 @@ build:
 	go build -o ./bin/volcago ./cmd/volcago
 
 .PHONY: gen_samples
-gen_samples: build
+gen_samples: build bootstrap
 	go generate ./examples
 	go test ./generator
