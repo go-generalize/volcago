@@ -5,7 +5,7 @@ go 1.17
 require (
 	cloud.google.com/go/firestore v1.6.1
 	github.com/fatih/structtag v1.2.0
-	github.com/go-generalize/go-easyparser v0.2.0
+	github.com/go-generalize/go-easyparser v0.3.0
 	github.com/go-utils/cont v0.1.2
 	github.com/go-utils/dedupe v1.0.0
 	github.com/go-utils/gopackages v0.0.0-20210218102646-e7d1f0008968
@@ -32,7 +32,7 @@ require (
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
 	golang.org/x/sys v0.0.0-20220209214540-3681064d5158 // indirect
 	golang.org/x/text v0.3.7 // indirect
-	golang.org/x/tools v0.1.7 // indirect
+	golang.org/x/tools v0.1.9 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 )
