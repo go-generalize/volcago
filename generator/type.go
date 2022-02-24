@@ -14,6 +14,7 @@ const (
 	typeInt64      = "int64"
 	typeFloat64    = "float64"
 	typeBool       = "bool"
+	typeAny        = "interface{}"
 	typeTime       = "time.Time"
 	typeTimePtr    = "*time.Time"
 	typeLatLng     = "latlng.LatLng"
@@ -24,6 +25,7 @@ const (
 	typeInt64Map   = "map[string]int64"
 	typeFloat64Map = "map[string]float64"
 	typeBoolMap    = "map[string]bool"
+	typeAnyMap     = "map[string]interface{}"
 )
 
 var (
@@ -36,12 +38,14 @@ var (
 			typeFloat64,
 			typeTime,
 			typeTimePtr,
+			typeAny,
 			"*" + typeLatLng,
 			"*" + typeReference,
 			typeStringMap,
 			typeIntMap,
 			typeInt64Map,
 			typeFloat64Map,
+			typeAnyMap,
 		}
 
 		for i := range t {
@@ -103,6 +107,8 @@ func getGoTypeFromEPTypes(t eptypes.Type) string {
 		return ""
 	case *eptypes.Map:
 		return "map[" + getGoTypeFromEPTypes(t.Key) + "]" + getGoTypeFromEPTypes(t.Value)
+	case *eptypes.Any:
+		return "interface{}"
 	case *documentRef:
 		return typeReference
 	case *latLng:

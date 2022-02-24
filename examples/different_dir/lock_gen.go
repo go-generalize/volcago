@@ -208,9 +208,11 @@ func (repo *lockRepository) RunInTransaction() func(ctx context.Context, f func(
 
 // LockSearchParam - params for search
 type LockSearchParam struct {
-	Text   *QueryChainer
-	Flag   *QueryChainer
-	Nested struct {
+	Text         *QueryChainer
+	Flag         *QueryChainer
+	Interface    *QueryChainer
+	MapInterface *QueryChainer
+	Nested       struct {
 		Name *QueryChainer
 	}
 	CreatedAt *QueryChainer
@@ -227,8 +229,10 @@ type LockSearchParam struct {
 
 // LockUpdateParam - params for strict updates
 type LockUpdateParam struct {
-	Flag   interface{}
-	Nested struct {
+	Flag         interface{}
+	Interface    interface{}
+	MapInterface interface{}
+	Nested       struct {
 		Name interface{}
 	}
 	CreatedAt interface{}
@@ -1131,6 +1135,26 @@ func (repo *lockRepository) search(v interface{}, param *LockSearchParam, q *fir
 				}
 				for key, value := range items {
 					query = query.WherePath(firestore.FieldPath{"flag", key}, chain.Operator, value)
+				}
+			}
+		}
+		if param.Interface != nil {
+			for _, chain := range param.Interface.QueryGroup {
+				query = query.Where("interface", chain.Operator, chain.Value)
+			}
+			if direction := param.Interface.OrderByDirection; direction > 0 {
+				query = query.OrderBy("interface", direction)
+				query = param.Interface.BuildCursorQuery(query)
+			}
+		}
+		if param.MapInterface != nil {
+			for _, chain := range param.MapInterface.QueryGroup {
+				items, ok := chain.Value.(map[string]interface{})
+				if !ok {
+					continue
+				}
+				for key, value := range items {
+					query = query.WherePath(firestore.FieldPath{"map_interface", key}, chain.Operator, value)
 				}
 			}
 		}
