@@ -18,12 +18,13 @@ type IndexesInfo struct {
 }
 
 type FieldInfo struct {
-	FsTag      string
-	Field      string
-	FieldType  string
-	IsUnique   bool
-	IndexerTag string
-	Indexes    []*IndexesInfo
+	FsTag          string
+	Field          string
+	FieldType      string
+	IsUnique       bool
+	IndexerTag     string
+	Indexes        []*IndexesInfo
+	NullableFields []string
 }
 
 type templateParameter struct {

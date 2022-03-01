@@ -10,6 +10,7 @@ type Lock struct {
 	Interface    interface{}            `firestore:"interface"`
 	MapInterface map[string]interface{} `firestore:"map_interface"`
 	Nested       Nested                 `firestore:"nested"`
+	NestedPtr    *Nested                `firestore:"nested_ptr"`
 	Meta
 }
 

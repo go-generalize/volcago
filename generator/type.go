@@ -94,6 +94,10 @@ func getGoTypeFromEPTypes(t eptypes.Type) string {
 	case *eptypes.Nullable:
 		r := getGoTypeFromEPTypes(t.Inner)
 
+		if r == "" {
+			return ""
+		}
+
 		if strings.HasPrefix(r, "[]") {
 			return r
 		}

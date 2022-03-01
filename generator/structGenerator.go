@@ -229,7 +229,15 @@ func (g *structGenerator) parseTypeImpl(rawKey, firestoreKey string, obj *types.
 		pos := e.Position.String()
 
 		if typeName == "" {
-			obj := e.Type.(*types.Object)
+			var obj *types.Object
+			switch e := e.Type.(type) {
+			case *types.Object:
+				obj = e
+			case *types.Nullable:
+				obj = e.Inner.(*types.Object)
+			default:
+				panic("unreachable")
+			}
 
 			fieldRawKey := strings.Join(sliceutil.RemoveEmpty([]string{rawKey, e.RawName}), ".")
 			fieldFirestoreKey := firestoreKey

@@ -215,6 +215,9 @@ type LockSearchParam struct {
 	Nested       struct {
 		Name *QueryChainer
 	}
+	NestedPtr struct {
+		Name *QueryChainer
+	}
 	CreatedAt *QueryChainer
 	CreatedBy *QueryChainer
 	UpdatedAt *QueryChainer
@@ -233,6 +236,9 @@ type LockUpdateParam struct {
 	Interface    interface{}
 	MapInterface interface{}
 	Nested       struct {
+		Name interface{}
+	}
+	NestedPtr struct {
 		Name interface{}
 	}
 	CreatedAt interface{}
@@ -1165,6 +1171,15 @@ func (repo *lockRepository) search(v interface{}, param *LockSearchParam, q *fir
 			if direction := param.Nested.Name.OrderByDirection; direction > 0 {
 				query = query.OrderBy("nested.name", direction)
 				query = param.Nested.Name.BuildCursorQuery(query)
+			}
+		}
+		if param.NestedPtr.Name != nil {
+			for _, chain := range param.NestedPtr.Name.QueryGroup {
+				query = query.Where("nested_ptr.name", chain.Operator, chain.Value)
+			}
+			if direction := param.NestedPtr.Name.OrderByDirection; direction > 0 {
+				query = query.OrderBy("nested_ptr.name", direction)
+				query = param.NestedPtr.Name.BuildCursorQuery(query)
 			}
 		}
 		if param.CreatedAt != nil {
