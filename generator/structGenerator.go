@@ -214,7 +214,7 @@ func (g *structGenerator) parseType() error {
 	return nil
 }
 
-func (g *structGenerator) parseTypeImpl(rawKey firestoreKey string, obj *types.Object) error {
+func (g *structGenerator) parseTypeImpl(rawKey, firestoreKey string, obj *types.Object) error {
 	entries := make([]types.ObjectEntry, 0, len(obj.Entries))
 	for _, e := range obj.Entries {
 		entries = append(entries, e)
