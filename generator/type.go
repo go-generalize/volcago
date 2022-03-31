@@ -98,7 +98,7 @@ func getGoTypeFromEPTypes(t eptypes.Type) string {
 			return ""
 		}
 
-		if strings.HasPrefix(r, "[]") {
+		if strings.HasPrefix(r, "[]") || strings.HasPrefix(r, "map[") {
 			return r
 		}
 

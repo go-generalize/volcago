@@ -1,11 +1,11 @@
 module github.com/go-generalize/volcago
 
-go 1.17
+go 1.18
 
 require (
 	cloud.google.com/go/firestore v1.6.1
 	github.com/fatih/structtag v1.2.0
-	github.com/go-generalize/go-easyparser v0.2.0
+	github.com/go-generalize/go-easyparser v0.3.1
 	github.com/go-utils/cont v0.1.2
 	github.com/go-utils/dedupe v1.0.0
 	github.com/go-utils/gopackages v0.0.0-20210218102646-e7d1f0008968
@@ -27,12 +27,12 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/googleapis/gax-go/v2 v2.1.1 // indirect
 	go.opencensus.io v0.23.0 // indirect
-	golang.org/x/mod v0.5.1 // indirect
+	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3 // indirect
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
 	golang.org/x/oauth2 v0.0.0-20220309155454-6242fa91716a // indirect
-	golang.org/x/sys v0.0.0-20220310020820-b874c991c1a5 // indirect
+	golang.org/x/sys v0.0.0-20220330033206-e17cdc41300f // indirect
 	golang.org/x/text v0.3.7 // indirect
-	golang.org/x/tools v0.1.7 // indirect
+	golang.org/x/tools v0.1.10 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 )
