@@ -313,6 +313,14 @@ func (g *structGenerator) parseTypeImpl(rawKey, firestoreKey string, obj *types.
 					return xerrors.Errorf("%s: The only field type that uses the `unique` tag is a string", pos)
 				}
 				fieldInfo.IsUnique = true
+				if g.param.UniqueInfos == nil {
+					g.param.UniqueInfos = make([]*UniqueInfo, 0)
+				}
+				ui := &UniqueInfo{
+					Field: fieldInfo.Field,
+					FsTag: fieldInfo.FsTag,
+				}
+				g.param.UniqueInfos = append(g.param.UniqueInfos, ui)
 			}
 			if fieldInfo, err = g.appendIndexer(tags, firestoreKey, fieldInfo); err != nil {
 				return xerrors.Errorf("%s: %w", pos, err)
