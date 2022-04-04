@@ -4,9 +4,18 @@ package examples
 
 // Lock - with automatic id generation
 type Lock struct {
-	ID    string             `firestore:"-" firestore_key:"auto"`
-	Email string             `unique:""`
-	Text  string             `firestore:"text" unique:""`
-	Flag  map[string]float64 `firestore:"flag"`
+	ID           string                 `firestore:"-" firestore_key:"auto"`
+	Text         string                 `firestore:"text" unique:""`
+	Email        string                 `unique:""`
+	Flag         map[string]float64     `firestore:"flag"`
+	Interface    interface{}            `firestore:"interface"`
+	MapInterface map[string]interface{} `firestore:"map_interface"`
+	Nested       Nested                 `firestore:"nested"`
+	NestedPtr    *Nested                `firestore:"nested_ptr"`
 	Meta
+}
+
+// Nested - nested struct
+type Nested struct {
+	Name string `firestore:"name"`
 }

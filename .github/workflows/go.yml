@@ -27,13 +27,27 @@ jobs:
       - name: Start firestore emulator
         run: docker exec -d $(docker ps -f "ancestor=google/cloud-sdk" -q) gcloud beta emulators firestore start --project=pname --host-port 0.0.0.0:8000
 
-      - name: Set up Go 1.17
+      - name: Set up Go 1.18
         uses: actions/setup-go@v2
         with:
-          go-version: 1.17
+          go-version: 1.18
         id: go
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+
+      - name: Ensure samples are generated
+        env:
+          TZ: Asia/Tokyo
+        run: |
+          export PATH=$PATH:$PWD/bin
+          make gen_samples
+          
+          clean=$(git status | grep "nothing to commit" || true)
+          if [ -z "$clean" ]; then
+            git diff
+            echo 'Please run "make gen_samples"'
+            exit 1
+          fi
 
       - name: Run tests
         run: |
