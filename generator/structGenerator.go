@@ -300,6 +300,8 @@ func (g *structGenerator) parseTypeImpl(rawKey, firestoreKey string, obj *types.
 			continue
 		}
 
+		fsTag, fsTagErr := tags.Get("firestore")
+
 		tag, err := tags.Get("firestore_key")
 		if err != nil {
 			fieldInfo := &FieldInfo{
@@ -318,7 +320,16 @@ func (g *structGenerator) parseTypeImpl(rawKey, firestoreKey string, obj *types.
 				}
 				ui := &UniqueInfo{
 					Field: fieldInfo.Field,
-					FsTag: fieldInfo.FsTag,
+					FsTag: func() string {
+						ft := fieldInfo.Field
+						if fsTagErr == nil {
+							ft = strings.Split(fsTag.Value(), ",")[0]
+						}
+						if fsTagErr != nil || ft == "" {
+							return fieldInfo.Field
+						}
+						return ft
+					}(),
 				}
 				g.param.UniqueInfos = append(g.param.UniqueInfos, ui)
 			}
@@ -338,10 +349,8 @@ func (g *structGenerator) parseTypeImpl(rawKey, firestoreKey string, obj *types.
 			return xerrors.Errorf(`%s: The contents of the firestore_key tag should be "" or "auto"`, pos)
 		}
 
-		fsTag, err := tags.Get("firestore")
-
 		// firestore タグが存在しないか-になっていない
-		if err != nil || strings.Split(fsTag.Value(), ",")[0] != "-" {
+		if fsTagErr != nil || strings.Split(fsTag.Value(), ",")[0] != "-" {
 			return xerrors.New("key field for firestore should have firestore:\"-\" tag")
 		}
 
