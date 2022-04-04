@@ -73,7 +73,7 @@ type {{ .RepositoryInterfaceName }} interface {
 	// get by unique field
 {{-     range $ui := .UniqueInfos }}
 	GetBy{{ $ui.Field }}(ctx context.Context, {{ ToLower $ui.FsTag }} string) (*{{ $structNameRef }}, error)
-    GetBy{{ $ui.Field }}WithTx(tx *firestore.Transaction, {{ ToLower $ui.FsTag }} string) (*{{ $structNameRef }}, error)
+	GetBy{{ $ui.Field }}WithTx(tx *firestore.Transaction, {{ ToLower $ui.FsTag }} string) (*{{ $structNameRef }}, error)
 {{-     end }}
 {{- end }}
 }
