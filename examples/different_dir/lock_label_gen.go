@@ -3,6 +3,10 @@
 package repository
 
 const (
+	LockIndexLabelEmailEqual      = "e4" // perfect-match of Email
+	LockIndexLabelEmailLike       = "e3" // like-match of Email
+	LockIndexLabelEmailPrefix     = "e1" // prefix-match of Email
+	LockIndexLabelEmailSuffix     = "e2" // suffix-match of Email
 	LockIndexLabelTextEqual       = "t4" // perfect-match of Text
 	LockIndexLabelTextLike        = "t3" // like-match of Text
 	LockIndexLabelTextPrefix      = "t1" // prefix-match of Text
