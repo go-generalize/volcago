@@ -68,6 +68,14 @@ type {{ .RepositoryInterfaceName }} interface {
 	SetParentDoc(doc *firestore.DocumentRef)
 	Free()
 {{- end }}
+{{- $structNameRef := .StructNameRef }}
+{{- if ne ( len .UniqueInfos ) 0 }}
+	// get by unique field
+{{-     range $ui := .UniqueInfos }}
+	GetBy{{ $ui.Field }}(ctx context.Context, {{ ToLower $ui.FsTag }} string) (*{{ $structNameRef }}, error)
+    GetBy{{ $ui.Field }}WithTx(tx *firestore.Transaction, {{ ToLower $ui.FsTag }} string) (*{{ $structNameRef }}, error)
+{{-     end }}
+{{- end }}
 }
 {{ $middlewareName := printf "%sMiddleware" .RepositoryInterfaceName }}
 // {{ $middlewareName }} - middleware of {{ .RepositoryInterfaceName }}
@@ -1454,3 +1462,29 @@ func (repo *{{ .RepositoryStructName }}) search(v interface{}, param *{{ .Struct
 
 	return repo.runQuery(v, query)
 }
+{{- if ne ( len .UniqueInfos ) 0 }}
+{{- $repositoryStructName := .RepositoryStructName }}
+{{- range $ui := .UniqueInfos }}
+
+// GetBy{{ $ui.Field }} - get by {{ $ui.Field }}
+func (repo *{{ $repositoryStructName }}) GetBy{{ $ui.Field }}(ctx context.Context, {{ ToLower $ui.FsTag }} string) (*{{ $structNameRef }}, error) {
+	return repo.getByXXX(ctx, "{{ $ui.FsTag }}", {{ ToLower $ui.FsTag }})
+}
+
+// GetBy{{ $ui.Field }}WithTx - get by {{ $ui.Field }} in transaction
+func (repo *{{ $repositoryStructName }}) GetBy{{ $ui.Field }}WithTx(tx *firestore.Transaction, {{ ToLower $ui.FsTag }} string) (*{{ $structNameRef }}, error) {
+	return repo.getByXXX(tx, "{{ $ui.FsTag }}", {{ ToLower $ui.FsTag }})
+}
+{{- end }}
+
+func (repo *{{ .RepositoryStructName }}) getByXXX(v interface{}, field, value string) (*{{ $structNameRef }}, error) {
+	query := repo.GetCollection().Query.Where(field, OpTypeEqual, value)
+	results, err := repo.runQuery(v, query)
+	if err != nil {
+		return nil, xerrors.Errorf("failed to run query: %w", err)
+	} else if len(results) == 0 {
+		return nil, ErrNotFound
+	}
+	return results[0], nil
+}
+{{- end }}
