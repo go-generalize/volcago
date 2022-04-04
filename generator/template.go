@@ -26,6 +26,11 @@ type FieldInfo struct {
 	Indexes    []*IndexesInfo
 }
 
+type UniqueInfo struct {
+	Field string
+	FsTag string
+}
+
 type templateParameter struct {
 	AppVersion        string
 	PackageName       string
@@ -46,7 +51,8 @@ type templateParameter struct {
 	KeyFieldType string
 	KeyValueName string // lower camel case
 
-	FieldInfos []*FieldInfo
+	FieldInfos  []*FieldInfo
+	UniqueInfos []*UniqueInfo
 
 	EnableIndexes       bool
 	FieldInfoForIndexes *FieldInfo
