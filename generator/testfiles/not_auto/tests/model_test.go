@@ -315,6 +315,12 @@ func TestFirestore(t *testing.T) {
 				ttrr.Fatalf("unexpected err == ErrUniqueConstraint")
 			}
 		})
+
+		tr.Run("GetByXXX", func(ttr *testing.T) {
+			if _, err := taskRepo.GetByDesc(ctx, fmt.Sprintf("%s%d", desc, 1001)); err != nil {
+				ttr.Fatalf("%+v", err)
+			}
+		})
 	})
 }
 
@@ -493,6 +499,18 @@ func TestFirestoreTransaction_Single(t *testing.T) {
 			tr.Fatalf("unexpected err != nil")
 		} else if !xerrors.Is(err, model.ErrUniqueConstraint) {
 			tr.Fatalf("unexpected err == ErrUniqueConstraint")
+		}
+	})
+
+	t.Run("GetByXXXWithTx", func(tr *testing.T) {
+		if err := client.RunTransaction(ctx, func(cx context.Context, tx *firestore.Transaction) error {
+			if _, err := taskRepo.GetByDescWithTx(tx, fmt.Sprintf("%s01", desc)); err != nil {
+				return err
+			}
+
+			return nil
+		}); err != nil {
+			tr.Fatalf("error: %+v", err)
 		}
 	})
 }
