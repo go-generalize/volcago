@@ -1293,7 +1293,7 @@ func (repo *lockRepository) GetByEmailWithTx(tx *firestore.Transaction, email st
 }
 
 func (repo *lockRepository) getByXXX(v interface{}, field, value string) (*model.Lock, error) {
-	query := repo.GetCollection().Query.Where(field, OpTypeEqual, value)
+	query := repo.GetCollection().Query.Where(field, OpTypeEqual, value).Limit(1)
 	results, err := repo.runQuery(v, query)
 	if err != nil {
 		return nil, xerrors.Errorf("failed to run query: %w", err)

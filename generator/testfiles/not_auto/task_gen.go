@@ -1142,7 +1142,7 @@ func (repo *taskRepository) GetByDescWithTx(tx *firestore.Transaction, descripti
 }
 
 func (repo *taskRepository) getByXXX(v interface{}, field, value string) (*Task, error) {
-	query := repo.GetCollection().Query.Where(field, OpTypeEqual, value)
+	query := repo.GetCollection().Query.Where(field, OpTypeEqual, value).Limit(1)
 	results, err := repo.runQuery(v, query)
 	if err != nil {
 		return nil, xerrors.Errorf("failed to run query: %w", err)
