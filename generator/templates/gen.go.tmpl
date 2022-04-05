@@ -1478,7 +1478,7 @@ func (repo *{{ $repositoryStructName }}) GetBy{{ $ui.Field }}WithTx(tx *firestor
 {{- end }}
 
 func (repo *{{ .RepositoryStructName }}) getByXXX(v interface{}, field, value string) (*{{ $structNameRef }}, error) {
-	query := repo.GetCollection().Query.Where(field, OpTypeEqual, value)
+	query := repo.GetCollection().Query.Where(field, OpTypeEqual, value).Limit(1)
 	results, err := repo.runQuery(v, query)
 	if err != nil {
 		return nil, xerrors.Errorf("failed to run query: %w", err)
