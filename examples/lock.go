@@ -6,6 +6,7 @@ package examples
 type Lock struct {
 	ID           string                 `firestore:"-" firestore_key:"auto"`
 	Text         string                 `firestore:"text" unique:""`
+	Email        string                 `unique:""`
 	Flag         map[string]float64     `firestore:"flag"`
 	Interface    interface{}            `firestore:"interface"`
 	MapInterface map[string]interface{} `firestore:"map_interface"`

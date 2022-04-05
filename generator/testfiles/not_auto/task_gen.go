@@ -52,6 +52,9 @@ type TaskRepository interface {
 	GetCollectionName() string
 	GetDocRef(identity string) *firestore.DocumentRef
 	RunInTransaction() func(ctx context.Context, f func(context.Context, *firestore.Transaction) error, opts ...firestore.TransactionOption) (err error)
+	// get by unique field
+	GetByDesc(ctx context.Context, description string) (*Task, error)
+	GetByDescWithTx(tx *firestore.Transaction, description string) (*Task, error)
 }
 
 // TaskRepositoryMiddleware - middleware of TaskRepository
@@ -1126,4 +1129,25 @@ func (repo *taskRepository) search(v interface{}, param *TaskSearchParam, q *fir
 	}
 
 	return repo.runQuery(v, query)
+}
+
+// GetByDesc - get by Desc
+func (repo *taskRepository) GetByDesc(ctx context.Context, description string) (*Task, error) {
+	return repo.getByXXX(ctx, "description", description)
+}
+
+// GetByDescWithTx - get by Desc in transaction
+func (repo *taskRepository) GetByDescWithTx(tx *firestore.Transaction, description string) (*Task, error) {
+	return repo.getByXXX(tx, "description", description)
+}
+
+func (repo *taskRepository) getByXXX(v interface{}, field, value string) (*Task, error) {
+	query := repo.GetCollection().Query.Where(field, OpTypeEqual, value).Limit(1)
+	results, err := repo.runQuery(v, query)
+	if err != nil {
+		return nil, xerrors.Errorf("failed to run query: %w", err)
+	} else if len(results) == 0 {
+		return nil, ErrNotFound
+	}
+	return results[0], nil
 }
