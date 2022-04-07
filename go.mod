@@ -7,7 +7,7 @@ require (
 	github.com/fatih/structtag v1.2.0
 	github.com/go-generalize/go-easyparser v0.3.1
 	github.com/go-utils/cont v0.1.2
-	github.com/go-utils/dedupe v1.0.0
+	github.com/go-utils/dedupe v1.0.1
 	github.com/go-utils/gopackages v0.0.0-20210218102646-e7d1f0008968
 	github.com/go-utils/plural v0.0.1
 	github.com/go-utils/xim v0.1.2
