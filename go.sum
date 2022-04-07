@@ -92,8 +92,8 @@ github.com/go-gl/glfw/v3.3/glfw v0.0.0-20191125211704-12ad95a8df72/go.mod h1:tQ2
 github.com/go-gl/glfw/v3.3/glfw v0.0.0-20200222043503-6f7a984d4dc4/go.mod h1:tQ2UAYgL5IevRw8kRxooKSPJfGvJ9fJQFa0TUsXzTg8=
 github.com/go-utils/cont v0.1.2 h1:ynFzZJ7rZVySN9P4IGBOjmLt7knlUcdDLY9Q9Dl3nzg=
 github.com/go-utils/cont v0.1.2/go.mod h1:zXQ9kh3mb8Bydc0Ce+12tHwn/cb/+zL8twUeOs4E+eA=
-github.com/go-utils/dedupe v1.0.0 h1:iEEV94wfE6NgKlFesWlt9uALEHYRdmEn+KJzkx9vSC8=
-github.com/go-utils/dedupe v1.0.0/go.mod h1:d3isYB4QNtAtaLlVkStDXoq6R0qRAelD48W2VUZUpCg=
+github.com/go-utils/dedupe v1.0.1 h1:CxmzRK58Wqk5+f2f0dG3KLf2Hg2+SYfw3JdxsS0u2lE=
+github.com/go-utils/dedupe v1.0.1/go.mod h1:oRzAt9jnMtYvaAEJDDlRhce1tvDATaUQEszeT/XQxZ0=
 github.com/go-utils/gopackages v0.0.0-20210218102646-e7d1f0008968 h1:sHm78LgJXVdlQPfpmVq4tLmssocz+tda7NJgdH6LJFY=
 github.com/go-utils/gopackages v0.0.0-20210218102646-e7d1f0008968/go.mod h1:QPVW4BzGDze3cEu7TbM7Gw9ppfYTj4NDgBW0JwNZE1g=
 github.com/go-utils/plural v0.0.1 h1:GdqHN1+s1dm3HDyejIjUUOS+WIZcyNkB2SrajDS0Iy4=
