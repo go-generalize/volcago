@@ -28,7 +28,7 @@ jobs:
         run: docker exec -d $(docker ps -f "ancestor=google/cloud-sdk" -q) gcloud beta emulators firestore start --project=pname --host-port 0.0.0.0:8000
 
       - name: Set up Go 1.18
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: 1.18
         id: go
