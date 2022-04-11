@@ -98,7 +98,7 @@ func (repo *uniqueRepository) getUniqueItems(value interface{}) ([]*Unique, bool
 		}
 
 		keySet := []string{
-			repo.collectionName,
+			repo.targetCollection,
 			fieldName,
 			fieldValue,
 		}
@@ -106,7 +106,7 @@ func (repo *uniqueRepository) getUniqueItems(value interface{}) ([]*Unique, bool
 
 		u := &Unique{
 			ID:         fmt.Sprintf("%x", md5.Sum([]byte(key))),
-			Collection: repo.collectionName,
+			Collection: repo.targetCollection,
 			Data:       fieldName,
 			Value:      fieldValue,
 		}
