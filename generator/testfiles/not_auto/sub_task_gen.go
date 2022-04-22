@@ -52,7 +52,7 @@ type SubTaskRepository interface {
 	GetCollectionName() string
 	GetDocRef(id string) *firestore.DocumentRef
 	RunInTransaction() func(ctx context.Context, f func(context.Context, *firestore.Transaction) error, opts ...firestore.TransactionOption) (err error)
-	SetParentDoc(doc *firestore.DocumentRef)
+	SetParentDoc(doc *firestore.DocumentRef) SubTaskRepository
 	Free()
 }
 
@@ -190,11 +190,12 @@ func (repo *subTaskRepository) RunInTransaction() func(ctx context.Context, f fu
 }
 
 // SetParentDoc - parent document setter
-func (repo *subTaskRepository) SetParentDoc(doc *firestore.DocumentRef) {
+func (repo subTaskRepository) SetParentDoc(doc *firestore.DocumentRef) SubTaskRepository {
 	if doc == nil {
-		return
+		return &repo
 	}
 	repo.parentDocument = doc
+	return &repo
 }
 
 // Free - parent document releaser
