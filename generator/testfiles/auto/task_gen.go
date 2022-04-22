@@ -206,7 +206,6 @@ type TaskSearchParam struct {
 	NameList   *QueryChainer
 	Proportion *QueryChainer
 	Flag       *QueryChainer
-	Sub        *QueryChainer
 
 	CursorLimit int
 }
@@ -222,7 +221,6 @@ type TaskUpdateParam struct {
 	NameList   interface{}
 	Proportion interface{}
 	Flag       interface{}
-	Sub        interface{}
 }
 
 // Search - search documents
@@ -1245,29 +1243,6 @@ func (repo *taskRepository) search(v interface{}, param *TaskSearchParam, q *fir
 				}
 				for key, value := range items {
 					query = query.WherePath(firestore.FieldPath{"flag", key}, chain.Operator, value)
-				}
-			}
-		}
-		if param.Sub != nil {
-			for _, chain := range param.Sub.QueryGroup {
-				query = query.Where("sub", chain.Operator, chain.Value)
-			}
-			if direction := param.Sub.OrderByDirection; direction > 0 {
-				query = query.OrderBy("sub", direction)
-				query = param.Sub.BuildCursorQuery(query)
-			}
-			value, ok := param.Sub.Filter.Value.(string)
-			for _, filter := range param.Sub.Filter.FilterTypes {
-				switch filter {
-				// Treat `Add` or otherwise as `Equal`.
-				case FilterTypeAdd:
-					fallthrough
-				default:
-					if !ok {
-						filters.AddSomething(TaskIndexLabelSubEqual, param.Sub.Filter.Value)
-						continue
-					}
-					filters.Add(TaskIndexLabelSubEqual, value)
 				}
 			}
 		}

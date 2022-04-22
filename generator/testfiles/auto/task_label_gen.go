@@ -39,8 +39,4 @@ const (
 	TaskIndexLabelFlagSuffix       = "f2"  // suffix-match of Flag
 	TaskIndexLabelFlagLike         = "f3"  // like-match of Flag
 	TaskIndexLabelFlagEqual        = "f4"  // perfect-match of Flag
-	TaskIndexLabelSubPrefix        = "s1"  // prefix-match of Sub
-	TaskIndexLabelSubSuffix        = "s2"  // suffix-match of Sub
-	TaskIndexLabelSubLike          = "s3"  // like-match of Sub
-	TaskIndexLabelSubEqual         = "s4"  // perfect-match of Sub
 )
