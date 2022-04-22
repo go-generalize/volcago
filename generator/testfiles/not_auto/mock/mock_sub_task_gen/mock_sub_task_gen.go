@@ -478,6 +478,20 @@ func (mr *MockSubTaskRepositoryMockRecorder) SetParentDoc(doc interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetParentDoc", reflect.TypeOf((*MockSubTaskRepository)(nil).SetParentDoc), doc)
 }
 
+// SetParentDocWithNewInstance mocks base method.
+func (m *MockSubTaskRepository) SetParentDocWithNewInstance(doc *firestore.DocumentRef) model.SubTaskRepository {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetParentDocWithNewInstance", doc)
+	ret0, _ := ret[0].(model.SubTaskRepository)
+	return ret0
+}
+
+// SetParentDocWithNewInstance indicates an expected call of SetParentDocWithNewInstance.
+func (mr *MockSubTaskRepositoryMockRecorder) SetParentDocWithNewInstance(doc interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetParentDocWithNewInstance", reflect.TypeOf((*MockSubTaskRepository)(nil).SetParentDocWithNewInstance), doc)
+}
+
 // StrictUpdate mocks base method.
 func (m *MockSubTaskRepository) StrictUpdate(ctx context.Context, id string, param *model.SubTaskUpdateParam, opts ...firestore.Precondition) error {
 	m.ctrl.T.Helper()
