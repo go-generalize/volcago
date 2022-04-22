@@ -236,6 +236,85 @@ func TestFirestore(t *testing.T) {
 			})
 		})
 
+		tr.Run("SubCollectionWithSetParentDocWithNewInstance", func(tr *testing.T) {
+			ids2 := make([]string, 0, 3)
+			doc := taskRepo.GetDocRef(id)
+			subRepo := model.NewSubTaskRepository(client, nil)
+			subRepo = subRepo.SetParentDocWithNewInstance(doc)
+			defer func() {
+				if err = subRepo.DeleteMultiByIDs(ctx, ids2); err != nil {
+					tr.Fatalf("%+v", err)
+				}
+			}()
+			st := &model.SubTask{IsSubCollection: true}
+			id, err = subRepo.Insert(ctx, st)
+			if err != nil {
+				tr.Fatalf("%+v", err)
+			}
+			ids2 = append(ids2, id)
+
+			sts := []*model.SubTask{
+				{IsSubCollection: true},
+				{IsSubCollection: false},
+			}
+			stsIDs, er := subRepo.InsertMulti(ctx, sts)
+			if er != nil {
+				tr.Fatalf("%+v", er)
+			}
+			ids2 = append(ids2, stsIDs...)
+
+			param := &model.SubTaskSearchParam{IsSubCollection: model.NewQueryChainer().Equal(true)}
+			sts, err = subRepo.Search(ctx, param, nil)
+			if err != nil {
+				tr.Fatalf("%+v", err)
+			}
+
+			if len(sts) != 2 {
+				tr.Fatal("not match")
+			}
+
+			tr.Run("CollectionGroup", func(ttrr *testing.T) {
+				sts, err = model.NewSubTaskCollectionGroupRepository(client).Search(ctx, param, nil)
+				if err != nil {
+					tr.Fatalf("%+v", err)
+				}
+
+				if len(sts) != 2 {
+					tr.Fatal("not match")
+				}
+			})
+
+			tr.Run("Reference", func(tr2 *testing.T) {
+				tk.Sub = subRepo.GetDocRef(sts[1].ID)
+				if err = taskRepo.Update(ctx, tk); err != nil {
+					tr2.Fatalf("%+v", err)
+				}
+
+				tkr, er := taskRepo.Get(ctx, doc.ID)
+				if er != nil {
+					tr2.Fatalf("%+v", er)
+				}
+
+				sub, er := subRepo.GetWithDoc(ctx, tkr.Sub)
+				if er != nil {
+					tr2.Fatalf("%+v", er)
+				}
+
+				if sub.ID != sts[1].ID {
+					tr2.Fatal("not match")
+				}
+
+				taskSearchParam := &model.TaskSearchParam{Sub: model.NewQueryChainer().Equal(tk.Sub)}
+				tks, er := taskRepo.Search(ctx, taskSearchParam, nil)
+				if er != nil {
+					tr2.Fatalf("%+v", er)
+				}
+				if len(tks) != 1 {
+					tr2.Fatal("not match")
+				}
+			})
+		})
+
 		tk.Count++
 		if err = taskRepo.Update(ctx, tk); err != nil {
 			tr.Fatalf("%+v", err)
