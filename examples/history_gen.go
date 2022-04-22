@@ -52,7 +52,8 @@ type HistoryRepository interface {
 	GetCollectionName() string
 	GetDocRef(id string) *firestore.DocumentRef
 	RunInTransaction() func(ctx context.Context, f func(context.Context, *firestore.Transaction) error, opts ...firestore.TransactionOption) (err error)
-	SetParentDoc(doc *firestore.DocumentRef) HistoryRepository
+	SetParentDoc(doc *firestore.DocumentRef)
+	SetParentDocWithNewInstance(doc *firestore.DocumentRef) HistoryRepository
 	Free()
 }
 
@@ -190,7 +191,15 @@ func (repo *historyRepository) RunInTransaction() func(ctx context.Context, f fu
 }
 
 // SetParentDoc - parent document setter
-func (repo historyRepository) SetParentDoc(doc *firestore.DocumentRef) HistoryRepository {
+func (repo *historyRepository) SetParentDoc(doc *firestore.DocumentRef) {
+	if doc == nil {
+		return
+	}
+	repo.parentDocument = doc
+}
+
+// SetParentDocWithNewInstance - Returns new instance with setting parent document
+func (repo historyRepository) SetParentDocWithNewInstance(doc *firestore.DocumentRef) HistoryRepository {
 	if doc == nil {
 		return &repo
 	}
