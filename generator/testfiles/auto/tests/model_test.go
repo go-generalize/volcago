@@ -487,14 +487,19 @@ func TestFirestoreQuery(t *testing.T) {
 			Done2:      false,
 			Count:      i,
 			Count64:    int64(i),
-			Proportion: 0.12345 + float64(i),
 			NameList:   []string{"a", "b", "c"},
+			Proportion: 0.12345 + float64(i),
 			Flag: map[string]float64{
 				"1": 1.1,
 				"2": 2.2,
 				"3": 3.3,
 				"4": 4.4,
 				"5": 5.5,
+			},
+			SliceSubTask: []*model.SubTask{
+				{
+					Name: "slice_nested",
+				},
 			},
 		}
 		tks = append(tks, tk)
@@ -590,6 +595,36 @@ func TestFirestoreQuery(t *testing.T) {
 		}
 
 		if len(tasks) != 10 {
+			tr.Fatalf("unexpected length: %d (expected: %d)", len(tasks), 10)
+		}
+	})
+
+	t.Run("[]Object(10件)", func(tr *testing.T) {
+		param := &model.TaskSearchParam{
+			SliceSubTask: model.NewQueryChainer().ArrayContainsAny([]*model.SubTask{{Name: "slice_struct"}}),
+		}
+
+		tasks, err := taskRepo.Search(ctx, param, nil)
+		if err != nil {
+			tr.Fatalf("%+v", err)
+		}
+
+		if len(tasks) != 10 {
+			tr.Fatalf("unexpected length: %d (expected: %d)", len(tasks), 10)
+		}
+	})
+
+	t.Run("[]Object(0件)", func(tr *testing.T) {
+		param := &model.TaskSearchParam{
+			SliceSubTask: model.NewQueryChainer().ArrayContains("slice_struct"),
+		}
+
+		tasks, err := taskRepo.Search(ctx, param, nil)
+		if err != nil {
+			tr.Fatalf("%+v", err)
+		}
+
+		if len(tasks) != 0 {
 			tr.Fatalf("unexpected length: %d (expected: %d)", len(tasks), 10)
 		}
 	})
