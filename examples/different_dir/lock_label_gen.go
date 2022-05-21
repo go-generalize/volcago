@@ -7,6 +7,10 @@ const (
 	LockIndexLabelTextLike           = "t3" // like-match of Text
 	LockIndexLabelTextPrefix         = "t1" // prefix-match of Text
 	LockIndexLabelTextSuffix         = "t2" // suffix-match of Text
+	LockIndexLabelEmailEqual         = "e4" // perfect-match of Email
+	LockIndexLabelEmailLike          = "e3" // like-match of Email
+	LockIndexLabelEmailPrefix        = "e1" // prefix-match of Email
+	LockIndexLabelEmailSuffix        = "e2" // suffix-match of Email
 	LockIndexLabelFlagPrefix         = "f1" // prefix-match of Flag
 	LockIndexLabelFlagSuffix         = "f2" // suffix-match of Flag
 	LockIndexLabelFlagLike           = "f3" // like-match of Flag

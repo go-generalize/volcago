@@ -273,5 +273,8 @@ func (g *structGenerator) getFuncMap() template.FuncMap {
 
 			return nil
 		},
+		"ToLower": func(s string) string {
+			return strings.ToLower(s)
+		},
 	}
 }
