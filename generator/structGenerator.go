@@ -12,7 +12,6 @@ import (
 	"github.com/go-generalize/volcago/pkg/fsutil"
 	"github.com/go-generalize/volcago/pkg/gocodegen"
 	"github.com/go-generalize/volcago/pkg/sliceutil"
-	"github.com/go-utils/cont"
 	"github.com/go-utils/gopackages"
 	"github.com/iancoleman/strcase"
 	"golang.org/x/xerrors"
@@ -197,7 +196,7 @@ func (g *structGenerator) parseIndexesField(tags *structtag.Tags) error {
 
 	tag, err := validateFirestoreTag(tags)
 	if err != nil {
-		return xerrors.Errorf("firestora tag(%s) is invalid: %w", tag, err)
+		return xerrors.Errorf("firestore tag(%s) is invalid: %w", tag, err)
 	}
 
 	fieldInfo.FsTag = tag
@@ -255,18 +254,6 @@ func (g *structGenerator) parseTypeImpl(rawKey, firestoreKey string, obj *types.
 				return xerrors.Errorf("failed to parse %s: %w", e.RawName, err)
 			}
 			continue
-		}
-
-		if !cont.Contains(supportedTypes, typeName) {
-			obj := strings.TrimPrefix(typeName, typeMap)
-
-			if !cont.Contains(supportedTypes, obj) {
-				log.Printf(
-					"%s: the type of `%s` is an invalid type in struct `%s` [%s]\n",
-					pos, e.RawName, g.structName, typeName,
-				)
-				continue
-			}
 		}
 
 		if strings.HasPrefix(typeName, "[]") {
