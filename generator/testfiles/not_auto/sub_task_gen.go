@@ -47,6 +47,8 @@ type SubTaskRepository interface {
 	// Search
 	Search(ctx context.Context, param *SubTaskSearchParam, q *firestore.Query) ([]*SubTask, error)
 	SearchWithTx(tx *firestore.Transaction, param *SubTaskSearchParam, q *firestore.Query) ([]*SubTask, error)
+	SearchByParam(ctx context.Context, param *SubTaskSearchParam) ([]*SubTask, *PagingResult, error)
+	SearchByParamWithTx(tx *firestore.Transaction, param *SubTaskSearchParam) ([]*SubTask, *PagingResult, error)
 	// misc
 	GetCollection() *firestore.CollectionRef
 	GetCollectionName() string
@@ -206,6 +208,7 @@ func (repo *subTaskRepository) Free() {
 type SubTaskSearchParam struct {
 	IsSubCollection *QueryChainer
 
+	CursorKey   string
 	CursorLimit int
 }
 
@@ -218,6 +221,11 @@ type SubTaskUpdateParam struct {
 // The third argument is firestore.Query, basically you can pass nil
 func (repo *subTaskRepository) Search(ctx context.Context, param *SubTaskSearchParam, q *firestore.Query) ([]*SubTask, error) {
 	return repo.search(ctx, param, q)
+}
+
+// SearchByParam - search documents by search param
+func (repo *subTaskRepository) SearchByParam(ctx context.Context, param *SubTaskSearchParam) ([]*SubTask, *PagingResult, error) {
+	return repo.searchByParam(ctx, param)
 }
 
 // Get - get `SubTask` by `SubTask.ID`
@@ -547,8 +555,14 @@ func (repo *subTaskRepository) DeleteMultiByIDs(ctx context.Context, ids []strin
 	return repo.DeleteMulti(ctx, subjects, opts...)
 }
 
+// SearchWithTx - search documents in transaction
 func (repo *subTaskRepository) SearchWithTx(tx *firestore.Transaction, param *SubTaskSearchParam, q *firestore.Query) ([]*SubTask, error) {
 	return repo.search(tx, param, q)
+}
+
+// SearchByParamWithTx - search documents by search param in transaction
+func (repo *subTaskRepository) SearchByParamWithTx(tx *firestore.Transaction, param *SubTaskSearchParam) ([]*SubTask, *PagingResult, error) {
+	return repo.searchByParam(tx, param)
 }
 
 // GetWithTx - get `SubTask` by `SubTask.ID` in transaction
@@ -1056,7 +1070,7 @@ func (repo *subTaskRepository) runQuery(v interface{}, query firestore.Query) ([
 
 		subject := new(SubTask)
 
-		if err := doc.DataTo(&subject); err != nil {
+		if err = doc.DataTo(&subject); err != nil {
 			return nil, xerrors.Errorf("error in DataTo method: %w", err)
 		}
 
@@ -1068,6 +1082,69 @@ func (repo *subTaskRepository) runQuery(v interface{}, query firestore.Query) ([
 }
 
 // BUG(54m): there may be potential bugs
+func (repo *subTaskRepository) searchByParam(v interface{}, param *SubTaskSearchParam) ([]*SubTask, *PagingResult, error) {
+	query := func() firestore.Query {
+		if repo.collectionGroup != nil {
+			return repo.collectionGroup.Query
+		}
+		return repo.GetCollection().Query
+	}()
+	if param.IsSubCollection != nil {
+		for _, chain := range param.IsSubCollection.QueryGroup {
+			query = query.Where("IsSubCollection", chain.Operator, chain.Value)
+		}
+		if direction := param.IsSubCollection.OrderByDirection; direction > 0 {
+			query = query.OrderBy("IsSubCollection", direction)
+			query = param.IsSubCollection.BuildCursorQuery(query)
+		}
+	}
+
+	limit := param.CursorLimit + 1
+
+	if param.CursorKey != "" {
+		var (
+			ds  *firestore.DocumentSnapshot
+			err error
+		)
+		switch x := v.(type) {
+		case *firestore.Transaction:
+			ds, err = x.Get(repo.GetDocRef(param.CursorKey))
+		case context.Context:
+			ds, err = repo.GetDocRef(param.CursorKey).Get(x)
+		default:
+			return nil, nil, xerrors.Errorf("invalid x type: %v", v)
+		}
+		if err != nil {
+			if status.Code(err) == codes.NotFound {
+				return nil, nil, ErrNotFound
+			}
+			return nil, nil, xerrors.Errorf("error in Get method: %w", err)
+		}
+		query = query.StartAt(ds)
+	}
+
+	if limit > 1 {
+		query = query.Limit(limit)
+	}
+
+	subjects, err := repo.runQuery(v, query)
+	if err != nil {
+		return nil, nil, xerrors.Errorf("error in runQuery method: %w", err)
+	}
+
+	pagingResult := &PagingResult{
+		Length: len(subjects),
+	}
+	if limit > 1 && limit == pagingResult.Length {
+		next := pagingResult.Length - 1
+		pagingResult.NextCursorKey = subjects[next].ID
+		subjects = subjects[:next]
+		pagingResult.Length--
+	}
+
+	return subjects, pagingResult, nil
+}
+
 func (repo *subTaskRepository) search(v interface{}, param *SubTaskSearchParam, q *firestore.Query) ([]*SubTask, error) {
 	if (param == nil && q == nil) || (param != nil && q != nil) {
 		return nil, xerrors.New("either one should be nil")
@@ -1084,19 +1161,12 @@ func (repo *subTaskRepository) search(v interface{}, param *SubTaskSearchParam, 
 	}()
 
 	if q == nil {
-		if param.IsSubCollection != nil {
-			for _, chain := range param.IsSubCollection.QueryGroup {
-				query = query.Where("IsSubCollection", chain.Operator, chain.Value)
-			}
-			if direction := param.IsSubCollection.OrderByDirection; direction > 0 {
-				query = query.OrderBy("IsSubCollection", direction)
-				query = param.IsSubCollection.BuildCursorQuery(query)
-			}
+		subjects, _, err := repo.searchByParam(v, param)
+		if err != nil {
+			return nil, xerrors.Errorf("error in searchByParam method: %w", err)
 		}
 
-		if l := param.CursorLimit; l > 0 {
-			query = query.Limit(l)
-		}
+		return subjects, nil
 	}
 
 	return repo.runQuery(v, query)

@@ -482,7 +482,7 @@ func TestFirestoreQuery(t *testing.T) {
 		tk := &model.Task{
 			ID:         fmt.Sprintf("%d", i),
 			Desc:       fmt.Sprintf("%s%d", desc, i),
-			Created:    now,
+			Created:    now.Add(time.Millisecond * time.Duration(i)),
 			Done:       true,
 			Done2:      false,
 			Count:      i,
@@ -508,6 +508,53 @@ func TestFirestoreQuery(t *testing.T) {
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}
+
+	t.Run("Paging", func(tr *testing.T) {
+		param := &model.TaskSearchParam{
+			Done:        model.NewQueryChainer().Equal(true),
+			CursorLimit: 8,
+		}
+
+		tasks, pagingResult, err := taskRepo.SearchByParam(ctx, param)
+		if err != nil {
+			tr.Fatalf("%+v", err)
+		}
+
+		if len(tasks) != 8 && pagingResult.Length == len(tasks) {
+			tr.Fatalf("unexpected length: %d (expected: %d)", len(tasks), 8)
+		}
+
+		param = &model.TaskSearchParam{
+			Done:        model.NewQueryChainer().Equal(true),
+			CursorLimit: 5,
+			CursorKey:   pagingResult.NextCursorKey,
+		}
+
+		tasks, pagingResult, err = taskRepo.SearchByParam(ctx, param)
+		if err != nil {
+			tr.Fatalf("%+v", err)
+		}
+
+		if len(tasks) != 2 && pagingResult.Length == len(tasks) {
+			tr.Fatalf("unexpected length: %d (expected: %d)", len(tasks), 2)
+		}
+	})
+
+	t.Run("Paging", func(tr *testing.T) {
+		param := &model.TaskSearchParam{
+			Done:        model.NewQueryChainer().Equal(true),
+			CursorLimit: 30,
+		}
+
+		tasks, _, err := taskRepo.SearchByParam(ctx, param)
+		if err != nil {
+			tr.Fatalf("%+v", err)
+		}
+
+		if len(tasks) != 10 {
+			tr.Fatalf("unexpected length: %d (expected: %d)", len(tasks), 10)
+		}
+	})
 
 	t.Run("int(1件)", func(tr *testing.T) {
 		param := &model.TaskSearchParam{
@@ -569,9 +616,9 @@ func TestFirestoreQuery(t *testing.T) {
 		}
 	})
 
-	t.Run("time.Time(10件)", func(tr *testing.T) {
+	t.Run("time.Time(1件)", func(tr *testing.T) {
 		param := &model.TaskSearchParam{
-			Created: model.NewQueryChainer().Equal(now),
+			Created: model.NewQueryChainer().Equal(now.Add(time.Millisecond)),
 		}
 
 		tasks, err := taskRepo.Search(ctx, param, nil)
@@ -579,8 +626,8 @@ func TestFirestoreQuery(t *testing.T) {
 			tr.Fatalf("%+v", err)
 		}
 
-		if len(tasks) != 10 {
-			tr.Fatalf("unexpected length: %d (expected: %d)", len(tasks), 10)
+		if len(tasks) != 1 {
+			tr.Fatalf("unexpected length: %d (expected: %d)", len(tasks), 1)
 		}
 	})
 
