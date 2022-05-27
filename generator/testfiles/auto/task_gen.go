@@ -48,6 +48,8 @@ type TaskRepository interface {
 	// Search
 	Search(ctx context.Context, param *TaskSearchParam, q *firestore.Query) ([]*Task, error)
 	SearchWithTx(tx *firestore.Transaction, param *TaskSearchParam, q *firestore.Query) ([]*Task, error)
+	SearchByParam(ctx context.Context, param *TaskSearchParam) ([]*Task, *PagingResult, error)
+	SearchByParamWithTx(tx *firestore.Transaction, param *TaskSearchParam) ([]*Task, *PagingResult, error)
 	// misc
 	GetCollection() *firestore.CollectionRef
 	GetCollectionName() string
@@ -228,6 +230,11 @@ type TaskUpdateParam struct {
 // The third argument is firestore.Query, basically you can pass nil
 func (repo *taskRepository) Search(ctx context.Context, param *TaskSearchParam, q *firestore.Query) ([]*Task, error) {
 	return repo.search(ctx, param, q)
+}
+
+// SearchByParam - search documents by search param
+func (repo *taskRepository) SearchByParam(ctx context.Context, param *TaskSearchParam) ([]*Task, *PagingResult, error) {
+	return repo.searchByParam(ctx, param)
 }
 
 // Get - get `Task` by `Task.ID`
@@ -537,8 +544,14 @@ func (repo *taskRepository) DeleteMultiByIDs(ctx context.Context, ids []string, 
 	return repo.DeleteMulti(ctx, subjects, opts...)
 }
 
+// SearchWithTx - search documents in transaction
 func (repo *taskRepository) SearchWithTx(tx *firestore.Transaction, param *TaskSearchParam, q *firestore.Query) ([]*Task, error) {
 	return repo.search(tx, param, q)
+}
+
+// SearchByParamWithTx - search documents by search param in transaction
+func (repo *taskRepository) SearchByParamWithTx(tx *firestore.Transaction, param *TaskSearchParam) ([]*Task, *PagingResult, error) {
+	return repo.searchByParam(tx, param)
 }
 
 // GetWithTx - get `Task` by `Task.ID` in transaction
@@ -1037,7 +1050,7 @@ func (repo *taskRepository) runQuery(v interface{}, query firestore.Query) ([]*T
 }
 
 // BUG(54m): there may be potential bugs
-func (repo *taskRepository) searchWithChainer(v interface{}, param *TaskSearchParam) ([]*Task, *PagingResult, error) {
+func (repo *taskRepository) searchByParam(v interface{}, param *TaskSearchParam) ([]*Task, *PagingResult, error) {
 	query := repo.GetCollection().Query
 	filters := xim.NewFilters(&xim.Config{
 		IgnoreCase:         true,
@@ -1296,9 +1309,9 @@ func (repo *taskRepository) search(v interface{}, param *TaskSearchParam, q *fir
 	}()
 
 	if q == nil {
-		subjects, _, err := repo.searchWithChainer(v, param)
+		subjects, _, err := repo.searchByParam(v, param)
 		if err != nil {
-			return nil, xerrors.Errorf("error in searchWithChainer method: %w", err)
+			return nil, xerrors.Errorf("error in searchByParam method: %w", err)
 		}
 
 		return subjects, nil

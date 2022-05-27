@@ -48,6 +48,8 @@ type LockRepository interface {
 	// Search
 	Search(ctx context.Context, param *LockSearchParam, q *firestore.Query) ([]*Lock, error)
 	SearchWithTx(tx *firestore.Transaction, param *LockSearchParam, q *firestore.Query) ([]*Lock, error)
+	SearchByParam(ctx context.Context, param *LockSearchParam) ([]*Lock, *PagingResult, error)
+	SearchByParamWithTx(tx *firestore.Transaction, param *LockSearchParam) ([]*Lock, *PagingResult, error)
 	// misc
 	GetCollection() *firestore.CollectionRef
 	GetCollectionName() string
@@ -238,6 +240,11 @@ type LockUpdateParam struct {
 // The third argument is firestore.Query, basically you can pass nil
 func (repo *lockRepository) Search(ctx context.Context, param *LockSearchParam, q *firestore.Query) ([]*Lock, error) {
 	return repo.search(ctx, param, q)
+}
+
+// SearchByParam - search documents by search param
+func (repo *lockRepository) SearchByParam(ctx context.Context, param *LockSearchParam) ([]*Lock, *PagingResult, error) {
+	return repo.searchByParam(ctx, param)
 }
 
 // Get - get `Lock` by `Lock.ID`
@@ -555,8 +562,14 @@ func (repo *lockRepository) DeleteMultiByIDs(ctx context.Context, ids []string, 
 	return repo.DeleteMulti(ctx, subjects, opts...)
 }
 
+// SearchWithTx - search documents in transaction
 func (repo *lockRepository) SearchWithTx(tx *firestore.Transaction, param *LockSearchParam, q *firestore.Query) ([]*Lock, error) {
 	return repo.search(tx, param, q)
+}
+
+// SearchByParamWithTx - search documents by search param in transaction
+func (repo *lockRepository) SearchByParamWithTx(tx *firestore.Transaction, param *LockSearchParam) ([]*Lock, *PagingResult, error) {
+	return repo.searchByParam(tx, param)
 }
 
 // GetWithTx - get `Lock` by `Lock.ID` in transaction
@@ -1095,7 +1108,7 @@ func (repo *lockRepository) runQuery(v interface{}, query firestore.Query) ([]*L
 }
 
 // BUG(54m): there may be potential bugs
-func (repo *lockRepository) searchWithChainer(v interface{}, param *LockSearchParam) ([]*Lock, *PagingResult, error) {
+func (repo *lockRepository) searchByParam(v interface{}, param *LockSearchParam) ([]*Lock, *PagingResult, error) {
 	query := repo.GetCollection().Query
 	if param.Text != nil {
 		for _, chain := range param.Text.QueryGroup {
@@ -1235,9 +1248,9 @@ func (repo *lockRepository) search(v interface{}, param *LockSearchParam, q *fir
 	}()
 
 	if q == nil {
-		subjects, _, err := repo.searchWithChainer(v, param)
+		subjects, _, err := repo.searchByParam(v, param)
 		if err != nil {
-			return nil, xerrors.Errorf("error in searchWithChainer method: %w", err)
+			return nil, xerrors.Errorf("error in searchByParam method: %w", err)
 		}
 
 		return subjects, nil
