@@ -1046,7 +1046,7 @@ func (repo *taskRepository) runQuery(v interface{}, query firestore.Query) ([]*T
 
 		subject := new(Task)
 
-		if err := doc.DataTo(&subject); err != nil {
+		if err = doc.DataTo(&subject); err != nil {
 			return nil, xerrors.Errorf("error in DataTo method: %w", err)
 		}
 
@@ -1312,28 +1312,16 @@ func (repo *taskRepository) searchByParam(v interface{}, param *TaskSearchParam)
 		query = query.WherePath(firestore.FieldPath{"indexes", key}, OpTypeEqual, true)
 	}
 
-	if l := param.CursorLimit; l > 0 {
-		query = query.Limit(l)
-	}
-
-	cursorKey := param.CursorKey
-	if cursorKey == "" {
-		if l := param.CursorLimit; l > 0 {
-			query = query.Limit(l)
-		}
-
-		subjects, err := repo.runQuery(v, query)
-		if err != nil {
-			return nil, nil, xerrors.Errorf("error in runQuery method: %w", err)
-		}
-
-		return subjects, nil, nil
-	}
-
 	limit := param.CursorLimit + 1
 
-	dr := repo.GetDocRef(cursorKey)
-	query = query.StartAt(dr).Limit(limit)
+	if param.CursorKey != "" {
+		dr := repo.GetDocRef(param.CursorKey)
+		query = query.StartAt(dr)
+	}
+
+	if limit > 1 {
+		query = query.Limit(limit)
+	}
 
 	subjects, err := repo.runQuery(v, query)
 	if err != nil {
@@ -1343,8 +1331,11 @@ func (repo *taskRepository) searchByParam(v interface{}, param *TaskSearchParam)
 	pagingResult := &PagingResult{
 		Length: len(subjects),
 	}
-	if limit == pagingResult.Length {
-		pagingResult.NextCursorKey = subjects[pagingResult.Length-1].ID
+	if limit > 1 && limit == pagingResult.Length {
+		next := pagingResult.Length - 1
+		pagingResult.NextCursorKey = subjects[next].ID
+		subjects = subjects[:next]
+		pagingResult.Length--
 	}
 
 	return subjects, pagingResult, nil
