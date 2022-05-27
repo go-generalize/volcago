@@ -108,7 +108,8 @@ func getGoTypeFromEPTypes(t eptypes.Type) string {
 	case *eptypes.Date:
 		return "time.Time"
 	case *eptypes.Object:
-		return ""
+		names := strings.Split(t.Name, ".")
+		return names[len(names)-1]
 	case *eptypes.Map:
 		return "map[" + getGoTypeFromEPTypes(t.Key) + "]" + getGoTypeFromEPTypes(t.Value)
 	case *eptypes.Any:

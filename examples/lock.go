@@ -12,6 +12,8 @@ type Lock struct {
 	MapInterface map[string]interface{} `firestore:"map_interface"`
 	Nested       Nested                 `firestore:"nested"`
 	NestedPtr    *Nested                `firestore:"nested_ptr"`
+	SliceString  []string               `firestore:"slice_string"`
+	SliceNested  []*Nested              `firestore:"slice_nested"`
 	Meta
 }
 

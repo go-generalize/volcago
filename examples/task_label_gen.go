@@ -43,8 +43,8 @@ const (
 	TaskIndexLabelFlagSuffix         = "f2"  // suffix-match of Flag
 	TaskIndexLabelFlagLike           = "f3"  // like-match of Flag
 	TaskIndexLabelFlagEqual          = "f4"  // perfect-match of Flag
-	TaskIndexLabelInner_AEqual       = "i4"  // perfect-match of Inner.A
-	TaskIndexLabelInner_ALike        = "i3"  // like-match of Inner.A
-	TaskIndexLabelInner_APrefix      = "i1"  // prefix-match of Inner.A
-	TaskIndexLabelInner_ASuffix      = "i2"  // suffix-match of Inner.A
+	TaskIndexLabelInnerPrefix        = "i1"  // prefix-match of Inner
+	TaskIndexLabelInnerSuffix        = "i2"  // suffix-match of Inner
+	TaskIndexLabelInnerLike          = "i3"  // like-match of Inner
+	TaskIndexLabelInnerEqual         = "i4"  // perfect-match of Inner
 )
