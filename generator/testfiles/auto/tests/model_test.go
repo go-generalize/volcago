@@ -482,7 +482,7 @@ func TestFirestoreQuery(t *testing.T) {
 		tk := &model.Task{
 			ID:         fmt.Sprintf("%d", i),
 			Desc:       fmt.Sprintf("%s%d", desc, i),
-			Created:    now,
+			Created:    now.Add(time.Millisecond * time.Duration(i)),
 			Done:       true,
 			Done2:      false,
 			Count:      i,
@@ -503,6 +503,38 @@ func TestFirestoreQuery(t *testing.T) {
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}
+
+	t.Run("Paging", func(tr *testing.T) {
+		param := &model.TaskSearchParam{
+			Done:        model.NewQueryChainer().Equal(true),
+			CursorLimit: 5,
+		}
+
+		tasks, pagingResult, err := taskRepo.SearchByParam(ctx, param)
+		if err != nil {
+			tr.Fatalf("%+v", err)
+		}
+
+		if len(tasks) != 5 && pagingResult.Length == len(tasks) {
+			tr.Fatalf("unexpected length: %d (expected: %d)", len(tasks), 5)
+		}
+	})
+
+	t.Run("Paging", func(tr *testing.T) {
+		param := &model.TaskSearchParam{
+			Done:        model.NewQueryChainer().Equal(true),
+			CursorLimit: 30,
+		}
+
+		tasks, _, err := taskRepo.SearchByParam(ctx, param)
+		if err != nil {
+			tr.Fatalf("%+v", err)
+		}
+
+		if len(tasks) != 10 {
+			tr.Fatalf("unexpected length: %d (expected: %d)", len(tasks), 10)
+		}
+	})
 
 	t.Run("int(1件)", func(tr *testing.T) {
 		param := &model.TaskSearchParam{
