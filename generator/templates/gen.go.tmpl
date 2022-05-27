@@ -1353,7 +1353,7 @@ func (repo *{{ .RepositoryStructName }}) runQuery(v interface{}, query firestore
 }
 
 // BUG(54m): there may be potential bugs
-func (repo *{{ .RepositoryStructName }}) searchWithChainer(v interface{}, param *{{ .StructName }}SearchParam) ([]*{{ .StructNameRef }}, *PagingResult, error) {
+func (repo *{{ .RepositoryStructName }}) searchByParam(v interface{}, param *{{ .StructName }}SearchParam) ([]*{{ .StructNameRef }}, *PagingResult, error) {
 	query := repo.GetCollection().Query
 {{- if .EnableIndexes }}
 	filters := xim.NewFilters(&xim.Config{
@@ -1497,9 +1497,9 @@ func (repo *{{ .RepositoryStructName }}) search(v interface{}, param *{{ .Struct
 	}()
 
 if q == nil {
-	subjects, _, err := repo.searchWithChainer(v, param)
+	subjects, _, err := repo.searchByParam(v, param)
 	if err != nil {
-		return nil, xerrors.Errorf("error in searchWithChainer method: %w", err)
+		return nil, xerrors.Errorf("error in searchByParam method: %w", err)
 	}
 
 	return subjects, nil
