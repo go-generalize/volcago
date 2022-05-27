@@ -1128,7 +1128,9 @@ func (repo *lockRepository) runQuery(v interface{}, query firestore.Query) ([]*m
 
 // BUG(54m): there may be potential bugs
 func (repo *lockRepository) searchByParam(v interface{}, param *LockSearchParam) ([]*model.Lock, *PagingResult, error) {
-	query := repo.GetCollection().Query
+	query := func() firestore.Query {
+		return repo.GetCollection().Query
+	}()
 	if param.Text != nil {
 		for _, chain := range param.Text.QueryGroup {
 			query = query.Where("text", chain.Operator, chain.Value)
