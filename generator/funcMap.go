@@ -191,7 +191,14 @@ func (g *structGenerator) getFuncMap() template.FuncMap {
 		"SearchFunc": func() string {
 			return fmt.Sprintf(
 				"Search(ctx context.Context, param *%sSearchParam, q *firestore.Query) ([]*%s, error)",
-				g.param.StructName, g.param.StructNameRef)
+				g.param.StructName, g.param.StructNameRef,
+			)
+		},
+		"SearchByParamFunc": func() string {
+			return fmt.Sprintf(
+				"SearchByParam(ctx context.Context, param *%sSearchParam) ([]*%s, *PagingResult, error)",
+				g.param.StructName, g.param.StructNameRef,
+			)
 		},
 		"GetWithTxFunc": func() string {
 			raw := fmt.Sprintf(
@@ -237,7 +244,14 @@ func (g *structGenerator) getFuncMap() template.FuncMap {
 		"SearchWithTxFunc": func() string {
 			return fmt.Sprintf(
 				"SearchWithTx(tx *firestore.Transaction, param *%sSearchParam, q *firestore.Query) ([]*%s, error)",
-				g.param.StructName, g.param.StructNameRef)
+				g.param.StructName, g.param.StructNameRef,
+			)
+		},
+		"SearchByParamWithTxFunc": func() string {
+			return fmt.Sprintf(
+				"SearchByParamWithTx(tx *firestore.Transaction, param *%sSearchParam) ([]*%s, *PagingResult, error)",
+				g.param.StructName, g.param.StructNameRef,
+			)
 		},
 		"GetMultiWithTxFunc": func() string {
 			return fmt.Sprintf(
