@@ -206,6 +206,7 @@ func (repo *subTaskRepository) Free() {
 type SubTaskSearchParam struct {
 	IsSubCollection *QueryChainer
 
+	CursorKey   string
 	CursorLimit int
 }
 
@@ -1068,6 +1069,56 @@ func (repo *subTaskRepository) runQuery(v interface{}, query firestore.Query) ([
 }
 
 // BUG(54m): there may be potential bugs
+func (repo *subTaskRepository) searchWithChainer(v interface{}, param *SubTaskSearchParam) ([]*SubTask, *PagingResult, error) {
+	query := repo.GetCollection().Query
+	if param.IsSubCollection != nil {
+		for _, chain := range param.IsSubCollection.QueryGroup {
+			query = query.Where("IsSubCollection", chain.Operator, chain.Value)
+		}
+		if direction := param.IsSubCollection.OrderByDirection; direction > 0 {
+			query = query.OrderBy("IsSubCollection", direction)
+			query = param.IsSubCollection.BuildCursorQuery(query)
+		}
+	}
+
+	if l := param.CursorLimit; l > 0 {
+		query = query.Limit(l)
+	}
+
+	cursorKey := param.CursorKey
+	if cursorKey == "" {
+		if l := param.CursorLimit; l > 0 {
+			query = query.Limit(l)
+		}
+
+		subjects, err := repo.runQuery(v, query)
+		if err != nil {
+			return nil, nil, xerrors.Errorf("error in runQuery method: %w", err)
+		}
+
+		return subjects, nil, nil
+	}
+
+	limit := param.CursorLimit + 1
+
+	dr := repo.GetDocRef(cursorKey)
+	query = query.StartAt(dr).Limit(limit)
+
+	subjects, err := repo.runQuery(v, query)
+	if err != nil {
+		return nil, nil, xerrors.Errorf("error in runQuery method: %w", err)
+	}
+
+	pagingResult := &PagingResult{
+		Length: len(subjects),
+	}
+	if limit == pagingResult.Length {
+		pagingResult.NextCursorKey = subjects[pagingResult.Length-1].ID
+	}
+
+	return subjects, pagingResult, nil
+}
+
 func (repo *subTaskRepository) search(v interface{}, param *SubTaskSearchParam, q *firestore.Query) ([]*SubTask, error) {
 	if (param == nil && q == nil) || (param != nil && q != nil) {
 		return nil, xerrors.New("either one should be nil")
@@ -1084,19 +1135,12 @@ func (repo *subTaskRepository) search(v interface{}, param *SubTaskSearchParam, 
 	}()
 
 	if q == nil {
-		if param.IsSubCollection != nil {
-			for _, chain := range param.IsSubCollection.QueryGroup {
-				query = query.Where("IsSubCollection", chain.Operator, chain.Value)
-			}
-			if direction := param.IsSubCollection.OrderByDirection; direction > 0 {
-				query = query.OrderBy("IsSubCollection", direction)
-				query = param.IsSubCollection.BuildCursorQuery(query)
-			}
+		subjects, _, err := repo.searchWithChainer(v, param)
+		if err != nil {
+			return nil, xerrors.Errorf("error in searchWithChainer method: %w", err)
 		}
 
-		if l := param.CursorLimit; l > 0 {
-			query = query.Limit(l)
-		}
+		return subjects, nil
 	}
 
 	return repo.runQuery(v, query)

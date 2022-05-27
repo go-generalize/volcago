@@ -189,6 +189,7 @@ type TaskSearchParam struct {
 	Sub          *QueryChainer
 	Flag         *QueryChainer
 
+	CursorKey   string
 	CursorLimit int
 }
 
@@ -996,6 +997,160 @@ func (repo *taskRepository) runQuery(v interface{}, query firestore.Query) ([]*T
 }
 
 // BUG(54m): there may be potential bugs
+func (repo *taskRepository) searchWithChainer(v interface{}, param *TaskSearchParam) ([]*Task, *PagingResult, error) {
+	query := repo.GetCollection().Query
+	if param.Desc != nil {
+		for _, chain := range param.Desc.QueryGroup {
+			query = query.Where("description", chain.Operator, chain.Value)
+		}
+		if direction := param.Desc.OrderByDirection; direction > 0 {
+			query = query.OrderBy("description", direction)
+			query = param.Desc.BuildCursorQuery(query)
+		}
+	}
+	if param.Desc2 != nil {
+		for _, chain := range param.Desc2.QueryGroup {
+			query = query.Where("desc2", chain.Operator, chain.Value)
+		}
+		if direction := param.Desc2.OrderByDirection; direction > 0 {
+			query = query.OrderBy("desc2", direction)
+			query = param.Desc2.BuildCursorQuery(query)
+		}
+	}
+	if param.Created != nil {
+		for _, chain := range param.Created.QueryGroup {
+			query = query.Where("created", chain.Operator, chain.Value)
+		}
+		if direction := param.Created.OrderByDirection; direction > 0 {
+			query = query.OrderBy("created", direction)
+			query = param.Created.BuildCursorQuery(query)
+		}
+	}
+	if param.ReservedDate != nil {
+		for _, chain := range param.ReservedDate.QueryGroup {
+			query = query.Where("reservedDate", chain.Operator, chain.Value)
+		}
+		if direction := param.ReservedDate.OrderByDirection; direction > 0 {
+			query = query.OrderBy("reservedDate", direction)
+			query = param.ReservedDate.BuildCursorQuery(query)
+		}
+	}
+	if param.Done != nil {
+		for _, chain := range param.Done.QueryGroup {
+			query = query.Where("done", chain.Operator, chain.Value)
+		}
+		if direction := param.Done.OrderByDirection; direction > 0 {
+			query = query.OrderBy("done", direction)
+			query = param.Done.BuildCursorQuery(query)
+		}
+	}
+	if param.Done2 != nil {
+		for _, chain := range param.Done2.QueryGroup {
+			query = query.Where("done2", chain.Operator, chain.Value)
+		}
+		if direction := param.Done2.OrderByDirection; direction > 0 {
+			query = query.OrderBy("done2", direction)
+			query = param.Done2.BuildCursorQuery(query)
+		}
+	}
+	if param.Count != nil {
+		for _, chain := range param.Count.QueryGroup {
+			query = query.Where("count", chain.Operator, chain.Value)
+		}
+		if direction := param.Count.OrderByDirection; direction > 0 {
+			query = query.OrderBy("count", direction)
+			query = param.Count.BuildCursorQuery(query)
+		}
+	}
+	if param.Count64 != nil {
+		for _, chain := range param.Count64.QueryGroup {
+			query = query.Where("count64", chain.Operator, chain.Value)
+		}
+		if direction := param.Count64.OrderByDirection; direction > 0 {
+			query = query.OrderBy("count64", direction)
+			query = param.Count64.BuildCursorQuery(query)
+		}
+	}
+	if param.NameList != nil {
+		for _, chain := range param.NameList.QueryGroup {
+			query = query.Where("nameList", chain.Operator, chain.Value)
+		}
+	}
+	if param.Proportion != nil {
+		for _, chain := range param.Proportion.QueryGroup {
+			query = query.Where("proportion", chain.Operator, chain.Value)
+		}
+		if direction := param.Proportion.OrderByDirection; direction > 0 {
+			query = query.OrderBy("proportion", direction)
+			query = param.Proportion.BuildCursorQuery(query)
+		}
+	}
+	if param.Geo != nil {
+		for _, chain := range param.Geo.QueryGroup {
+			query = query.Where("geo", chain.Operator, chain.Value)
+		}
+		if direction := param.Geo.OrderByDirection; direction > 0 {
+			query = query.OrderBy("geo", direction)
+			query = param.Geo.BuildCursorQuery(query)
+		}
+	}
+	if param.Sub != nil {
+		for _, chain := range param.Sub.QueryGroup {
+			query = query.Where("sub", chain.Operator, chain.Value)
+		}
+		if direction := param.Sub.OrderByDirection; direction > 0 {
+			query = query.OrderBy("sub", direction)
+			query = param.Sub.BuildCursorQuery(query)
+		}
+	}
+	if param.Flag != nil {
+		for _, chain := range param.Flag.QueryGroup {
+			query = query.Where("flag", chain.Operator, chain.Value)
+		}
+		if direction := param.Flag.OrderByDirection; direction > 0 {
+			query = query.OrderBy("flag", direction)
+			query = param.Flag.BuildCursorQuery(query)
+		}
+	}
+
+	if l := param.CursorLimit; l > 0 {
+		query = query.Limit(l)
+	}
+
+	cursorKey := param.CursorKey
+	if cursorKey == "" {
+		if l := param.CursorLimit; l > 0 {
+			query = query.Limit(l)
+		}
+
+		subjects, err := repo.runQuery(v, query)
+		if err != nil {
+			return nil, nil, xerrors.Errorf("error in runQuery method: %w", err)
+		}
+
+		return subjects, nil, nil
+	}
+
+	limit := param.CursorLimit + 1
+
+	dr := repo.GetDocRef(cursorKey)
+	query = query.StartAt(dr).Limit(limit)
+
+	subjects, err := repo.runQuery(v, query)
+	if err != nil {
+		return nil, nil, xerrors.Errorf("error in runQuery method: %w", err)
+	}
+
+	pagingResult := &PagingResult{
+		Length: len(subjects),
+	}
+	if limit == pagingResult.Length {
+		pagingResult.NextCursorKey = subjects[pagingResult.Length-1].Identity
+	}
+
+	return subjects, pagingResult, nil
+}
+
 func (repo *taskRepository) search(v interface{}, param *TaskSearchParam, q *firestore.Query) ([]*Task, error) {
 	if (param == nil && q == nil) || (param != nil && q != nil) {
 		return nil, xerrors.New("either one should be nil")
@@ -1009,123 +1164,12 @@ func (repo *taskRepository) search(v interface{}, param *TaskSearchParam, q *fir
 	}()
 
 	if q == nil {
-		if param.Desc != nil {
-			for _, chain := range param.Desc.QueryGroup {
-				query = query.Where("description", chain.Operator, chain.Value)
-			}
-			if direction := param.Desc.OrderByDirection; direction > 0 {
-				query = query.OrderBy("description", direction)
-				query = param.Desc.BuildCursorQuery(query)
-			}
-		}
-		if param.Desc2 != nil {
-			for _, chain := range param.Desc2.QueryGroup {
-				query = query.Where("desc2", chain.Operator, chain.Value)
-			}
-			if direction := param.Desc2.OrderByDirection; direction > 0 {
-				query = query.OrderBy("desc2", direction)
-				query = param.Desc2.BuildCursorQuery(query)
-			}
-		}
-		if param.Created != nil {
-			for _, chain := range param.Created.QueryGroup {
-				query = query.Where("created", chain.Operator, chain.Value)
-			}
-			if direction := param.Created.OrderByDirection; direction > 0 {
-				query = query.OrderBy("created", direction)
-				query = param.Created.BuildCursorQuery(query)
-			}
-		}
-		if param.ReservedDate != nil {
-			for _, chain := range param.ReservedDate.QueryGroup {
-				query = query.Where("reservedDate", chain.Operator, chain.Value)
-			}
-			if direction := param.ReservedDate.OrderByDirection; direction > 0 {
-				query = query.OrderBy("reservedDate", direction)
-				query = param.ReservedDate.BuildCursorQuery(query)
-			}
-		}
-		if param.Done != nil {
-			for _, chain := range param.Done.QueryGroup {
-				query = query.Where("done", chain.Operator, chain.Value)
-			}
-			if direction := param.Done.OrderByDirection; direction > 0 {
-				query = query.OrderBy("done", direction)
-				query = param.Done.BuildCursorQuery(query)
-			}
-		}
-		if param.Done2 != nil {
-			for _, chain := range param.Done2.QueryGroup {
-				query = query.Where("done2", chain.Operator, chain.Value)
-			}
-			if direction := param.Done2.OrderByDirection; direction > 0 {
-				query = query.OrderBy("done2", direction)
-				query = param.Done2.BuildCursorQuery(query)
-			}
-		}
-		if param.Count != nil {
-			for _, chain := range param.Count.QueryGroup {
-				query = query.Where("count", chain.Operator, chain.Value)
-			}
-			if direction := param.Count.OrderByDirection; direction > 0 {
-				query = query.OrderBy("count", direction)
-				query = param.Count.BuildCursorQuery(query)
-			}
-		}
-		if param.Count64 != nil {
-			for _, chain := range param.Count64.QueryGroup {
-				query = query.Where("count64", chain.Operator, chain.Value)
-			}
-			if direction := param.Count64.OrderByDirection; direction > 0 {
-				query = query.OrderBy("count64", direction)
-				query = param.Count64.BuildCursorQuery(query)
-			}
-		}
-		if param.NameList != nil {
-			for _, chain := range param.NameList.QueryGroup {
-				query = query.Where("nameList", chain.Operator, chain.Value)
-			}
-		}
-		if param.Proportion != nil {
-			for _, chain := range param.Proportion.QueryGroup {
-				query = query.Where("proportion", chain.Operator, chain.Value)
-			}
-			if direction := param.Proportion.OrderByDirection; direction > 0 {
-				query = query.OrderBy("proportion", direction)
-				query = param.Proportion.BuildCursorQuery(query)
-			}
-		}
-		if param.Geo != nil {
-			for _, chain := range param.Geo.QueryGroup {
-				query = query.Where("geo", chain.Operator, chain.Value)
-			}
-			if direction := param.Geo.OrderByDirection; direction > 0 {
-				query = query.OrderBy("geo", direction)
-				query = param.Geo.BuildCursorQuery(query)
-			}
-		}
-		if param.Sub != nil {
-			for _, chain := range param.Sub.QueryGroup {
-				query = query.Where("sub", chain.Operator, chain.Value)
-			}
-			if direction := param.Sub.OrderByDirection; direction > 0 {
-				query = query.OrderBy("sub", direction)
-				query = param.Sub.BuildCursorQuery(query)
-			}
-		}
-		if param.Flag != nil {
-			for _, chain := range param.Flag.QueryGroup {
-				query = query.Where("flag", chain.Operator, chain.Value)
-			}
-			if direction := param.Flag.OrderByDirection; direction > 0 {
-				query = query.OrderBy("flag", direction)
-				query = param.Flag.BuildCursorQuery(query)
-			}
+		subjects, _, err := repo.searchWithChainer(v, param)
+		if err != nil {
+			return nil, xerrors.Errorf("error in searchWithChainer method: %w", err)
 		}
 
-		if l := param.CursorLimit; l > 0 {
-			query = query.Limit(l)
-		}
+		return subjects, nil
 	}
 
 	return repo.runQuery(v, query)
