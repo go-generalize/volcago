@@ -59,6 +59,8 @@ type {{ .RepositoryInterfaceName }} interface {
 	// Search
 	{{ SearchFunc }}
 	{{ SearchWithTxFunc }}
+	{{ SearchByParamFunc }}
+	{{ SearchByParamWithTxFunc }}
 	// misc
 	GetCollection() *firestore.CollectionRef
 	GetCollectionName() string
@@ -321,6 +323,11 @@ type {{ .StructName }}UpdateParam struct {
 // The third argument is firestore.Query, basically you can pass nil
 func (repo *{{ .RepositoryStructName }}) {{ SearchFunc }} {
 	return repo.search(ctx, param, q)
+}
+
+// SearchByParam - search documents by search param
+func (repo *{{ .RepositoryStructName }}) {{ SearchByParamFunc }} {
+	return repo.searchByParam(ctx, param)
 }
 
 // Get - get `{{ .StructName }}` by `{{ .StructName }}.{{ .KeyFieldName }}`
@@ -719,6 +726,11 @@ func (repo *{{ .RepositoryStructName }}) {{ DeleteMultiByFunc }} {
 // SearchWithTx - search documents in transaction
 func (repo *{{ .RepositoryStructName }}) {{ SearchWithTxFunc }} {
 	return repo.search(tx, param, q)
+}
+
+// SearchByParamWithTx - search documents by search param in transaction
+func (repo *{{ .RepositoryStructName }}) {{ SearchByParamWithTxFunc }} {
+	return repo.searchByParam(tx, param)
 }
 
 // GetWithTx - get `{{ .StructName }}` by `{{ .StructName }}.{{ .KeyFieldName }}` in transaction
