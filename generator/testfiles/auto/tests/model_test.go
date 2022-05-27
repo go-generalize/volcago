@@ -512,7 +512,7 @@ func TestFirestoreQuery(t *testing.T) {
 	t.Run("Paging", func(tr *testing.T) {
 		param := &model.TaskSearchParam{
 			Done:        model.NewQueryChainer().Equal(true),
-			CursorLimit: 5,
+			CursorLimit: 8,
 		}
 
 		tasks, pagingResult, err := taskRepo.SearchByParam(ctx, param)
@@ -520,8 +520,23 @@ func TestFirestoreQuery(t *testing.T) {
 			tr.Fatalf("%+v", err)
 		}
 
-		if len(tasks) != 5 && pagingResult.Length == len(tasks) {
-			tr.Fatalf("unexpected length: %d (expected: %d)", len(tasks), 5)
+		if len(tasks) != 8 && pagingResult.Length == len(tasks) {
+			tr.Fatalf("unexpected length: %d (expected: %d)", len(tasks), 8)
+		}
+
+		param = &model.TaskSearchParam{
+			Done:        model.NewQueryChainer().Equal(true),
+			CursorLimit: 5,
+			CursorKey:   pagingResult.NextCursorKey,
+		}
+
+		tasks, pagingResult, err = taskRepo.SearchByParam(ctx, param)
+		if err != nil {
+			tr.Fatalf("%+v", err)
+		}
+
+		if len(tasks) != 2 && pagingResult.Length == len(tasks) {
+			tr.Fatalf("unexpected length: %d (expected: %d)", len(tasks), 2)
 		}
 	})
 
