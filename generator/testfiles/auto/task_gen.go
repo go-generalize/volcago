@@ -1268,8 +1268,25 @@ func (repo *taskRepository) searchByParam(v interface{}, param *TaskSearchParam)
 	limit := param.CursorLimit + 1
 
 	if param.CursorKey != "" {
-		dr := repo.GetDocRef(param.CursorKey)
-		query = query.StartAt(dr)
+		var (
+			ds  *firestore.DocumentSnapshot
+			err error
+		)
+		switch x := v.(type) {
+		case *firestore.Transaction:
+			ds, err = x.Get(repo.GetDocRef(param.CursorKey))
+		case context.Context:
+			ds, err = repo.GetDocRef(param.CursorKey).Get(x)
+		default:
+			return nil, nil, xerrors.Errorf("invalid x type: %v", v)
+		}
+		if err != nil {
+			if status.Code(err) == codes.NotFound {
+				return nil, nil, ErrNotFound
+			}
+			return nil, nil, xerrors.Errorf("error in Get method: %w", err)
+		}
+		query = query.StartAt(ds)
 	}
 
 	if limit > 1 {
