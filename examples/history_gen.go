@@ -47,6 +47,8 @@ type HistoryRepository interface {
 	// Search
 	Search(ctx context.Context, param *HistorySearchParam, q *firestore.Query) ([]*History, error)
 	SearchWithTx(tx *firestore.Transaction, param *HistorySearchParam, q *firestore.Query) ([]*History, error)
+	SearchByParam(ctx context.Context, param *HistorySearchParam) ([]*History, *PagingResult, error)
+	SearchByParamWithTx(tx *firestore.Transaction, param *HistorySearchParam) ([]*History, *PagingResult, error)
 	// misc
 	GetCollection() *firestore.CollectionRef
 	GetCollectionName() string
@@ -219,6 +221,11 @@ type HistoryUpdateParam struct {
 // The third argument is firestore.Query, basically you can pass nil
 func (repo *historyRepository) Search(ctx context.Context, param *HistorySearchParam, q *firestore.Query) ([]*History, error) {
 	return repo.search(ctx, param, q)
+}
+
+// SearchByParam - search documents by search param
+func (repo *historyRepository) SearchByParam(ctx context.Context, param *HistorySearchParam) ([]*History, *PagingResult, error) {
+	return repo.searchByParam(ctx, param)
 }
 
 // Get - get `History` by `History.ID`
@@ -548,8 +555,14 @@ func (repo *historyRepository) DeleteMultiByIDs(ctx context.Context, ids []strin
 	return repo.DeleteMulti(ctx, subjects, opts...)
 }
 
+// SearchWithTx - search documents in transaction
 func (repo *historyRepository) SearchWithTx(tx *firestore.Transaction, param *HistorySearchParam, q *firestore.Query) ([]*History, error) {
 	return repo.search(tx, param, q)
+}
+
+// SearchByParamWithTx - search documents by search param in transaction
+func (repo *historyRepository) SearchByParamWithTx(tx *firestore.Transaction, param *HistorySearchParam) ([]*History, *PagingResult, error) {
+	return repo.searchByParam(tx, param)
 }
 
 // GetWithTx - get `History` by `History.ID` in transaction
@@ -1069,7 +1082,7 @@ func (repo *historyRepository) runQuery(v interface{}, query firestore.Query) ([
 }
 
 // BUG(54m): there may be potential bugs
-func (repo *historyRepository) searchWithChainer(v interface{}, param *HistorySearchParam) ([]*History, *PagingResult, error) {
+func (repo *historyRepository) searchByParam(v interface{}, param *HistorySearchParam) ([]*History, *PagingResult, error) {
 	query := repo.GetCollection().Query
 	if param.IsSubCollection != nil {
 		for _, chain := range param.IsSubCollection.QueryGroup {
@@ -1135,9 +1148,9 @@ func (repo *historyRepository) search(v interface{}, param *HistorySearchParam, 
 	}()
 
 	if q == nil {
-		subjects, _, err := repo.searchWithChainer(v, param)
+		subjects, _, err := repo.searchByParam(v, param)
 		if err != nil {
-			return nil, xerrors.Errorf("error in searchWithChainer method: %w", err)
+			return nil, xerrors.Errorf("error in searchByParam method: %w", err)
 		}
 
 		return subjects, nil
