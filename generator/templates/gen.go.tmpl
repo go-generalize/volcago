@@ -1353,7 +1353,7 @@ func (repo *{{ .RepositoryStructName }}) runQuery(v interface{}, query firestore
 
 		subject := new({{ .StructNameRef }})
 
-		if err := doc.DataTo(&subject); err != nil {
+		if err = doc.DataTo(&subject); err != nil {
 			return nil, xerrors.Errorf("error in DataTo method: %w", err)
 		}
 
@@ -1473,7 +1473,10 @@ func (repo *{{ .RepositoryStructName }}) searchByParam(v interface{}, param *{{ 
 		Length: len(subjects),
 	}
 	if limit > 1 && limit == pagingResult.Length {
-		pagingResult.NextCursorKey = subjects[pagingResult.Length-1].{{ .KeyFieldName }}
+		next := pagingResult.Length-1
+		pagingResult.NextCursorKey = subjects[next].{{ .KeyFieldName }}
+		subjects = subjects[:next]
+		pagingResult.Length--
 	}
 
 	return subjects, pagingResult, nil
