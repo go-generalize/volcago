@@ -716,7 +716,7 @@ func (repo *{{ .RepositoryStructName }}) {{ DeleteMultiByFunc }} {
 
 	return repo.DeleteMulti(ctx, subjects, opts...)
 }
-
+// SearchWithTx - search documents in transaction
 func (repo *{{ .RepositoryStructName }}) {{ SearchWithTxFunc }} {
 	return repo.search(tx, param, q)
 }
