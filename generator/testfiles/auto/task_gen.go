@@ -199,15 +199,16 @@ func (repo *taskRepository) saveIndexes(subject *Task) error {
 
 // TaskSearchParam - params for search
 type TaskSearchParam struct {
-	Desc       *QueryChainer
-	Created    *QueryChainer
-	Done       *QueryChainer
-	Done2      *QueryChainer
-	Count      *QueryChainer
-	Count64    *QueryChainer
-	NameList   *QueryChainer
-	Proportion *QueryChainer
-	Flag       *QueryChainer
+	Desc         *QueryChainer
+	Created      *QueryChainer
+	Done         *QueryChainer
+	Done2        *QueryChainer
+	Count        *QueryChainer
+	Count64      *QueryChainer
+	NameList     *QueryChainer
+	Proportion   *QueryChainer
+	Flag         *QueryChainer
+	SliceSubTask *QueryChainer
 
 	CursorKey   string
 	CursorLimit int
@@ -215,15 +216,16 @@ type TaskSearchParam struct {
 
 // TaskUpdateParam - params for strict updates
 type TaskUpdateParam struct {
-	Desc       interface{}
-	Created    interface{}
-	Done       interface{}
-	Done2      interface{}
-	Count      interface{}
-	Count64    interface{}
-	NameList   interface{}
-	Proportion interface{}
-	Flag       interface{}
+	Desc         interface{}
+	Created      interface{}
+	Done         interface{}
+	Done2        interface{}
+	Count        interface{}
+	Count64      interface{}
+	NameList     interface{}
+	Proportion   interface{}
+	Flag         interface{}
+	SliceSubTask interface{}
 }
 
 // Search - search documents
@@ -1247,6 +1249,11 @@ func (repo *taskRepository) searchByParam(v interface{}, param *TaskSearchParam)
 			for key, value := range items {
 				query = query.WherePath(firestore.FieldPath{"flag", key}, chain.Operator, value)
 			}
+		}
+	}
+	if param.SliceSubTask != nil {
+		for _, chain := range param.SliceSubTask.QueryGroup {
+			query = query.Where("slice_sub_task", chain.Operator, chain.Value)
 		}
 	}
 
