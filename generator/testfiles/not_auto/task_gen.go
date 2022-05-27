@@ -1011,7 +1011,9 @@ func (repo *taskRepository) runQuery(v interface{}, query firestore.Query) ([]*T
 
 // BUG(54m): there may be potential bugs
 func (repo *taskRepository) searchByParam(v interface{}, param *TaskSearchParam) ([]*Task, *PagingResult, error) {
-	query := repo.GetCollection().Query
+	query := func() firestore.Query {
+		return repo.GetCollection().Query
+	}()
 	if param.Desc != nil {
 		for _, chain := range param.Desc.QueryGroup {
 			query = query.Where("description", chain.Operator, chain.Value)

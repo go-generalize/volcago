@@ -1083,7 +1083,12 @@ func (repo *subTaskRepository) runQuery(v interface{}, query firestore.Query) ([
 
 // BUG(54m): there may be potential bugs
 func (repo *subTaskRepository) searchByParam(v interface{}, param *SubTaskSearchParam) ([]*SubTask, *PagingResult, error) {
-	query := repo.GetCollection().Query
+	query := func() firestore.Query {
+		if repo.collectionGroup != nil {
+			return repo.collectionGroup.Query
+		}
+		return repo.GetCollection().Query
+	}()
 	if param.IsSubCollection != nil {
 		for _, chain := range param.IsSubCollection.QueryGroup {
 			query = query.Where("IsSubCollection", chain.Operator, chain.Value)

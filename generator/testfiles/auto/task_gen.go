@@ -1053,7 +1053,9 @@ func (repo *taskRepository) runQuery(v interface{}, query firestore.Query) ([]*T
 
 // BUG(54m): there may be potential bugs
 func (repo *taskRepository) searchByParam(v interface{}, param *TaskSearchParam) ([]*Task, *PagingResult, error) {
-	query := repo.GetCollection().Query
+	query := func() firestore.Query {
+		return repo.GetCollection().Query
+	}()
 	filters := xim.NewFilters(&xim.Config{
 		IgnoreCase:         true,
 		SaveNoFiltersIndex: true,
