@@ -1096,7 +1096,7 @@ func (repo *lockRepository) runQuery(v interface{}, query firestore.Query) ([]*L
 
 		subject := new(Lock)
 
-		if err := doc.DataTo(&subject); err != nil {
+		if err = doc.DataTo(&subject); err != nil {
 			return nil, xerrors.Errorf("error in DataTo method: %w", err)
 		}
 
@@ -1197,28 +1197,16 @@ func (repo *lockRepository) searchByParam(v interface{}, param *LockSearchParam)
 		query = query.Where("deletedAt", OpTypeEqual, nil)
 	}
 
-	if l := param.CursorLimit; l > 0 {
-		query = query.Limit(l)
-	}
-
-	cursorKey := param.CursorKey
-	if cursorKey == "" {
-		if l := param.CursorLimit; l > 0 {
-			query = query.Limit(l)
-		}
-
-		subjects, err := repo.runQuery(v, query)
-		if err != nil {
-			return nil, nil, xerrors.Errorf("error in runQuery method: %w", err)
-		}
-
-		return subjects, nil, nil
-	}
-
 	limit := param.CursorLimit + 1
 
-	dr := repo.GetDocRef(cursorKey)
-	query = query.StartAt(dr).Limit(limit)
+	if param.CursorKey != "" {
+		dr := repo.GetDocRef(param.CursorKey)
+		query = query.StartAt(dr)
+	}
+
+	if limit > 1 {
+		query = query.Limit(limit)
+	}
 
 	subjects, err := repo.runQuery(v, query)
 	if err != nil {
@@ -1228,8 +1216,11 @@ func (repo *lockRepository) searchByParam(v interface{}, param *LockSearchParam)
 	pagingResult := &PagingResult{
 		Length: len(subjects),
 	}
-	if limit == pagingResult.Length {
-		pagingResult.NextCursorKey = subjects[pagingResult.Length-1].ID
+	if limit > 1 && limit == pagingResult.Length {
+		next := pagingResult.Length - 1
+		pagingResult.NextCursorKey = subjects[next].ID
+		subjects = subjects[:next]
+		pagingResult.Length--
 	}
 
 	return subjects, pagingResult, nil
