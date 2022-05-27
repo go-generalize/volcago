@@ -209,9 +209,7 @@ type TaskSearchParam struct {
 	NameList     *QueryChainer
 	Proportion   *QueryChainer
 	Flag         *QueryChainer
-	Inner        struct {
-		A *QueryChainer
-	}
+	Inner        *QueryChainer
 
 	CursorKey   string
 	CursorLimit int
@@ -229,9 +227,7 @@ type TaskUpdateParam struct {
 	NameList     interface{}
 	Proportion   interface{}
 	Flag         interface{}
-	Inner        struct {
-		A interface{}
-	}
+	Inner        interface{}
 }
 
 // Search - search documents
@@ -1280,26 +1276,26 @@ func (repo *taskRepository) searchByParam(v interface{}, param *TaskSearchParam)
 			}
 		}
 	}
-	if param.Inner.A != nil {
-		for _, chain := range param.Inner.A.QueryGroup {
-			query = query.Where("inner.a", chain.Operator, chain.Value)
+	if param.Inner != nil {
+		for _, chain := range param.Inner.QueryGroup {
+			query = query.Where("inner", chain.Operator, chain.Value)
 		}
-		if direction := param.Inner.A.OrderByDirection; direction > 0 {
-			query = query.OrderBy("inner.a", direction)
-			query = param.Inner.A.BuildCursorQuery(query)
+		if direction := param.Inner.OrderByDirection; direction > 0 {
+			query = query.OrderBy("inner", direction)
+			query = param.Inner.BuildCursorQuery(query)
 		}
-		value, ok := param.Inner.A.Filter.Value.(string)
-		for _, filter := range param.Inner.A.Filter.FilterTypes {
+		value, ok := param.Inner.Filter.Value.(string)
+		for _, filter := range param.Inner.Filter.FilterTypes {
 			switch filter {
 			// Treat `Add` or otherwise as `Equal`.
 			case FilterTypeAdd:
 				fallthrough
 			default:
 				if !ok {
-					filters.AddSomething(TaskIndexLabelInner_AEqual, param.Inner.A.Filter.Value)
+					filters.AddSomething(TaskIndexLabelInnerEqual, param.Inner.Filter.Value)
 					continue
 				}
-				filters.Add(TaskIndexLabelInner_AEqual, value)
+				filters.Add(TaskIndexLabelInnerEqual, value)
 			}
 		}
 	}
