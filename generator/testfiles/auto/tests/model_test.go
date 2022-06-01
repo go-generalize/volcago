@@ -219,26 +219,6 @@ func TestFirestore(t *testing.T) {
 				ttr.Fatalf("unexpected Proportion: %g (expected: %g)", tsk.Proportion, 11.22345)
 			}
 		})
-
-		tr.Run("ParentDocWithNewInstance", func(ttr *testing.T) {
-			subTask := &model.SubTask{
-				Flag: true,
-			}
-
-			subTaskRepo := model.NewSubTaskRepository(client, nil).
-				NewRepositoryByParent(taskRepo.GetDocRef(id))
-			id, err := subTaskRepo.Insert(ctx, subTask)
-			if err != nil {
-				ttr.Fatalf("unexpected err: %+v", err)
-			}
-			gotSubTask, err := subTaskRepo.Get(ctx, id)
-			if err != nil {
-				ttr.Fatalf("unexpected err: %+v", err)
-			}
-			if subTask.Flag != gotSubTask.Flag {
-				ttr.Fatal("wrong model")
-			}
-		})
 	})
 }
 
