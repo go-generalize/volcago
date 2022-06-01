@@ -226,7 +226,7 @@ func TestFirestore(t *testing.T) {
 			}
 
 			subTaskRepo := model.NewSubTaskRepository(client, nil).
-				SetParentDocWithNewInstance(taskRepo.GetDocRef(id))
+				NewRepositoryByParent(taskRepo.GetDocRef(id))
 			id, err := subTaskRepo.Insert(ctx, subTask)
 			if err != nil {
 				ttr.Fatalf("unexpected err: %+v", err)
