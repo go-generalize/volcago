@@ -59,6 +59,8 @@ type {{ .RepositoryInterfaceName }} interface {
 	// Search
 	{{ SearchFunc }}
 	{{ SearchWithTxFunc }}
+	{{ SearchByParamFunc }}
+	{{ SearchByParamWithTxFunc }}
 	// misc
 	GetCollection() *firestore.CollectionRef
 	GetCollectionName() string
@@ -313,9 +315,11 @@ type {{ .StructName }}SearchParam struct {
 {{- if .MetaFieldsEnabled }}
 
 	IncludeSoftDeleted bool
+	CursorKey          string
 	CursorLimit        int
 {{- else }}
 
+	CursorKey   string
 	CursorLimit int
 {{- end  }}
 }
@@ -329,6 +333,11 @@ type {{ .StructName }}UpdateParam struct {
 // The third argument is firestore.Query, basically you can pass nil
 func (repo *{{ .RepositoryStructName }}) {{ SearchFunc }} {
 	return repo.search(ctx, param, q)
+}
+
+// SearchByParam - search documents by search param
+func (repo *{{ .RepositoryStructName }}) {{ SearchByParamFunc }} {
+	return repo.searchByParam(ctx, param)
 }
 
 // Get - get `{{ .StructName }}` by `{{ .StructName }}.{{ .KeyFieldName }}`
@@ -724,9 +733,14 @@ func (repo *{{ .RepositoryStructName }}) {{ DeleteMultiByFunc }} {
 
 	return repo.DeleteMulti(ctx, subjects, opts...)
 }
-
+// SearchWithTx - search documents in transaction
 func (repo *{{ .RepositoryStructName }}) {{ SearchWithTxFunc }} {
 	return repo.search(tx, param, q)
+}
+
+// SearchByParamWithTx - search documents by search param in transaction
+func (repo *{{ .RepositoryStructName }}) {{ SearchByParamWithTxFunc }} {
+	return repo.searchByParam(tx, param)
 }
 
 // GetWithTx - get `{{ .StructName }}` by `{{ .StructName }}.{{ .KeyFieldName }}` in transaction
@@ -1349,7 +1363,7 @@ func (repo *{{ .RepositoryStructName }}) runQuery(v interface{}, query firestore
 
 		subject := new({{ .StructNameRef }})
 
-		if err := doc.DataTo(&subject); err != nil {
+		if err = doc.DataTo(&subject); err != nil {
 			return nil, xerrors.Errorf("error in DataTo method: %w", err)
 		}
 
@@ -1361,6 +1375,147 @@ func (repo *{{ .RepositoryStructName }}) runQuery(v interface{}, query firestore
 }
 
 // BUG(54m): there may be potential bugs
+func (repo *{{ .RepositoryStructName }}) searchByParam(v interface{}, param *{{ .StructName }}SearchParam) ([]*{{ .StructNameRef }}, *PagingResult, error) {
+	query := func() firestore.Query {
+{{- if eq .IsSubCollection true }}
+		if repo.collectionGroup != nil {
+			return repo.collectionGroup.Query
+		}
+{{- end }}
+		return repo.GetCollection().Query
+	}()
+{{- if .EnableIndexes }}
+	filters := xim.NewFilters(&xim.Config{
+		IgnoreCase:         true,
+		SaveNoFiltersIndex: true,
+	})
+{{ end }}
+{{- $Meta := .MetaFieldsEnabled }}
+{{- $EnableIndexes := .EnableIndexes }}
+{{- $RepositoryStructName := .RepositoryStructName }}
+{{- range $fi := .FieldInfos }}
+{{- 	$IsSlice := HasSlice $fi.FieldType }}
+{{- 	$IsMap := HasMap $fi.FieldType }}
+	if param.{{ $fi.Field }} != nil {
+{{- 		if eq $IsMap true }}
+		for _, chain := range param.{{ $fi.Field }}.QueryGroup {
+			items, ok := chain.Value.({{ $fi.FieldType }})
+			if !ok {
+				continue
+			}
+			for key, value := range items {
+				query = query.WherePath(firestore.FieldPath{{ $bracketsStart }}"{{ $fi.FsTag }}", key{{ $bracketsEnd }}, chain.Operator, value)
+			}
+		}
+{{- 		else if eq $IsSlice true }}
+		for _, chain := range param.{{ $fi.Field }}.QueryGroup {
+			query = query.Where("{{ $fi.FsTag }}", chain.Operator, chain.Value)
+		}
+{{- 		else }}
+		for _, chain := range param.{{ $fi.Field }}.QueryGroup {
+			query = query.Where("{{ $fi.FsTag }}", chain.Operator, chain.Value)
+		}
+		if direction := param.{{ $fi.Field }}.OrderByDirection; direction > 0 {
+			query = query.OrderBy("{{ $fi.FsTag }}", direction)
+			query = param.{{ $fi.Field }}.BuildCursorQuery(query)
+		}
+{{- 			if and (eq $EnableIndexes true ) (ne ( len $fi.Indexes ) 0) }}
+		value, ok := param.{{ $fi.Field }}.Filter.Value.(string)
+{{- 				$indexerInfo := IndexerInfo $fi }}
+{{- 				if ne $indexerInfo "" }}
+		{{ print $indexerInfo }}
+{{- 				end }}
+		for _, filter := range param.{{ $fi.Field }}.Filter.FilterTypes {
+			switch filter {
+{{- 				$EqualLabel := "" }}
+{{- 				range $filters := $fi.Indexes }}
+{{- 					if eq (HasSuffix $filters.ConstName "Equal") true }}
+							{{- $EqualLabel = $filters.ConstName }}
+{{- 					end }}
+{{- 					if and (ne $filters.Method "AddSomething" ) (eq $filters.Use true) }}
+{{- 						if ne $filters.Method "Add" }}
+			case {{ if eq $filters.Method "AddPrefix" }}FilterTypeAddPrefix{{ else if eq $filters.Method "AddSuffix" }}FilterTypeAddSuffix{{ else if eq $filters.Method "AddBiunigrams" }}FilterTypeAddBiunigrams{{ end }}:
+				if ok {
+					filters.{{ $filters.Method }}({{ $filters.ConstName }}, value)
+				}
+{{- 						end }}
+{{- 					end }}
+{{- 				end }}
+			// Treat `Add` or otherwise as `Equal`.
+			case FilterTypeAdd:
+				fallthrough
+			default:
+				if !ok {
+					filters.AddSomething({{ $EqualLabel }}, param.{{ $fi.Field }}.Filter.Value)
+					continue
+				}
+				filters.Add({{ $EqualLabel }}, value)
+			}
+		}
+{{- 			end }}
+{{- 		end }}
+	}
+{{- end }}
+{{- if .MetaFieldsEnabled }}
+	if !param.IncludeSoftDeleted {
+		query = query.Where("{{ (LookUpFieldByName .FieldInfos "DeletedAt").FsTag }}", OpTypeEqual, nil)
+	}
+{{- end }}
+{{ if .EnableIndexes }}
+	build, err := filters.Build()
+	if err != nil {
+		return nil, nil, xerrors.Errorf("failed to filter build: %w", err)
+	}
+	for key := range build {
+		query = query.WherePath(firestore.FieldPath{{ $bracketsStart }}"{{ .FieldInfoForIndexes.FsTag }}", key{{ $bracketsEnd}}, OpTypeEqual, true)
+	}
+{{ end }}
+	limit := param.CursorLimit + 1
+
+	if param.CursorKey != "" {
+		var (
+			ds  *firestore.DocumentSnapshot
+			err error
+		)
+		switch x := v.(type) {
+		case *firestore.Transaction:
+			ds, err = x.Get(repo.GetDocRef(param.CursorKey))
+		case context.Context:
+			ds, err = repo.GetDocRef(param.CursorKey).Get(x)
+		default:
+			return nil, nil, xerrors.Errorf("invalid x type: %v", v)
+		}
+		if err != nil {
+			if status.Code(err) == codes.NotFound {
+				return nil, nil, ErrNotFound
+			}
+			return nil, nil, xerrors.Errorf("error in Get method: %w", err)
+		}
+		query = query.StartAt(ds)
+	}
+
+	if limit > 1 {
+		query = query.Limit(limit)
+	}
+
+	subjects, err := repo.runQuery(v, query)
+	if err != nil {
+		return nil, nil, xerrors.Errorf("error in runQuery method: %w", err)
+	}
+
+	pagingResult := &PagingResult{
+		Length: len(subjects),
+	}
+	if limit > 1 && limit == pagingResult.Length {
+		next := pagingResult.Length-1
+		pagingResult.NextCursorKey = subjects[next].{{ .KeyFieldName }}
+		subjects = subjects[:next]
+		pagingResult.Length--
+	}
+
+	return subjects, pagingResult, nil
+}
+
 func (repo *{{ .RepositoryStructName }}) search(v interface{}, param *{{ .StructName }}SearchParam, q *firestore.Query) ([]*{{ .StructNameRef }}, error) {
 	if (param == nil && q == nil) || (param != nil && q != nil) {
 		return nil, xerrors.New("either one should be nil")
@@ -1378,97 +1533,14 @@ func (repo *{{ .RepositoryStructName }}) search(v interface{}, param *{{ .Struct
 		return repo.GetCollection().Query
 	}()
 
-	if q == nil {
-{{- if .EnableIndexes }}
-		filters := xim.NewFilters(&xim.Config{
-			IgnoreCase:         true,
-			SaveNoFiltersIndex: true,
-		})
-{{ end }}
-{{- $Meta := .MetaFieldsEnabled }}
-{{- $EnableIndexes := .EnableIndexes }}
-{{- $RepositoryStructName := .RepositoryStructName }}
-{{- range $fi := .FieldInfos }}
-{{- 	$IsSlice := HasSlice $fi.FieldType }}
-{{- 	$IsMap := HasMap $fi.FieldType }}
-		if param.{{ $fi.Field }} != nil {
-{{- 		if eq $IsMap true }}
-			for _, chain := range param.{{ $fi.Field }}.QueryGroup {
-				items, ok := chain.Value.({{ $fi.FieldType }})
-				if !ok {
-					continue
-				}
-				for key, value := range items {
-					query = query.WherePath(firestore.FieldPath{{ $bracketsStart }}"{{ $fi.FsTag }}", key{{ $bracketsEnd }}, chain.Operator, value)
-				}
-			}
-{{- 		else if eq $IsSlice true }}
-			for _, chain := range param.{{ $fi.Field }}.QueryGroup {
-				query = query.Where("{{ $fi.FsTag }}", chain.Operator, chain.Value)
-			}
-{{- 		else }}
-			for _, chain := range param.{{ $fi.Field }}.QueryGroup {
-				query = query.Where("{{ $fi.FsTag }}", chain.Operator, chain.Value)
-			}
-			if direction := param.{{ $fi.Field }}.OrderByDirection; direction > 0 {
-				query = query.OrderBy("{{ $fi.FsTag }}", direction)
-				query = param.{{ $fi.Field }}.BuildCursorQuery(query)
-			}
-{{- 			if and (eq $EnableIndexes true ) (ne ( len $fi.Indexes ) 0) }}
-			value, ok := param.{{ $fi.Field }}.Filter.Value.(string)
-{{- 				$indexerInfo := IndexerInfo $fi }}
-{{- 				if ne $indexerInfo "" }}
-			{{ print $indexerInfo }}
-{{- 				end }}
-			for _, filter := range param.{{ $fi.Field }}.Filter.FilterTypes {
-				switch filter {
-{{- 				$EqualLabel := "" }}
-{{- 				range $filters := $fi.Indexes }}
-{{- 					if eq (HasSuffix $filters.ConstName "Equal") true }}
-							{{- $EqualLabel = $filters.ConstName }}
-{{- 					end }}
-{{- 					if and (ne $filters.Method "AddSomething" ) (eq $filters.Use true) }}
-{{- 						if ne $filters.Method "Add" }}
-				case {{ if eq $filters.Method "AddPrefix" }}FilterTypeAddPrefix{{ else if eq $filters.Method "AddSuffix" }}FilterTypeAddSuffix{{ else if eq $filters.Method "AddBiunigrams" }}FilterTypeAddBiunigrams{{ end }}:
-					if ok {
-						filters.{{ $filters.Method }}({{ $filters.ConstName }}, value)
-					}
-{{- 						end }}
-{{- 					end }}
-{{- 				end }}
-				// Treat `Add` or otherwise as `Equal`.
-				case FilterTypeAdd:
-					fallthrough
-				default:
-					if !ok {
-						filters.AddSomething({{ $EqualLabel }}, param.{{ $fi.Field }}.Filter.Value)
-						continue
-					}
-					filters.Add({{ $EqualLabel }}, value)
-				}
-			}
-{{- 			end }}
-{{- 		end }}
-		}
-{{- end }}
-{{- if .MetaFieldsEnabled }}
-		if !param.IncludeSoftDeleted {
-			query = query.Where("{{ (LookUpFieldByName .FieldInfos "DeletedAt").FsTag }}", OpTypeEqual, nil)
-		}
-{{- end }}
-{{ if .EnableIndexes }}
-		build, err := filters.Build()
-		if err != nil {
-			return nil, xerrors.Errorf("failed to filter build: %w", err)
-		}
-		for key := range build {
-			query = query.WherePath(firestore.FieldPath{{ $bracketsStart }}"{{ .FieldInfoForIndexes.FsTag }}", key{{ $bracketsEnd}}, OpTypeEqual, true)
-		}
-{{ end }}
-		if l := param.CursorLimit; l > 0 {
-			query = query.Limit(l)
-		}
+if q == nil {
+	subjects, _, err := repo.searchByParam(v, param)
+	if err != nil {
+		return nil, xerrors.Errorf("error in searchByParam method: %w", err)
 	}
+
+	return subjects, nil
+}
 
 	return repo.runQuery(v, query)
 }

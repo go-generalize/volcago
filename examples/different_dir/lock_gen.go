@@ -50,6 +50,8 @@ type LockRepository interface {
 	// Search
 	Search(ctx context.Context, param *LockSearchParam, q *firestore.Query) ([]*model.Lock, error)
 	SearchWithTx(tx *firestore.Transaction, param *LockSearchParam, q *firestore.Query) ([]*model.Lock, error)
+	SearchByParam(ctx context.Context, param *LockSearchParam) ([]*model.Lock, *PagingResult, error)
+	SearchByParamWithTx(tx *firestore.Transaction, param *LockSearchParam) ([]*model.Lock, *PagingResult, error)
 	// misc
 	GetCollection() *firestore.CollectionRef
 	GetCollectionName() string
@@ -218,21 +220,20 @@ type LockSearchParam struct {
 	Flag         *QueryChainer
 	Interface    *QueryChainer
 	MapInterface *QueryChainer
-	Nested       struct {
-		Name *QueryChainer
-	}
-	NestedPtr struct {
-		Name *QueryChainer
-	}
-	CreatedAt *QueryChainer
-	CreatedBy *QueryChainer
-	UpdatedAt *QueryChainer
-	UpdatedBy *QueryChainer
-	DeletedAt *QueryChainer
-	DeletedBy *QueryChainer
-	Version   *QueryChainer
+	Nested       *QueryChainer
+	NestedPtr    *QueryChainer
+	SliceString  *QueryChainer
+	SliceNested  *QueryChainer
+	CreatedAt    *QueryChainer
+	CreatedBy    *QueryChainer
+	UpdatedAt    *QueryChainer
+	UpdatedBy    *QueryChainer
+	DeletedAt    *QueryChainer
+	DeletedBy    *QueryChainer
+	Version      *QueryChainer
 
 	IncludeSoftDeleted bool
+	CursorKey          string
 	CursorLimit        int
 }
 
@@ -241,25 +242,28 @@ type LockUpdateParam struct {
 	Flag         interface{}
 	Interface    interface{}
 	MapInterface interface{}
-	Nested       struct {
-		Name interface{}
-	}
-	NestedPtr struct {
-		Name interface{}
-	}
-	CreatedAt interface{}
-	CreatedBy interface{}
-	UpdatedAt interface{}
-	UpdatedBy interface{}
-	DeletedAt interface{}
-	DeletedBy interface{}
-	Version   interface{}
+	Nested       interface{}
+	NestedPtr    interface{}
+	SliceString  interface{}
+	SliceNested  interface{}
+	CreatedAt    interface{}
+	CreatedBy    interface{}
+	UpdatedAt    interface{}
+	UpdatedBy    interface{}
+	DeletedAt    interface{}
+	DeletedBy    interface{}
+	Version      interface{}
 }
 
 // Search - search documents
 // The third argument is firestore.Query, basically you can pass nil
 func (repo *lockRepository) Search(ctx context.Context, param *LockSearchParam, q *firestore.Query) ([]*model.Lock, error) {
 	return repo.search(ctx, param, q)
+}
+
+// SearchByParam - search documents by search param
+func (repo *lockRepository) SearchByParam(ctx context.Context, param *LockSearchParam) ([]*model.Lock, *PagingResult, error) {
+	return repo.searchByParam(ctx, param)
 }
 
 // Get - get `Lock` by `Lock.ID`
@@ -577,8 +581,14 @@ func (repo *lockRepository) DeleteMultiByIDs(ctx context.Context, ids []string, 
 	return repo.DeleteMulti(ctx, subjects, opts...)
 }
 
+// SearchWithTx - search documents in transaction
 func (repo *lockRepository) SearchWithTx(tx *firestore.Transaction, param *LockSearchParam, q *firestore.Query) ([]*model.Lock, error) {
 	return repo.search(tx, param, q)
+}
+
+// SearchByParamWithTx - search documents by search param in transaction
+func (repo *lockRepository) SearchByParamWithTx(tx *firestore.Transaction, param *LockSearchParam) ([]*model.Lock, *PagingResult, error) {
+	return repo.searchByParam(tx, param)
 }
 
 // GetWithTx - get `Lock` by `Lock.ID` in transaction
@@ -1105,7 +1115,7 @@ func (repo *lockRepository) runQuery(v interface{}, query firestore.Query) ([]*m
 
 		subject := new(model.Lock)
 
-		if err := doc.DataTo(&subject); err != nil {
+		if err = doc.DataTo(&subject); err != nil {
 			return nil, xerrors.Errorf("error in DataTo method: %w", err)
 		}
 
@@ -1117,6 +1127,200 @@ func (repo *lockRepository) runQuery(v interface{}, query firestore.Query) ([]*m
 }
 
 // BUG(54m): there may be potential bugs
+func (repo *lockRepository) searchByParam(v interface{}, param *LockSearchParam) ([]*model.Lock, *PagingResult, error) {
+	query := func() firestore.Query {
+		return repo.GetCollection().Query
+	}()
+	if param.Text != nil {
+		for _, chain := range param.Text.QueryGroup {
+			query = query.Where("text", chain.Operator, chain.Value)
+		}
+		if direction := param.Text.OrderByDirection; direction > 0 {
+			query = query.OrderBy("text", direction)
+			query = param.Text.BuildCursorQuery(query)
+		}
+	}
+	if param.Email != nil {
+		for _, chain := range param.Email.QueryGroup {
+			query = query.Where("Email", chain.Operator, chain.Value)
+		}
+		if direction := param.Email.OrderByDirection; direction > 0 {
+			query = query.OrderBy("Email", direction)
+			query = param.Email.BuildCursorQuery(query)
+		}
+	}
+	if param.Flag != nil {
+		for _, chain := range param.Flag.QueryGroup {
+			items, ok := chain.Value.(map[string]float64)
+			if !ok {
+				continue
+			}
+			for key, value := range items {
+				query = query.WherePath(firestore.FieldPath{"flag", key}, chain.Operator, value)
+			}
+		}
+	}
+	if param.Interface != nil {
+		for _, chain := range param.Interface.QueryGroup {
+			query = query.Where("interface", chain.Operator, chain.Value)
+		}
+		if direction := param.Interface.OrderByDirection; direction > 0 {
+			query = query.OrderBy("interface", direction)
+			query = param.Interface.BuildCursorQuery(query)
+		}
+	}
+	if param.MapInterface != nil {
+		for _, chain := range param.MapInterface.QueryGroup {
+			items, ok := chain.Value.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			for key, value := range items {
+				query = query.WherePath(firestore.FieldPath{"map_interface", key}, chain.Operator, value)
+			}
+		}
+	}
+	if param.Nested != nil {
+		for _, chain := range param.Nested.QueryGroup {
+			query = query.Where("nested", chain.Operator, chain.Value)
+		}
+		if direction := param.Nested.OrderByDirection; direction > 0 {
+			query = query.OrderBy("nested", direction)
+			query = param.Nested.BuildCursorQuery(query)
+		}
+	}
+	if param.NestedPtr != nil {
+		for _, chain := range param.NestedPtr.QueryGroup {
+			query = query.Where("nested_ptr", chain.Operator, chain.Value)
+		}
+		if direction := param.NestedPtr.OrderByDirection; direction > 0 {
+			query = query.OrderBy("nested_ptr", direction)
+			query = param.NestedPtr.BuildCursorQuery(query)
+		}
+	}
+	if param.SliceString != nil {
+		for _, chain := range param.SliceString.QueryGroup {
+			query = query.Where("slice_string", chain.Operator, chain.Value)
+		}
+	}
+	if param.SliceNested != nil {
+		for _, chain := range param.SliceNested.QueryGroup {
+			query = query.Where("slice_nested", chain.Operator, chain.Value)
+		}
+	}
+	if param.CreatedAt != nil {
+		for _, chain := range param.CreatedAt.QueryGroup {
+			query = query.Where("createdAt", chain.Operator, chain.Value)
+		}
+		if direction := param.CreatedAt.OrderByDirection; direction > 0 {
+			query = query.OrderBy("createdAt", direction)
+			query = param.CreatedAt.BuildCursorQuery(query)
+		}
+	}
+	if param.CreatedBy != nil {
+		for _, chain := range param.CreatedBy.QueryGroup {
+			query = query.Where("createdBy", chain.Operator, chain.Value)
+		}
+		if direction := param.CreatedBy.OrderByDirection; direction > 0 {
+			query = query.OrderBy("createdBy", direction)
+			query = param.CreatedBy.BuildCursorQuery(query)
+		}
+	}
+	if param.UpdatedAt != nil {
+		for _, chain := range param.UpdatedAt.QueryGroup {
+			query = query.Where("updatedAt", chain.Operator, chain.Value)
+		}
+		if direction := param.UpdatedAt.OrderByDirection; direction > 0 {
+			query = query.OrderBy("updatedAt", direction)
+			query = param.UpdatedAt.BuildCursorQuery(query)
+		}
+	}
+	if param.UpdatedBy != nil {
+		for _, chain := range param.UpdatedBy.QueryGroup {
+			query = query.Where("updatedBy", chain.Operator, chain.Value)
+		}
+		if direction := param.UpdatedBy.OrderByDirection; direction > 0 {
+			query = query.OrderBy("updatedBy", direction)
+			query = param.UpdatedBy.BuildCursorQuery(query)
+		}
+	}
+	if param.DeletedAt != nil {
+		for _, chain := range param.DeletedAt.QueryGroup {
+			query = query.Where("deletedAt", chain.Operator, chain.Value)
+		}
+		if direction := param.DeletedAt.OrderByDirection; direction > 0 {
+			query = query.OrderBy("deletedAt", direction)
+			query = param.DeletedAt.BuildCursorQuery(query)
+		}
+	}
+	if param.DeletedBy != nil {
+		for _, chain := range param.DeletedBy.QueryGroup {
+			query = query.Where("deletedBy", chain.Operator, chain.Value)
+		}
+		if direction := param.DeletedBy.OrderByDirection; direction > 0 {
+			query = query.OrderBy("deletedBy", direction)
+			query = param.DeletedBy.BuildCursorQuery(query)
+		}
+	}
+	if param.Version != nil {
+		for _, chain := range param.Version.QueryGroup {
+			query = query.Where("version", chain.Operator, chain.Value)
+		}
+		if direction := param.Version.OrderByDirection; direction > 0 {
+			query = query.OrderBy("version", direction)
+			query = param.Version.BuildCursorQuery(query)
+		}
+	}
+	if !param.IncludeSoftDeleted {
+		query = query.Where("deletedAt", OpTypeEqual, nil)
+	}
+
+	limit := param.CursorLimit + 1
+
+	if param.CursorKey != "" {
+		var (
+			ds  *firestore.DocumentSnapshot
+			err error
+		)
+		switch x := v.(type) {
+		case *firestore.Transaction:
+			ds, err = x.Get(repo.GetDocRef(param.CursorKey))
+		case context.Context:
+			ds, err = repo.GetDocRef(param.CursorKey).Get(x)
+		default:
+			return nil, nil, xerrors.Errorf("invalid x type: %v", v)
+		}
+		if err != nil {
+			if status.Code(err) == codes.NotFound {
+				return nil, nil, ErrNotFound
+			}
+			return nil, nil, xerrors.Errorf("error in Get method: %w", err)
+		}
+		query = query.StartAt(ds)
+	}
+
+	if limit > 1 {
+		query = query.Limit(limit)
+	}
+
+	subjects, err := repo.runQuery(v, query)
+	if err != nil {
+		return nil, nil, xerrors.Errorf("error in runQuery method: %w", err)
+	}
+
+	pagingResult := &PagingResult{
+		Length: len(subjects),
+	}
+	if limit > 1 && limit == pagingResult.Length {
+		next := pagingResult.Length - 1
+		pagingResult.NextCursorKey = subjects[next].ID
+		subjects = subjects[:next]
+		pagingResult.Length--
+	}
+
+	return subjects, pagingResult, nil
+}
+
 func (repo *lockRepository) search(v interface{}, param *LockSearchParam, q *firestore.Query) ([]*model.Lock, error) {
 	if (param == nil && q == nil) || (param != nil && q != nil) {
 		return nil, xerrors.New("either one should be nil")
@@ -1130,143 +1334,12 @@ func (repo *lockRepository) search(v interface{}, param *LockSearchParam, q *fir
 	}()
 
 	if q == nil {
-		if param.Text != nil {
-			for _, chain := range param.Text.QueryGroup {
-				query = query.Where("text", chain.Operator, chain.Value)
-			}
-			if direction := param.Text.OrderByDirection; direction > 0 {
-				query = query.OrderBy("text", direction)
-				query = param.Text.BuildCursorQuery(query)
-			}
-		}
-		if param.Email != nil {
-			for _, chain := range param.Email.QueryGroup {
-				query = query.Where("Email", chain.Operator, chain.Value)
-			}
-			if direction := param.Email.OrderByDirection; direction > 0 {
-				query = query.OrderBy("Email", direction)
-				query = param.Email.BuildCursorQuery(query)
-			}
-		}
-		if param.Flag != nil {
-			for _, chain := range param.Flag.QueryGroup {
-				items, ok := chain.Value.(map[string]float64)
-				if !ok {
-					continue
-				}
-				for key, value := range items {
-					query = query.WherePath(firestore.FieldPath{"flag", key}, chain.Operator, value)
-				}
-			}
-		}
-		if param.Interface != nil {
-			for _, chain := range param.Interface.QueryGroup {
-				query = query.Where("interface", chain.Operator, chain.Value)
-			}
-			if direction := param.Interface.OrderByDirection; direction > 0 {
-				query = query.OrderBy("interface", direction)
-				query = param.Interface.BuildCursorQuery(query)
-			}
-		}
-		if param.MapInterface != nil {
-			for _, chain := range param.MapInterface.QueryGroup {
-				items, ok := chain.Value.(map[string]interface{})
-				if !ok {
-					continue
-				}
-				for key, value := range items {
-					query = query.WherePath(firestore.FieldPath{"map_interface", key}, chain.Operator, value)
-				}
-			}
-		}
-		if param.Nested.Name != nil {
-			for _, chain := range param.Nested.Name.QueryGroup {
-				query = query.Where("nested.name", chain.Operator, chain.Value)
-			}
-			if direction := param.Nested.Name.OrderByDirection; direction > 0 {
-				query = query.OrderBy("nested.name", direction)
-				query = param.Nested.Name.BuildCursorQuery(query)
-			}
-		}
-		if param.NestedPtr.Name != nil {
-			for _, chain := range param.NestedPtr.Name.QueryGroup {
-				query = query.Where("nested_ptr.name", chain.Operator, chain.Value)
-			}
-			if direction := param.NestedPtr.Name.OrderByDirection; direction > 0 {
-				query = query.OrderBy("nested_ptr.name", direction)
-				query = param.NestedPtr.Name.BuildCursorQuery(query)
-			}
-		}
-		if param.CreatedAt != nil {
-			for _, chain := range param.CreatedAt.QueryGroup {
-				query = query.Where("createdAt", chain.Operator, chain.Value)
-			}
-			if direction := param.CreatedAt.OrderByDirection; direction > 0 {
-				query = query.OrderBy("createdAt", direction)
-				query = param.CreatedAt.BuildCursorQuery(query)
-			}
-		}
-		if param.CreatedBy != nil {
-			for _, chain := range param.CreatedBy.QueryGroup {
-				query = query.Where("createdBy", chain.Operator, chain.Value)
-			}
-			if direction := param.CreatedBy.OrderByDirection; direction > 0 {
-				query = query.OrderBy("createdBy", direction)
-				query = param.CreatedBy.BuildCursorQuery(query)
-			}
-		}
-		if param.UpdatedAt != nil {
-			for _, chain := range param.UpdatedAt.QueryGroup {
-				query = query.Where("updatedAt", chain.Operator, chain.Value)
-			}
-			if direction := param.UpdatedAt.OrderByDirection; direction > 0 {
-				query = query.OrderBy("updatedAt", direction)
-				query = param.UpdatedAt.BuildCursorQuery(query)
-			}
-		}
-		if param.UpdatedBy != nil {
-			for _, chain := range param.UpdatedBy.QueryGroup {
-				query = query.Where("updatedBy", chain.Operator, chain.Value)
-			}
-			if direction := param.UpdatedBy.OrderByDirection; direction > 0 {
-				query = query.OrderBy("updatedBy", direction)
-				query = param.UpdatedBy.BuildCursorQuery(query)
-			}
-		}
-		if param.DeletedAt != nil {
-			for _, chain := range param.DeletedAt.QueryGroup {
-				query = query.Where("deletedAt", chain.Operator, chain.Value)
-			}
-			if direction := param.DeletedAt.OrderByDirection; direction > 0 {
-				query = query.OrderBy("deletedAt", direction)
-				query = param.DeletedAt.BuildCursorQuery(query)
-			}
-		}
-		if param.DeletedBy != nil {
-			for _, chain := range param.DeletedBy.QueryGroup {
-				query = query.Where("deletedBy", chain.Operator, chain.Value)
-			}
-			if direction := param.DeletedBy.OrderByDirection; direction > 0 {
-				query = query.OrderBy("deletedBy", direction)
-				query = param.DeletedBy.BuildCursorQuery(query)
-			}
-		}
-		if param.Version != nil {
-			for _, chain := range param.Version.QueryGroup {
-				query = query.Where("version", chain.Operator, chain.Value)
-			}
-			if direction := param.Version.OrderByDirection; direction > 0 {
-				query = query.OrderBy("version", direction)
-				query = param.Version.BuildCursorQuery(query)
-			}
-		}
-		if !param.IncludeSoftDeleted {
-			query = query.Where("deletedAt", OpTypeEqual, nil)
+		subjects, _, err := repo.searchByParam(v, param)
+		if err != nil {
+			return nil, xerrors.Errorf("error in searchByParam method: %w", err)
 		}
 
-		if l := param.CursorLimit; l > 0 {
-			query = query.Limit(l)
-		}
+		return subjects, nil
 	}
 
 	return repo.runQuery(v, query)

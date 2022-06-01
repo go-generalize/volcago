@@ -122,6 +122,21 @@ if err != nil {
 }
 ```
 
+- Paging search
+```go
+param := &model.TaskSearchParam{
+	Done:        model.NewQueryChainer().Equal(true),
+	CursorLimit: 5,
+	// CursorKey: "document id",
+}
+
+tasks, pagingResult, err := taskRepo.SearchByParam(ctx, param)
+if err != nil {
+	// error handling
+}
+// pagingResult.NextPagingKey = "next document id"
+```
+
 ### Query builder
 The code for the query builder called `query_builder_gen.go` is generated.  
 
