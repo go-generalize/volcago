@@ -36,6 +36,12 @@ type DeleteOption struct {
 	Mode DeleteMode
 }
 
+// PagingResult - paging result
+type PagingResult struct {
+	NextCursorKey string
+	Length        int
+}
+
 func isReservedType(value reflect.Value) bool {
 	switch value.Interface().(type) {
 	case time.Time, *time.Time,
