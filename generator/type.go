@@ -9,51 +9,23 @@ import (
 )
 
 const (
-	typeString     = "string"
-	typeInt        = "int"
-	typeInt64      = "int64"
-	typeFloat64    = "float64"
-	typeBool       = "bool"
-	typeAny        = "interface{}"
-	typeTime       = "time.Time"
-	typeTimePtr    = "*time.Time"
-	typeLatLng     = "latlng.LatLng"
-	typeReference  = "firestore.DocumentRef"
-	typeMap        = "map[string]"
-	typeStringMap  = "map[string]string"
-	typeIntMap     = "map[string]int"
-	typeInt64Map   = "map[string]int64"
-	typeFloat64Map = "map[string]float64"
-	typeBoolMap    = "map[string]bool"
-	typeAnyMap     = "map[string]interface{}"
-)
-
-var (
-	supportedTypes = func() []string {
-		t := []string{
-			typeBool,
-			typeString,
-			typeInt,
-			typeInt64,
-			typeFloat64,
-			typeTime,
-			typeTimePtr,
-			typeAny,
-			"*" + typeLatLng,
-			"*" + typeReference,
-			typeStringMap,
-			typeIntMap,
-			typeInt64Map,
-			typeFloat64Map,
-			typeAnyMap,
-		}
-
-		for i := range t {
-			t = append(t, "[]"+t[i])
-		}
-
-		return t
-	}()
+	typeString    = "string"
+	typeInt       = "int"
+	typeInt64     = "int64"
+	typeFloat64   = "float64"
+	typeBool      = "bool"
+	_             = "interface{}"
+	_             = "time.Time"
+	_             = "*time.Time"
+	typeLatLng    = "latlng.LatLng"
+	typeReference = "firestore.DocumentRef"
+	typeMap       = "map[string]"
+	_             = "map[string]string"
+	_             = "map[string]int"
+	_             = "map[string]int64"
+	_             = "map[string]float64"
+	typeBoolMap   = "map[string]bool"
+	_             = "map[string]interface{}"
 )
 
 func getGoTypeFromEPTypes(t eptypes.Type) string {

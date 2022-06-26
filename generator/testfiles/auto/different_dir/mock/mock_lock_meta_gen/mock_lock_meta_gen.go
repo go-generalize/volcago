@@ -440,6 +440,38 @@ func (mr *MockLockMetaRepositoryMockRecorder) Search(ctx, param, q interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Search", reflect.TypeOf((*MockLockMetaRepository)(nil).Search), ctx, param, q)
 }
 
+// SearchByParam mocks base method.
+func (m *MockLockMetaRepository) SearchByParam(ctx context.Context, param *model0.LockMetaSearchParam) ([]*model.LockMeta, *model0.PagingResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SearchByParam", ctx, param)
+	ret0, _ := ret[0].([]*model.LockMeta)
+	ret1, _ := ret[1].(*model0.PagingResult)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// SearchByParam indicates an expected call of SearchByParam.
+func (mr *MockLockMetaRepositoryMockRecorder) SearchByParam(ctx, param interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchByParam", reflect.TypeOf((*MockLockMetaRepository)(nil).SearchByParam), ctx, param)
+}
+
+// SearchByParamWithTx mocks base method.
+func (m *MockLockMetaRepository) SearchByParamWithTx(tx *firestore.Transaction, param *model0.LockMetaSearchParam) ([]*model.LockMeta, *model0.PagingResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SearchByParamWithTx", tx, param)
+	ret0, _ := ret[0].([]*model.LockMeta)
+	ret1, _ := ret[1].(*model0.PagingResult)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// SearchByParamWithTx indicates an expected call of SearchByParamWithTx.
+func (mr *MockLockMetaRepositoryMockRecorder) SearchByParamWithTx(tx, param interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchByParamWithTx", reflect.TypeOf((*MockLockMetaRepository)(nil).SearchByParamWithTx), tx, param)
+}
+
 // SearchWithTx mocks base method.
 func (m *MockLockMetaRepository) SearchWithTx(tx *firestore.Transaction, param *model0.LockMetaSearchParam, q *firestore.Query) ([]*model.LockMeta, error) {
 	m.ctrl.T.Helper()

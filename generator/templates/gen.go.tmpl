@@ -68,6 +68,7 @@ type {{ .RepositoryInterfaceName }} interface {
 	RunInTransaction() func(ctx context.Context, f func(context.Context, *firestore.Transaction) error, opts ...firestore.TransactionOption) (err error)
 {{- if eq .IsSubCollection true }}
 	SetParentDoc(doc *firestore.DocumentRef)
+	NewRepositoryByParent(doc *firestore.DocumentRef) {{ .RepositoryInterfaceName }}
 	Free()
 {{- end }}
 {{- $structNameRef := .StructNameRef }}
@@ -265,6 +266,15 @@ func (repo *{{ .RepositoryStructName }}) SetParentDoc(doc *firestore.DocumentRef
 		return
 	}
 	repo.parentDocument = doc
+}
+
+// NewRepositoryByParent - Returns new instance with setting parent document
+func (repo {{ .RepositoryStructName }}) NewRepositoryByParent(doc *firestore.DocumentRef) {{ .RepositoryInterfaceName }} {
+	if doc == nil {
+		return &repo
+	}
+	repo.parentDocument = doc
+	return &repo
 }
 
 // Free - parent document releaser

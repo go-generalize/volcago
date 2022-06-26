@@ -439,6 +439,38 @@ func (mr *MockTaskRepositoryMockRecorder) Search(ctx, param, q interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Search", reflect.TypeOf((*MockTaskRepository)(nil).Search), ctx, param, q)
 }
 
+// SearchByParam mocks base method.
+func (m *MockTaskRepository) SearchByParam(ctx context.Context, param *model.TaskSearchParam) ([]*model.Task, *model.PagingResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SearchByParam", ctx, param)
+	ret0, _ := ret[0].([]*model.Task)
+	ret1, _ := ret[1].(*model.PagingResult)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// SearchByParam indicates an expected call of SearchByParam.
+func (mr *MockTaskRepositoryMockRecorder) SearchByParam(ctx, param interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchByParam", reflect.TypeOf((*MockTaskRepository)(nil).SearchByParam), ctx, param)
+}
+
+// SearchByParamWithTx mocks base method.
+func (m *MockTaskRepository) SearchByParamWithTx(tx *firestore.Transaction, param *model.TaskSearchParam) ([]*model.Task, *model.PagingResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SearchByParamWithTx", tx, param)
+	ret0, _ := ret[0].([]*model.Task)
+	ret1, _ := ret[1].(*model.PagingResult)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// SearchByParamWithTx indicates an expected call of SearchByParamWithTx.
+func (mr *MockTaskRepositoryMockRecorder) SearchByParamWithTx(tx, param interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchByParamWithTx", reflect.TypeOf((*MockTaskRepository)(nil).SearchByParamWithTx), tx, param)
+}
+
 // SearchWithTx mocks base method.
 func (m *MockTaskRepository) SearchWithTx(tx *firestore.Transaction, param *model.TaskSearchParam, q *firestore.Query) ([]*model.Task, error) {
 	m.ctrl.T.Helper()

@@ -422,6 +422,20 @@ func (mr *MockSubTaskRepositoryMockRecorder) InsertWithTx(ctx, tx, subject inter
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertWithTx", reflect.TypeOf((*MockSubTaskRepository)(nil).InsertWithTx), ctx, tx, subject)
 }
 
+// NewRepositoryByParent mocks base method.
+func (m *MockSubTaskRepository) NewRepositoryByParent(doc *firestore.DocumentRef) model.SubTaskRepository {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "NewRepositoryByParent", doc)
+	ret0, _ := ret[0].(model.SubTaskRepository)
+	return ret0
+}
+
+// NewRepositoryByParent indicates an expected call of NewRepositoryByParent.
+func (mr *MockSubTaskRepositoryMockRecorder) NewRepositoryByParent(doc interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewRepositoryByParent", reflect.TypeOf((*MockSubTaskRepository)(nil).NewRepositoryByParent), doc)
+}
+
 // RunInTransaction mocks base method.
 func (m *MockSubTaskRepository) RunInTransaction() func(context.Context, func(context.Context, *firestore.Transaction) error, ...firestore.TransactionOption) error {
 	m.ctrl.T.Helper()
@@ -449,6 +463,38 @@ func (m *MockSubTaskRepository) Search(ctx context.Context, param *model.SubTask
 func (mr *MockSubTaskRepositoryMockRecorder) Search(ctx, param, q interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Search", reflect.TypeOf((*MockSubTaskRepository)(nil).Search), ctx, param, q)
+}
+
+// SearchByParam mocks base method.
+func (m *MockSubTaskRepository) SearchByParam(ctx context.Context, param *model.SubTaskSearchParam) ([]*model.SubTask, *model.PagingResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SearchByParam", ctx, param)
+	ret0, _ := ret[0].([]*model.SubTask)
+	ret1, _ := ret[1].(*model.PagingResult)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// SearchByParam indicates an expected call of SearchByParam.
+func (mr *MockSubTaskRepositoryMockRecorder) SearchByParam(ctx, param interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchByParam", reflect.TypeOf((*MockSubTaskRepository)(nil).SearchByParam), ctx, param)
+}
+
+// SearchByParamWithTx mocks base method.
+func (m *MockSubTaskRepository) SearchByParamWithTx(tx *firestore.Transaction, param *model.SubTaskSearchParam) ([]*model.SubTask, *model.PagingResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SearchByParamWithTx", tx, param)
+	ret0, _ := ret[0].([]*model.SubTask)
+	ret1, _ := ret[1].(*model.PagingResult)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// SearchByParamWithTx indicates an expected call of SearchByParamWithTx.
+func (mr *MockSubTaskRepositoryMockRecorder) SearchByParamWithTx(tx, param interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchByParamWithTx", reflect.TypeOf((*MockSubTaskRepository)(nil).SearchByParamWithTx), tx, param)
 }
 
 // SearchWithTx mocks base method.
