@@ -1546,7 +1546,7 @@ if q == nil {
 }
 {{- if ne ( len .UniqueInfos ) 0 }}
 {{- $repositoryStructName := .RepositoryStructName }}
-{{- range $ui := .UniqueInfos }}
+{{- 	range $ui := .UniqueInfos }}
 
 // GetBy{{ $ui.Field }} - get by {{ $ui.Field }}
 func (repo *{{ $repositoryStructName }}) GetBy{{ $ui.Field }}(ctx context.Context, {{ ToLower $ui.FsTag }} string) (*{{ $structNameRef }}, error) {
@@ -1557,7 +1557,7 @@ func (repo *{{ $repositoryStructName }}) GetBy{{ $ui.Field }}(ctx context.Contex
 func (repo *{{ $repositoryStructName }}) GetBy{{ $ui.Field }}WithTx(tx *firestore.Transaction, {{ ToLower $ui.FsTag }} string) (*{{ $structNameRef }}, error) {
 	return repo.getByXXX(tx, "{{ $ui.FsTag }}", {{ ToLower $ui.FsTag }})
 }
-{{- end }}
+{{- 	end }}
 
 func (repo *{{ .RepositoryStructName }}) getByXXX(v interface{}, field, value string) (*{{ $structNameRef }}, error) {
 	query := repo.GetCollection().Query.Where(field, OpTypeEqual, value).Limit(1)
