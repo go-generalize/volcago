@@ -16,8 +16,9 @@ type Meta struct {
 
 // Lock ID自動生成あり
 type Lock struct {
-	ID   string             `firestore:"-" firestore_key:"auto"`
-	Text string             `firestore:"text"`
-	Flag map[string]float64 `firestore:"flag"`
+	ID    string             `firestore:"-"     firestore_key:"auto"`
+	Text  string             `firestore:"text"`
+	Text2 string             `firestore:"text2" unique:""`
+	Flag  map[string]float64 `firestore:"flag"`
 	Meta
 }
