@@ -1407,4 +1407,31 @@ func TestFirestoreOfLockRepo(t *testing.T) {
 			tr.Fatalf("unexpected Version: %d (expected: %d)", ret.Version, 2)
 		}
 	})
+
+	t.Run("GetByXXX test", func(tr *testing.T) {
+		l := &model.Lock{
+			Text2: text,
+		}
+
+		id, err := lockRepo.Insert(ctx, l)
+		if err != nil {
+			tr.Fatalf("failed to put item: %+v", err)
+		}
+
+		l, err = lockRepo.GetByText2(ctx, text)
+		if err != nil {
+			tr.Fatalf("%+v", err)
+		}
+		if err = lockRepo.DeleteByID(ctx, id, model.DeleteOption{Mode: model.DeleteModeSoft}); err != nil {
+			tr.Fatalf("%+v", err)
+		}
+		l, err = lockRepo.GetByText2(ctx, text)
+		if !xerrors.Is(err, model.ErrNotFound) {
+			tr.Fatalf("%+v", err)
+		}
+		l, err = lockRepo.GetByText2(ctx, text, model.GetOption{IncludeSoftDeleted: true})
+		if err != nil {
+			tr.Fatalf("%+v", err)
+		}
+	})
 }
