@@ -12,7 +12,7 @@ require (
 	github.com/go-utils/plural v0.0.1
 	github.com/go-utils/xim v0.1.2
 	github.com/golang/mock v1.6.0
-	github.com/google/go-cmp v0.5.8
+	github.com/google/go-cmp v0.5.9
 	github.com/iancoleman/strcase v0.2.0
 	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f
 	google.golang.org/api v0.94.0
