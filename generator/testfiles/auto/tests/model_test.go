@@ -1434,4 +1434,27 @@ func TestFirestoreOfLockRepo(t *testing.T) {
 			tr.Fatalf("%+v", err)
 		}
 	})
+
+	t.Run("UniqueConstraints", func(tr *testing.T) {
+		l := &model.Lock{
+			Text2: text + "2",
+		}
+
+		if _, err := lockRepo.Insert(ctx, l); err != nil {
+			tr.Fatalf("unexpected error: %+v", err)
+		}
+
+		// Check if the documents in the Unique collection can be deleted.
+		if err := lockRepo.DeleteByID(ctx, l.ID, model.DeleteOption{Mode: model.DeleteModeSoft}); err != nil {
+			tr.Fatalf("unexpected err != nil: %+v", err)
+		}
+
+		l = &model.Lock{
+			Text2: text + "2",
+		}
+
+		if _, err := lockRepo.Insert(ctx, l); err != nil {
+			tr.Fatalf("unexpected error: %+v", err)
+		}
+	})
 }
