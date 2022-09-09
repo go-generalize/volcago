@@ -314,6 +314,15 @@ func TestFirestore(t *testing.T) {
 			} else if !xerrors.Is(err, model.ErrUniqueConstraint) {
 				ttrr.Fatalf("expected err == ErrUniqueConstraint")
 			}
+
+			// Check if the documents in the Unique collection can be deleted.
+			if err = taskRepo.DeleteByIdentity(ctx, tk.Identity, model.DeleteOption{Mode: model.DeleteModeSoft}); err != nil {
+				ttrr.Fatalf("unexpected err != nil: %+v", err)
+			}
+
+			if _, err := taskRepo.Insert(ctx, tk); err != nil {
+				ttrr.Fatalf("unexpected error: %+v", err)
+			}
 		})
 
 		tr.Run("GetByXXX", func(ttr *testing.T) {
