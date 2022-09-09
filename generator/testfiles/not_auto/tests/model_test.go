@@ -130,7 +130,7 @@ func TestFirestore(t *testing.T) {
 			}
 			tks2 = append(tks2, tk)
 		}
-		if err := taskRepo.UpdateMulti(ctx, tks2); err != nil {
+		if err = taskRepo.UpdateMulti(ctx, tks2); err != nil {
 			tr.Fatalf("%+v", err)
 		}
 
@@ -297,7 +297,7 @@ func TestFirestore(t *testing.T) {
 		})
 
 		tr.Run("UniqueConstraints", func(ttrr *testing.T) {
-			tk := &model.Task{
+			tk = &model.Task{
 				Identity:   "Single",
 				Desc:       fmt.Sprintf("%s%d", desc, 1001),
 				Created:    now,
@@ -307,9 +307,9 @@ func TestFirestore(t *testing.T) {
 				Count64:    11,
 				Proportion: 11.12345,
 				NameList:   []string{"a", "b", "c"},
-				Flag:       model.Flag(true),
+				Flag:       true,
 			}
-			if _, err := taskRepo.Insert(ctx, tk); err == nil {
+			if _, err = taskRepo.Insert(ctx, tk); err == nil {
 				ttrr.Fatalf("expected err != nil")
 			} else if !xerrors.Is(err, model.ErrUniqueConstraint) {
 				ttrr.Fatalf("expected err == ErrUniqueConstraint")
@@ -320,7 +320,7 @@ func TestFirestore(t *testing.T) {
 				ttrr.Fatalf("unexpected err != nil: %+v", err)
 			}
 
-			if _, err := taskRepo.Insert(ctx, tk); err != nil {
+			if _, err = taskRepo.Insert(ctx, tk); err != nil {
 				ttrr.Fatalf("unexpected error: %+v", err)
 			}
 		})
@@ -1029,7 +1029,7 @@ func TestFirestoreValueCheck(t *testing.T) {
 	defer cancel()
 
 	now := time.Unix(time.Now().Unix(), 0)
-	desc := "hello"
+	desc = "hello"
 
 	id, err := taskRepo.Insert(ctx, &model.Task{
 		Identity: "TestID",
@@ -1079,11 +1079,11 @@ func TestFirestoreValueCheck(t *testing.T) {
 		Done:     true,
 	}, ret)
 
-	if err := taskRepo.DeleteByIdentity(ctx, id); err != nil {
+	if err = taskRepo.DeleteByIdentity(ctx, id); err != nil {
 		t.Fatalf("delete failed: %+v", err)
 	}
 
-	if _, err := taskRepo.Get(ctx, id); err == nil {
+	if _, err = taskRepo.Get(ctx, id); err == nil {
 		t.Fatalf("should get an error")
 	}
 }
