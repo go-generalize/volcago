@@ -74,9 +74,10 @@ type {{ .RepositoryInterfaceName }} interface {
 {{- $structNameRef := .StructNameRef }}
 {{- if ne ( len .UniqueInfos ) 0 }}
 	// get by unique field
+{{- $metaFiledsEnabled := .MetaFieldsEnabled }}
 {{-     range $ui := .UniqueInfos }}
-	GetBy{{ $ui.Field }}(ctx context.Context, {{ ToLower $ui.FsTag }} string) (*{{ $structNameRef }}, error)
-	GetBy{{ $ui.Field }}WithTx(tx *firestore.Transaction, {{ ToLower $ui.FsTag }} string) (*{{ $structNameRef }}, error)
+	GetBy{{ $ui.Field }}(ctx context.Context, {{ ToLower $ui.FsTag }} string{{ if $metaFiledsEnabled }}, opts ...GetOption{{ end }}) (*{{ $structNameRef }}, error)
+	GetBy{{ $ui.Field }}WithTx(tx *firestore.Transaction, {{ ToLower $ui.FsTag }} string{{ if $metaFiledsEnabled }}, opts ...GetOption{{ end }}) (*{{ $structNameRef }}, error)
 {{-     end }}
 {{- end }}
 }
@@ -1548,21 +1549,28 @@ if q == nil {
 }
 {{- if ne ( len .UniqueInfos ) 0 }}
 {{- $repositoryStructName := .RepositoryStructName }}
-{{- range $ui := .UniqueInfos }}
+{{- $metaFiledsEnabled := .MetaFieldsEnabled }}
+{{- 	range $ui := .UniqueInfos }}
 
 // GetBy{{ $ui.Field }} - get by {{ $ui.Field }}
-func (repo *{{ $repositoryStructName }}) GetBy{{ $ui.Field }}(ctx context.Context, {{ ToLower $ui.FsTag }} string) (*{{ $structNameRef }}, error) {
-	return repo.getByXXX(ctx, "{{ $ui.FsTag }}", {{ ToLower $ui.FsTag }})
+func (repo *{{ $repositoryStructName }}) GetBy{{ $ui.Field }}(ctx context.Context, {{ ToLower $ui.FsTag }} string{{ if $metaFiledsEnabled }}, opts ...GetOption{{ end }}) (*{{ $structNameRef }}, error) {
+	return repo.getByXXX(ctx, "{{ $ui.FsTag }}", {{ ToLower $ui.FsTag }}{{ if $metaFiledsEnabled }}, opts...{{ end }})
 }
 
 // GetBy{{ $ui.Field }}WithTx - get by {{ $ui.Field }} in transaction
-func (repo *{{ $repositoryStructName }}) GetBy{{ $ui.Field }}WithTx(tx *firestore.Transaction, {{ ToLower $ui.FsTag }} string) (*{{ $structNameRef }}, error) {
-	return repo.getByXXX(tx, "{{ $ui.FsTag }}", {{ ToLower $ui.FsTag }})
+func (repo *{{ $repositoryStructName }}) GetBy{{ $ui.Field }}WithTx(tx *firestore.Transaction, {{ ToLower $ui.FsTag }} string{{ if $metaFiledsEnabled }}, opts ...GetOption{{ end }}) (*{{ $structNameRef }}, error) {
+	return repo.getByXXX(tx, "{{ $ui.FsTag }}", {{ ToLower $ui.FsTag }}{{ if $metaFiledsEnabled }}, opts...{{ end }})
 }
-{{- end }}
+{{- 	end }}
 
-func (repo *{{ .RepositoryStructName }}) getByXXX(v interface{}, field, value string) (*{{ $structNameRef }}, error) {
-	query := repo.GetCollection().Query.Where(field, OpTypeEqual, value).Limit(1)
+func (repo *{{ .RepositoryStructName }}) getByXXX(v interface{}, field, value string{{ if .MetaFieldsEnabled }}, opts ...GetOption{{ end }}) (*{{ $structNameRef }}, error) {
+	query := repo.GetCollection().Query.Where(field, OpTypeEqual, value){{ if not .MetaFieldsEnabled }}.Limit(1){{ end }}
+{{- if .MetaFieldsEnabled }}
+	if len(opts) == 0 || !opts[0].IncludeSoftDeleted {
+		query = query.Where("{{ (LookUpFieldByName .FieldInfos "DeletedAt").FsTag }}", OpTypeEqual, nil)
+	}
+	query = query.Limit(1)
+{{- end }}
 	results, err := repo.runQuery(v, query)
 	if err != nil {
 		return nil, xerrors.Errorf("failed to run query: %w", err)

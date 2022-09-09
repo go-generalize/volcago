@@ -55,6 +55,9 @@ type LockRepository interface {
 	GetCollectionName() string
 	GetDocRef(id string) *firestore.DocumentRef
 	RunInTransaction() func(ctx context.Context, f func(context.Context, *firestore.Transaction) error, opts ...firestore.TransactionOption) (err error)
+	// get by unique field
+	GetByText2(ctx context.Context, text2 string, opts ...GetOption) (*Lock, error)
+	GetByText2WithTx(tx *firestore.Transaction, text2 string, opts ...GetOption) (*Lock, error)
 }
 
 // LockRepositoryMiddleware - middleware of LockRepository
@@ -209,6 +212,7 @@ func (repo *lockRepository) RunInTransaction() func(ctx context.Context, f func(
 // LockSearchParam - params for search
 type LockSearchParam struct {
 	Text      *QueryChainer
+	Text2     *QueryChainer
 	Flag      *QueryChainer
 	CreatedAt *QueryChainer
 	CreatedBy *QueryChainer
@@ -1121,6 +1125,15 @@ func (repo *lockRepository) searchByParam(v interface{}, param *LockSearchParam)
 			query = param.Text.BuildCursorQuery(query)
 		}
 	}
+	if param.Text2 != nil {
+		for _, chain := range param.Text2.QueryGroup {
+			query = query.Where("text2", chain.Operator, chain.Value)
+		}
+		if direction := param.Text2.OrderByDirection; direction > 0 {
+			query = query.OrderBy("text2", direction)
+			query = param.Text2.BuildCursorQuery(query)
+		}
+	}
 	if param.Flag != nil {
 		for _, chain := range param.Flag.QueryGroup {
 			items, ok := chain.Value.(map[string]float64)
@@ -1267,4 +1280,29 @@ func (repo *lockRepository) search(v interface{}, param *LockSearchParam, q *fir
 	}
 
 	return repo.runQuery(v, query)
+}
+
+// GetByText2 - get by Text2
+func (repo *lockRepository) GetByText2(ctx context.Context, text2 string, opts ...GetOption) (*Lock, error) {
+	return repo.getByXXX(ctx, "text2", text2, opts...)
+}
+
+// GetByText2WithTx - get by Text2 in transaction
+func (repo *lockRepository) GetByText2WithTx(tx *firestore.Transaction, text2 string, opts ...GetOption) (*Lock, error) {
+	return repo.getByXXX(tx, "text2", text2, opts...)
+}
+
+func (repo *lockRepository) getByXXX(v interface{}, field, value string, opts ...GetOption) (*Lock, error) {
+	query := repo.GetCollection().Query.Where(field, OpTypeEqual, value)
+	if len(opts) == 0 || !opts[0].IncludeSoftDeleted {
+		query = query.Where("deletedAt", OpTypeEqual, nil)
+	}
+	query = query.Limit(1)
+	results, err := repo.runQuery(v, query)
+	if err != nil {
+		return nil, xerrors.Errorf("failed to run query: %w", err)
+	} else if len(results) == 0 {
+		return nil, ErrNotFound
+	}
+	return results[0], nil
 }

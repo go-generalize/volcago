@@ -58,10 +58,10 @@ type LockRepository interface {
 	GetDocRef(id string) *firestore.DocumentRef
 	RunInTransaction() func(ctx context.Context, f func(context.Context, *firestore.Transaction) error, opts ...firestore.TransactionOption) (err error)
 	// get by unique field
-	GetByText(ctx context.Context, text string) (*model.Lock, error)
-	GetByTextWithTx(tx *firestore.Transaction, text string) (*model.Lock, error)
-	GetByEmail(ctx context.Context, email string) (*model.Lock, error)
-	GetByEmailWithTx(tx *firestore.Transaction, email string) (*model.Lock, error)
+	GetByText(ctx context.Context, text string, opts ...GetOption) (*model.Lock, error)
+	GetByTextWithTx(tx *firestore.Transaction, text string, opts ...GetOption) (*model.Lock, error)
+	GetByEmail(ctx context.Context, email string, opts ...GetOption) (*model.Lock, error)
+	GetByEmailWithTx(tx *firestore.Transaction, email string, opts ...GetOption) (*model.Lock, error)
 }
 
 // LockRepositoryMiddleware - middleware of LockRepository
@@ -1346,27 +1346,31 @@ func (repo *lockRepository) search(v interface{}, param *LockSearchParam, q *fir
 }
 
 // GetByText - get by Text
-func (repo *lockRepository) GetByText(ctx context.Context, text string) (*model.Lock, error) {
-	return repo.getByXXX(ctx, "text", text)
+func (repo *lockRepository) GetByText(ctx context.Context, text string, opts ...GetOption) (*model.Lock, error) {
+	return repo.getByXXX(ctx, "text", text, opts...)
 }
 
 // GetByTextWithTx - get by Text in transaction
-func (repo *lockRepository) GetByTextWithTx(tx *firestore.Transaction, text string) (*model.Lock, error) {
-	return repo.getByXXX(tx, "text", text)
+func (repo *lockRepository) GetByTextWithTx(tx *firestore.Transaction, text string, opts ...GetOption) (*model.Lock, error) {
+	return repo.getByXXX(tx, "text", text, opts...)
 }
 
 // GetByEmail - get by Email
-func (repo *lockRepository) GetByEmail(ctx context.Context, email string) (*model.Lock, error) {
-	return repo.getByXXX(ctx, "Email", email)
+func (repo *lockRepository) GetByEmail(ctx context.Context, email string, opts ...GetOption) (*model.Lock, error) {
+	return repo.getByXXX(ctx, "Email", email, opts...)
 }
 
 // GetByEmailWithTx - get by Email in transaction
-func (repo *lockRepository) GetByEmailWithTx(tx *firestore.Transaction, email string) (*model.Lock, error) {
-	return repo.getByXXX(tx, "Email", email)
+func (repo *lockRepository) GetByEmailWithTx(tx *firestore.Transaction, email string, opts ...GetOption) (*model.Lock, error) {
+	return repo.getByXXX(tx, "Email", email, opts...)
 }
 
-func (repo *lockRepository) getByXXX(v interface{}, field, value string) (*model.Lock, error) {
-	query := repo.GetCollection().Query.Where(field, OpTypeEqual, value).Limit(1)
+func (repo *lockRepository) getByXXX(v interface{}, field, value string, opts ...GetOption) (*model.Lock, error) {
+	query := repo.GetCollection().Query.Where(field, OpTypeEqual, value)
+	if len(opts) == 0 || !opts[0].IncludeSoftDeleted {
+		query = query.Where("deletedAt", OpTypeEqual, nil)
+	}
+	query = query.Limit(1)
 	results, err := repo.runQuery(v, query)
 	if err != nil {
 		return nil, xerrors.Errorf("failed to run query: %w", err)
