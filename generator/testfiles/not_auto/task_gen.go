@@ -305,6 +305,17 @@ func (repo *taskRepository) DeleteByIdentity(ctx context.Context, identity strin
 	if err != nil {
 		return xerrors.Errorf("error in Get method: %w", err)
 	}
+	rb, err := repo.beforeDelete(ctx, subject, opts...)
+	if err != nil {
+		return xerrors.Errorf("before delete error: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			if er := rb(ctx); er != nil {
+				err = xerrors.Errorf("unique delete error %+v, original error: %w", er, err)
+			}
+		}
+	}()
 
 	return repo.Delete(ctx, subject, opts...)
 }
