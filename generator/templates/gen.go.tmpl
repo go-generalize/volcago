@@ -440,16 +440,6 @@ func (repo *{{ .RepositoryStructName }}) {{ DeleteFunc }} {
 		return ErrNotAvailableCG
 	}
 {{- end }}
-{{- if .MetaFieldsEnabled }}
-	if len(opts) > 0 && opts[0].Mode == DeleteModeSoft {
-		t := time.Now()
-		subject.DeletedAt = &t
-		if err := repo.update(ctx, subject); err != nil {
-			return xerrors.Errorf("error in update method: %w", err)
-		}
-		return nil
-	}
-{{ end }}
 	rb, err := repo.beforeDelete(ctx, subject, opts...)
 	if err != nil {
 		return xerrors.Errorf("before delete error: %w", err)
@@ -461,6 +451,17 @@ func (repo *{{ .RepositoryStructName }}) {{ DeleteFunc }} {
 			}
 		}
 	}()
+{{- if .MetaFieldsEnabled }}
+
+	if len(opts) > 0 && opts[0].Mode == DeleteModeSoft {
+		t := time.Now()
+		subject.DeletedAt = &t
+		if err := repo.update(ctx, subject); err != nil {
+			return xerrors.Errorf("error in update method: %w", err)
+		}
+		return nil
+	}
+{{- end }}
 
 	return repo.deleteBy{{ .KeyFieldName }}(ctx, subject.{{ .KeyFieldName }})
 }
@@ -833,16 +834,6 @@ func (repo *{{ .RepositoryStructName }}) {{ DeleteWithTxFunc }} {
 		return ErrNotAvailableCG
 	}
 {{- end }}
-{{- if .MetaFieldsEnabled }}
-	if len(opts) > 0 && opts[0].Mode == DeleteModeSoft {
-		t := time.Now()
-		subject.DeletedAt = &t
-		if err := repo.update(tx, subject); err != nil {
-			return xerrors.Errorf("error in update method: %w", err)
-		}
-		return nil
-	}
-{{ end }}
 	rb, err := repo.beforeDelete(context.WithValue(ctx, transactionInProgressKey{}, 1), subject, opts...)
 	if err != nil {
 		return xerrors.Errorf("before delete error: %w", err)
@@ -854,6 +845,17 @@ func (repo *{{ .RepositoryStructName }}) {{ DeleteWithTxFunc }} {
 			}
 		}
 	}()
+{{- if .MetaFieldsEnabled }}
+
+	if len(opts) > 0 && opts[0].Mode == DeleteModeSoft {
+		t := time.Now()
+		subject.DeletedAt = &t
+		if err := repo.update(tx, subject); err != nil {
+			return xerrors.Errorf("error in update method: %w", err)
+		}
+		return nil
+	}
+{{- end }}
 
 	return repo.deleteBy{{ .KeyFieldName }}(tx, subject.{{ .KeyFieldName }})
 }
