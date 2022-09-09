@@ -328,15 +328,6 @@ func (repo *lockRepository) StrictUpdate(ctx context.Context, id string, param *
 
 // Delete - delete of `Lock`
 func (repo *lockRepository) Delete(ctx context.Context, subject *model.Lock, opts ...DeleteOption) (err error) {
-	if len(opts) > 0 && opts[0].Mode == DeleteModeSoft {
-		t := time.Now()
-		subject.DeletedAt = &t
-		if err := repo.update(ctx, subject); err != nil {
-			return xerrors.Errorf("error in update method: %w", err)
-		}
-		return nil
-	}
-
 	rb, err := repo.beforeDelete(ctx, subject, opts...)
 	if err != nil {
 		return xerrors.Errorf("before delete error: %w", err)
@@ -348,6 +339,15 @@ func (repo *lockRepository) Delete(ctx context.Context, subject *model.Lock, opt
 			}
 		}
 	}()
+
+	if len(opts) > 0 && opts[0].Mode == DeleteModeSoft {
+		t := time.Now()
+		subject.DeletedAt = &t
+		if err := repo.update(ctx, subject); err != nil {
+			return xerrors.Errorf("error in update method: %w", err)
+		}
+		return nil
+	}
 
 	return repo.deleteByID(ctx, subject.ID)
 }
@@ -643,15 +643,6 @@ func (repo *lockRepository) StrictUpdateWithTx(tx *firestore.Transaction, id str
 
 // DeleteWithTx - delete of `Lock` in transaction
 func (repo *lockRepository) DeleteWithTx(ctx context.Context, tx *firestore.Transaction, subject *model.Lock, opts ...DeleteOption) (err error) {
-	if len(opts) > 0 && opts[0].Mode == DeleteModeSoft {
-		t := time.Now()
-		subject.DeletedAt = &t
-		if err := repo.update(tx, subject); err != nil {
-			return xerrors.Errorf("error in update method: %w", err)
-		}
-		return nil
-	}
-
 	rb, err := repo.beforeDelete(context.WithValue(ctx, transactionInProgressKey{}, 1), subject, opts...)
 	if err != nil {
 		return xerrors.Errorf("before delete error: %w", err)
@@ -663,6 +654,15 @@ func (repo *lockRepository) DeleteWithTx(ctx context.Context, tx *firestore.Tran
 			}
 		}
 	}()
+
+	if len(opts) > 0 && opts[0].Mode == DeleteModeSoft {
+		t := time.Now()
+		subject.DeletedAt = &t
+		if err := repo.update(tx, subject); err != nil {
+			return xerrors.Errorf("error in update method: %w", err)
+		}
+		return nil
+	}
 
 	return repo.deleteByID(tx, subject.ID)
 }
