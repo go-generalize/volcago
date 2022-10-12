@@ -197,9 +197,10 @@ func (g *structGenerator) parseIndexesField(tags *structtag.Tags) error {
 	tag, err := validateFirestoreTag(tags)
 	if err != nil {
 		return xerrors.Errorf("firestore tag(%s) is invalid: %w", tag, err)
+	} else if tag != "" {
+		fieldInfo.FsTag = tag
 	}
 
-	fieldInfo.FsTag = tag
 	g.param.FieldInfoForIndexes = fieldInfo
 
 	return nil
@@ -228,12 +229,12 @@ func (g *structGenerator) parseTypeImpl(rawKey, firestoreKey string, obj *types.
 		pos := e.Position.String()
 
 		if typeName == "" {
-			var obj *types.Object
-			switch e := e.Type.(type) {
+			var o *types.Object
+			switch entry := e.Type.(type) {
 			case *types.Object:
-				obj = e
+				o = entry
 			case *types.Nullable:
-				obj = e.Inner.(*types.Object)
+				o = entry.Inner.(*types.Object)
 			default:
 				panic("unreachable")
 			}
@@ -250,7 +251,7 @@ func (g *structGenerator) parseTypeImpl(rawKey, firestoreKey string, obj *types.
 				fieldFirestoreKey = strings.Join(sliceutil.RemoveEmpty([]string{fieldFirestoreKey, t.Name}), ".")
 			}
 
-			if err := g.parseTypeImpl(fieldRawKey, fieldFirestoreKey, obj); err != nil {
+			if err = g.parseTypeImpl(fieldRawKey, fieldFirestoreKey, o); err != nil {
 				return xerrors.Errorf("failed to parse %s: %w", e.RawName, err)
 			}
 			continue
@@ -258,20 +259,6 @@ func (g *structGenerator) parseTypeImpl(rawKey, firestoreKey string, obj *types.
 
 		if strings.HasPrefix(typeName, "[]") {
 			g.param.SliceExist = true
-		}
-
-		if e.RawTag == "" {
-			fieldInfo := &FieldInfo{
-				FsTag:     strings.Join(sliceutil.RemoveEmpty([]string{firestoreKey, e.RawName}), "."),
-				Field:     strings.Join(sliceutil.RemoveEmpty([]string{rawKey, e.RawName}), "."),
-				FieldType: typeName,
-				Indexes:   make([]*IndexesInfo, 0),
-			}
-			if _, err := g.appendIndexer(nil, firestoreKey, fieldInfo); err != nil {
-				return xerrors.Errorf("%s: %w", pos, err)
-			}
-			g.param.FieldInfos = append(g.param.FieldInfos, fieldInfo)
-			continue
 		}
 
 		tags, err := structtag.Parse(e.RawTag)
@@ -288,10 +275,24 @@ func (g *structGenerator) parseTypeImpl(rawKey, firestoreKey string, obj *types.
 		}
 
 		if rawKey == "" && e.RawName == "Indexes" && typeName == typeBoolMap {
-			if err := g.parseIndexesField(tags); err != nil {
+			if err = g.parseIndexesField(tags); err != nil {
 				return xerrors.Errorf("failed to parse indexes field: %w", err)
 			}
 
+			continue
+		}
+
+		if e.RawTag == "" {
+			fieldInfo := &FieldInfo{
+				FsTag:     strings.Join(sliceutil.RemoveEmpty([]string{firestoreKey, e.RawName}), "."),
+				Field:     strings.Join(sliceutil.RemoveEmpty([]string{rawKey, e.RawName}), "."),
+				FieldType: typeName,
+				Indexes:   make([]*IndexesInfo, 0),
+			}
+			if _, err = g.appendIndexer(nil, firestoreKey, fieldInfo); err != nil {
+				return xerrors.Errorf("%s: %w", pos, err)
+			}
+			g.param.FieldInfos = append(g.param.FieldInfos, fieldInfo)
 			continue
 		}
 
