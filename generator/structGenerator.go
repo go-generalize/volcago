@@ -197,9 +197,10 @@ func (g *structGenerator) parseIndexesField(tags *structtag.Tags) error {
 	tag, err := validateFirestoreTag(tags)
 	if err != nil {
 		return xerrors.Errorf("firestore tag(%s) is invalid: %w", tag, err)
+	} else if tag != "" {
+		fieldInfo.FsTag = tag
 	}
 
-	fieldInfo.FsTag = tag
 	g.param.FieldInfoForIndexes = fieldInfo
 
 	return nil
