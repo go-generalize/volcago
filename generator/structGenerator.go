@@ -260,20 +260,6 @@ func (g *structGenerator) parseTypeImpl(rawKey, firestoreKey string, obj *types.
 			g.param.SliceExist = true
 		}
 
-		if e.RawTag == "" {
-			fieldInfo := &FieldInfo{
-				FsTag:     strings.Join(sliceutil.RemoveEmpty([]string{firestoreKey, e.RawName}), "."),
-				Field:     strings.Join(sliceutil.RemoveEmpty([]string{rawKey, e.RawName}), "."),
-				FieldType: typeName,
-				Indexes:   make([]*IndexesInfo, 0),
-			}
-			if _, err := g.appendIndexer(nil, firestoreKey, fieldInfo); err != nil {
-				return xerrors.Errorf("%s: %w", pos, err)
-			}
-			g.param.FieldInfos = append(g.param.FieldInfos, fieldInfo)
-			continue
-		}
-
 		tags, err := structtag.Parse(e.RawTag)
 		if err != nil {
 			log.Printf(
@@ -292,6 +278,20 @@ func (g *structGenerator) parseTypeImpl(rawKey, firestoreKey string, obj *types.
 				return xerrors.Errorf("failed to parse indexes field: %w", err)
 			}
 
+			continue
+		}
+
+		if e.RawTag == "" {
+			fieldInfo := &FieldInfo{
+				FsTag:     strings.Join(sliceutil.RemoveEmpty([]string{firestoreKey, e.RawName}), "."),
+				Field:     strings.Join(sliceutil.RemoveEmpty([]string{rawKey, e.RawName}), "."),
+				FieldType: typeName,
+				Indexes:   make([]*IndexesInfo, 0),
+			}
+			if _, err := g.appendIndexer(nil, firestoreKey, fieldInfo); err != nil {
+				return xerrors.Errorf("%s: %w", pos, err)
+			}
+			g.param.FieldInfos = append(g.param.FieldInfos, fieldInfo)
 			continue
 		}
 
