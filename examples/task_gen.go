@@ -1318,7 +1318,7 @@ func (repo *taskRepository) searchByParam(v interface{}, param *TaskSearchParam)
 		return nil, nil, xerrors.Errorf("failed to filter build: %w", err)
 	}
 	for key := range build {
-		query = query.WherePath(firestore.FieldPath{"indexes", key}, OpTypeEqual, true)
+		query = query.WherePath(firestore.FieldPath{"Indexes", key}, OpTypeEqual, true)
 	}
 
 	limit := param.CursorLimit + 1
