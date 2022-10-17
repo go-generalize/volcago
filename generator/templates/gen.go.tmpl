@@ -293,7 +293,7 @@ func (repo *{{ .RepositoryStructName }}) saveIndexes(subject *{{ .StructNameRef 
 {{- range $fi := .FieldInfos }}
 {{- 	range $index := $fi.Indexes }}
 {{- 		if eq $index.Use true }}
-		idx.{{ if HasSuffix $index.Method "fix" }}{{ PluralForm $index.Method }}{{ else }}{{ $index.Method }}{{ end }}({{ $index.ConstName }}, subject.{{ $fi.Field }})
+		idx.{{ if HasSuffix $index.Method "fix" }}{{ PluralForm $index.Method }}{{ else }}{{ $index.Method }}{{ end }}({{ $index.ConstName }}, {{ if eq $index.Method "AddSomething" }}subject.{{ $fi.Field }}{{ else }}string(subject.{{ $fi.Field }}){{ end }})
 {{- 		end }}
 {{- 	end }}
 {{- end }}
