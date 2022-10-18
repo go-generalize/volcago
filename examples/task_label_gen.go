@@ -39,6 +39,10 @@ const (
 	TaskIndexLabelProportionSuffix   = "p2"  // suffix-match of Proportion
 	TaskIndexLabelProportionLike     = "p3"  // like-match of Proportion
 	TaskIndexLabelProportionEqual    = "p4"  // perfect-match of Proportion
+	TaskIndexLabelTaskKindEqual      = "t4"  // perfect-match of TaskKind
+	TaskIndexLabelTaskKindLike       = "t3"  // like-match of TaskKind
+	TaskIndexLabelTaskKindPrefix     = "t1"  // prefix-match of TaskKind
+	TaskIndexLabelTaskKindSuffix     = "t2"  // suffix-match of TaskKind
 	TaskIndexLabelFlagPrefix         = "f1"  // prefix-match of Flag
 	TaskIndexLabelFlagSuffix         = "f2"  // suffix-match of Flag
 	TaskIndexLabelFlagLike           = "f3"  // like-match of Flag

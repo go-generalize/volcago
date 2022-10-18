@@ -179,11 +179,12 @@ func (repo *taskRepository) saveIndexes(subject *Task) error {
 		SaveNoFiltersIndex: true,
 	})
 	{
-		idx.Add(TaskIndexLabelDescEqual, subject.Desc)
-		idx.AddBiunigrams(TaskIndexLabelDescLike, subject.Desc)
-		idx.AddPrefixes(TaskIndexLabelDescPrefix, subject.Desc)
-		idx.AddSuffixes(TaskIndexLabelDescSuffix, subject.Desc)
+		idx.Add(TaskIndexLabelDescEqual, string(subject.Desc))
+		idx.AddBiunigrams(TaskIndexLabelDescLike, string(subject.Desc))
+		idx.AddPrefixes(TaskIndexLabelDescPrefix, string(subject.Desc))
+		idx.AddSuffixes(TaskIndexLabelDescSuffix, string(subject.Desc))
 		idx.AddSomething(TaskIndexLabelProportionEqual, subject.Proportion)
+		idx.Add(TaskIndexLabelTaskKindEqual, string(subject.TaskKind))
 	}
 	indexes, err := idx.Build()
 	if err != nil {
@@ -208,6 +209,7 @@ type TaskSearchParam struct {
 	Count64      *QueryChainer
 	NameList     *QueryChainer
 	Proportion   *QueryChainer
+	TaskKind     *QueryChainer
 	Flag         *QueryChainer
 	Inner        *QueryChainer
 
@@ -226,6 +228,7 @@ type TaskUpdateParam struct {
 	Count64      interface{}
 	NameList     interface{}
 	Proportion   interface{}
+	TaskKind     interface{}
 	Flag         interface{}
 	Inner        interface{}
 }
@@ -1275,6 +1278,30 @@ func (repo *taskRepository) searchByParam(v interface{}, param *TaskSearchParam)
 					continue
 				}
 				filters.Add(TaskIndexLabelProportionEqual, value)
+			}
+		}
+	}
+	if param.TaskKind != nil {
+		for _, chain := range param.TaskKind.QueryGroup {
+			query = query.Where("taskKind", chain.Operator, chain.Value)
+		}
+		if direction := param.TaskKind.OrderByDirection; direction > 0 {
+			query = query.OrderBy("taskKind", direction)
+			query = param.TaskKind.BuildCursorQuery(query)
+		}
+		value, ok := param.TaskKind.Filter.Value.(string)
+		// The value of the "indexer" tag = "e"
+		for _, filter := range param.TaskKind.Filter.FilterTypes {
+			switch filter {
+			// Treat `Add` or otherwise as `Equal`.
+			case FilterTypeAdd:
+				fallthrough
+			default:
+				if !ok {
+					filters.AddSomething(TaskIndexLabelTaskKindEqual, param.TaskKind.Filter.Value)
+					continue
+				}
+				filters.Add(TaskIndexLabelTaskKindEqual, value)
 			}
 		}
 	}

@@ -179,10 +179,10 @@ func (repo *taskRepository) saveIndexes(subject *Task) error {
 		SaveNoFiltersIndex: true,
 	})
 	{
-		idx.Add(TaskIndexLabelDescEqual, subject.Desc)
-		idx.AddBiunigrams(TaskIndexLabelDescLike, subject.Desc)
-		idx.AddPrefixes(TaskIndexLabelDescPrefix, subject.Desc)
-		idx.AddSuffixes(TaskIndexLabelDescSuffix, subject.Desc)
+		idx.Add(TaskIndexLabelDescEqual, string(subject.Desc))
+		idx.AddBiunigrams(TaskIndexLabelDescLike, string(subject.Desc))
+		idx.AddPrefixes(TaskIndexLabelDescPrefix, string(subject.Desc))
+		idx.AddSuffixes(TaskIndexLabelDescSuffix, string(subject.Desc))
 		idx.AddSomething(TaskIndexLabelProportionEqual, subject.Proportion)
 	}
 	indexes, err := idx.Build()
