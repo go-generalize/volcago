@@ -119,6 +119,9 @@ func updateBuilder(v, param interface{}) map[string]firestore.Update {
 			if isReservedType(fv) {
 				break
 			}
+			if pfv.Interface() == nil {
+				continue
+			}
 			for key, update := range updateBuilder(fv.Interface(), pfv.Interface()) {
 				update.FieldPath = append(firestore.FieldPath{path}, update.FieldPath...)
 
