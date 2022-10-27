@@ -1426,7 +1426,11 @@ func (repo *{{ .RepositoryStructName }}) searchByParam(v interface{}, param *{{ 
 		}
 {{- 		else if $fi.IsDocumentID }}
 		for _, chain := range param.{{ $fi.Field }}.QueryGroup {
-			query = query.Where(firestore.DocumentID, chain.Operator, chain.Value)
+			id, ok := chain.Value.(string)
+			if !ok {
+				continue
+			}
+			query = query.Where(firestore.DocumentID, chain.Operator, repo.GetDocRef(id))
 		}
 		if direction := param.{{ $fi.Field }}.OrderByDirection; direction > 0 {
 			query = query.OrderBy(firestore.DocumentID, direction)
