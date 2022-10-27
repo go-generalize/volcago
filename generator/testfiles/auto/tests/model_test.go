@@ -576,6 +576,21 @@ func TestFirestoreQuery(t *testing.T) {
 		}
 	})
 
+	t.Run("document id(1件)", func(tr *testing.T) {
+		param := &model.TaskSearchParam{
+			ID: model.NewQueryChainer().Equal(ids[0]),
+		}
+
+		tasks, err := taskRepo.Search(ctx, param, nil)
+		if err != nil {
+			tr.Fatalf("%+v", err)
+		}
+
+		if len(tasks) != 1 {
+			tr.Fatalf("unexpected length: %d (expected: %d)", len(tasks), 1)
+		}
+	})
+
 	t.Run("int(1件)", func(tr *testing.T) {
 		param := &model.TaskSearchParam{
 			Count: model.NewQueryChainer().Equal(1),
