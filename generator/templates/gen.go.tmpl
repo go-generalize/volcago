@@ -1406,7 +1406,6 @@ func (repo *{{ .RepositoryStructName }}) searchByParam(v interface{}, param *{{ 
 {{ end }}
 {{- $Meta := .MetaFieldsEnabled }}
 {{- $EnableIndexes := .EnableIndexes }}
-{{- $RepositoryStructName := .RepositoryStructName }}
 {{- range $fi := .FieldInfos }}
 {{- 	$IsSlice := HasSlice $fi.FieldType }}
 {{- 	$IsMap := HasMap $fi.FieldType }}
