@@ -590,6 +590,34 @@ func TestFirestoreQuery(t *testing.T) {
 			tr.Fatalf("unexpected length: %d (expected: %d)", len(tasks), 1)
 		}
 	})
+	t.Run("document id for IN(3件)", func(tr *testing.T) {
+		param := &model.TaskSearchParam{
+			ID: model.NewQueryChainer().In([]string{ids[0], ids[1], ids[2]}),
+		}
+
+		tasks, err := taskRepo.Search(ctx, param, nil)
+		if err != nil {
+			tr.Fatalf("%+v", err)
+		}
+
+		if len(tasks) != 3 {
+			tr.Fatalf("unexpected length: %d (expected: %d)", len(tasks), 3)
+		}
+	})
+	t.Run("document id for NOT IN(7件)", func(tr *testing.T) {
+		param := &model.TaskSearchParam{
+			ID: model.NewQueryChainer().NotIn([]string{ids[0], ids[1], ids[2]}),
+		}
+
+		tasks, err := taskRepo.Search(ctx, param, nil)
+		if err != nil {
+			tr.Fatalf("%+v", err)
+		}
+
+		if len(tasks) != 7 {
+			tr.Fatalf("unexpected length: %d (expected: %d)", len(tasks), 7)
+		}
+	})
 
 	t.Run("int(1件)", func(tr *testing.T) {
 		param := &model.TaskSearchParam{
