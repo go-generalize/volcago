@@ -785,6 +785,20 @@ func TestFirestoreQuery(t *testing.T) {
 				ttr.Fatalf("unexpected length: %d (expected: %d)", len(tasks), 5)
 			}
 		})
+		tr.Run("search by document id", func(ttr *testing.T) {
+			qb := model.NewQueryBuilder(taskRepo.GetCollection())
+			qb.Equal(firestore.DocumentID, taskRepo.GetDocRef(tks[0].ID))
+			qb.Desc(firestore.DocumentID)
+
+			tasks, err := taskRepo.Search(ctx, nil, qb.Query())
+			if err != nil {
+				ttr.Fatalf("%+v", err)
+			}
+
+			if len(tasks) != 1 {
+				ttr.Fatalf("unexpected length: %d (expected: %d)", len(tasks), 1)
+			}
+		})
 	})
 
 	t.Run("Indexes", func(tr *testing.T) {
