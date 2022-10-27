@@ -177,6 +177,7 @@ func (repo *taskRepository) RunInTransaction() func(ctx context.Context, f func(
 
 // TaskSearchParam - params for search
 type TaskSearchParam struct {
+	Identity     *QueryChainer
 	Desc         *QueryChainer
 	Desc2        *QueryChainer
 	Created      *QueryChainer
@@ -1025,6 +1026,28 @@ func (repo *taskRepository) searchByParam(v interface{}, param *TaskSearchParam)
 	query := func() firestore.Query {
 		return repo.GetCollection().Query
 	}()
+	if param.Identity != nil {
+		for _, chain := range param.Identity.QueryGroup {
+			var value interface{}
+			switch val := chain.Value.(type) {
+			case string:
+				value = repo.GetDocRef(val)
+			case []string:
+				docRefs := make([]*firestore.DocumentRef, len(val))
+				for i := range val {
+					docRefs[i] = repo.GetDocRef(val[i])
+				}
+				value = docRefs
+			default:
+				return nil, nil, xerrors.Errorf("document id can only be of type `string` and `[]string`. value: %#v", chain.Value)
+			}
+			query = query.Where(firestore.DocumentID, chain.Operator, value)
+		}
+		if direction := param.Identity.OrderByDirection; direction > 0 {
+			query = query.OrderBy(firestore.DocumentID, direction)
+			query = param.Identity.BuildCursorQuery(query)
+		}
+	}
 	if param.Desc != nil {
 		for _, chain := range param.Desc.QueryGroup {
 			query = query.Where("description", chain.Operator, chain.Value)

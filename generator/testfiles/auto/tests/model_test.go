@@ -576,6 +576,49 @@ func TestFirestoreQuery(t *testing.T) {
 		}
 	})
 
+	t.Run("document id(1件)", func(tr *testing.T) {
+		param := &model.TaskSearchParam{
+			ID: model.NewQueryChainer().Equal(ids[0]),
+		}
+
+		tasks, err := taskRepo.Search(ctx, param, nil)
+		if err != nil {
+			tr.Fatalf("%+v", err)
+		}
+
+		if len(tasks) != 1 {
+			tr.Fatalf("unexpected length: %d (expected: %d)", len(tasks), 1)
+		}
+	})
+	t.Run("document id for IN(3件)", func(tr *testing.T) {
+		param := &model.TaskSearchParam{
+			ID: model.NewQueryChainer().In([]string{ids[0], ids[1], ids[2]}),
+		}
+
+		tasks, err := taskRepo.Search(ctx, param, nil)
+		if err != nil {
+			tr.Fatalf("%+v", err)
+		}
+
+		if len(tasks) != 3 {
+			tr.Fatalf("unexpected length: %d (expected: %d)", len(tasks), 3)
+		}
+	})
+	t.Run("document id for NOT IN(7件)", func(tr *testing.T) {
+		param := &model.TaskSearchParam{
+			ID: model.NewQueryChainer().NotIn([]string{ids[0], ids[1], ids[2]}),
+		}
+
+		tasks, err := taskRepo.Search(ctx, param, nil)
+		if err != nil {
+			tr.Fatalf("%+v", err)
+		}
+
+		if len(tasks) != 7 {
+			tr.Fatalf("unexpected length: %d (expected: %d)", len(tasks), 7)
+		}
+	})
+
 	t.Run("int(1件)", func(tr *testing.T) {
 		param := &model.TaskSearchParam{
 			Count: model.NewQueryChainer().Equal(1),
@@ -587,7 +630,7 @@ func TestFirestoreQuery(t *testing.T) {
 		}
 
 		if len(tasks) != 1 {
-			tr.Fatalf("unexpected length: %d (expected: %d)", len(tasks), 10)
+			tr.Fatalf("unexpected length: %d (expected: %d)", len(tasks), 1)
 		}
 	})
 
@@ -783,6 +826,20 @@ func TestFirestoreQuery(t *testing.T) {
 
 			if len(tasks) != 5 {
 				ttr.Fatalf("unexpected length: %d (expected: %d)", len(tasks), 5)
+			}
+		})
+		tr.Run("search by document id", func(ttr *testing.T) {
+			qb := model.NewQueryBuilder(taskRepo.GetCollection())
+			qb.Equal(firestore.DocumentID, taskRepo.GetDocRef(tks[0].ID))
+			qb.Desc(firestore.DocumentID)
+
+			tasks, err := taskRepo.Search(ctx, nil, qb.Query())
+			if err != nil {
+				ttr.Fatalf("%+v", err)
+			}
+
+			if len(tasks) != 1 {
+				ttr.Fatalf("unexpected length: %d (expected: %d)", len(tasks), 1)
 			}
 		})
 	})

@@ -1406,7 +1406,6 @@ func (repo *{{ .RepositoryStructName }}) searchByParam(v interface{}, param *{{ 
 {{ end }}
 {{- $Meta := .MetaFieldsEnabled }}
 {{- $EnableIndexes := .EnableIndexes }}
-{{- $RepositoryStructName := .RepositoryStructName }}
 {{- range $fi := .FieldInfos }}
 {{- 	$IsSlice := HasSlice $fi.FieldType }}
 {{- 	$IsMap := HasMap $fi.FieldType }}
@@ -1424,6 +1423,27 @@ func (repo *{{ .RepositoryStructName }}) searchByParam(v interface{}, param *{{ 
 {{- 		else if eq $IsSlice true }}
 		for _, chain := range param.{{ $fi.Field }}.QueryGroup {
 			query = query.Where("{{ $fi.FsTag }}", chain.Operator, chain.Value)
+		}
+{{- 		else if $fi.IsDocumentID }}
+		for _, chain := range param.{{ $fi.Field }}.QueryGroup {
+			var value interface{}
+			switch val := chain.Value.(type) {
+			case string:
+				value = repo.GetDocRef(val)
+			case []string:
+				docRefs := make([]*firestore.DocumentRef, len(val))
+				for i := range val {
+					docRefs[i] = repo.GetDocRef(val[i])
+				}
+				value = docRefs
+			default:
+				return nil, nil, xerrors.Errorf("document id can only be of type `string` and `[]string`. value: %#v", chain.Value)
+			}
+			query = query.Where(firestore.DocumentID, chain.Operator, value)
+		}
+		if direction := param.{{ $fi.Field }}.OrderByDirection; direction > 0 {
+			query = query.OrderBy(firestore.DocumentID, direction)
+			query = param.{{ $fi.Field }}.BuildCursorQuery(query)
 		}
 {{- 		else }}
 		for _, chain := range param.{{ $fi.Field }}.QueryGroup {

@@ -358,6 +358,14 @@ func (g *structGenerator) parseTypeImpl(rawKey, firestoreKey string, obj *types.
 		}
 
 		g.param.KeyValueName = strcase.ToLowerCamel(e.RawName)
+
+		// NOTE: DocumentID検索用
+		fieldInfo := &FieldInfo{
+			Field:        strings.Join(sliceutil.RemoveEmpty([]string{rawKey, e.RawName}), "."),
+			FieldType:    typeName,
+			IsDocumentID: true,
+		}
+		g.param.FieldInfos = append(g.param.FieldInfos, fieldInfo)
 	}
 
 	return nil

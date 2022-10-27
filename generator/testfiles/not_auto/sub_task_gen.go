@@ -216,6 +216,7 @@ func (repo *subTaskRepository) Free() {
 
 // SubTaskSearchParam - params for search
 type SubTaskSearchParam struct {
+	ID              *QueryChainer
 	IsSubCollection *QueryChainer
 
 	CursorKey   string
@@ -1110,6 +1111,28 @@ func (repo *subTaskRepository) searchByParam(v interface{}, param *SubTaskSearch
 		}
 		return repo.GetCollection().Query
 	}()
+	if param.ID != nil {
+		for _, chain := range param.ID.QueryGroup {
+			var value interface{}
+			switch val := chain.Value.(type) {
+			case string:
+				value = repo.GetDocRef(val)
+			case []string:
+				docRefs := make([]*firestore.DocumentRef, len(val))
+				for i := range val {
+					docRefs[i] = repo.GetDocRef(val[i])
+				}
+				value = docRefs
+			default:
+				return nil, nil, xerrors.Errorf("document id can only be of type `string` and `[]string`. value: %#v", chain.Value)
+			}
+			query = query.Where(firestore.DocumentID, chain.Operator, value)
+		}
+		if direction := param.ID.OrderByDirection; direction > 0 {
+			query = query.OrderBy(firestore.DocumentID, direction)
+			query = param.ID.BuildCursorQuery(query)
+		}
+	}
 	if param.IsSubCollection != nil {
 		for _, chain := range param.IsSubCollection.QueryGroup {
 			query = query.Where("IsSubCollection", chain.Operator, chain.Value)

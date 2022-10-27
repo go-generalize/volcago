@@ -84,7 +84,7 @@ func (g *structGenerator) getFuncMap() template.FuncMap {
 
 			layers := make([]string, 0)
 			for _, f := range fis {
-				if f.IsUnique {
+				if f.IsUnique || f.IsDocumentID {
 					continue
 				}
 

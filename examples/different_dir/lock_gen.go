@@ -215,6 +215,7 @@ func (repo *lockRepository) RunInTransaction() func(ctx context.Context, f func(
 
 // LockSearchParam - params for search
 type LockSearchParam struct {
+	ID           *QueryChainer
 	Text         *QueryChainer
 	Email        *QueryChainer
 	Flag         *QueryChainer
@@ -1142,6 +1143,28 @@ func (repo *lockRepository) searchByParam(v interface{}, param *LockSearchParam)
 	query := func() firestore.Query {
 		return repo.GetCollection().Query
 	}()
+	if param.ID != nil {
+		for _, chain := range param.ID.QueryGroup {
+			var value interface{}
+			switch val := chain.Value.(type) {
+			case string:
+				value = repo.GetDocRef(val)
+			case []string:
+				docRefs := make([]*firestore.DocumentRef, len(val))
+				for i := range val {
+					docRefs[i] = repo.GetDocRef(val[i])
+				}
+				value = docRefs
+			default:
+				return nil, nil, xerrors.Errorf("document id can only be of type `string` and `[]string`. value: %#v", chain.Value)
+			}
+			query = query.Where(firestore.DocumentID, chain.Operator, value)
+		}
+		if direction := param.ID.OrderByDirection; direction > 0 {
+			query = query.OrderBy(firestore.DocumentID, direction)
+			query = param.ID.BuildCursorQuery(query)
+		}
+	}
 	if param.Text != nil {
 		for _, chain := range param.Text.QueryGroup {
 			query = query.Where("text", chain.Operator, chain.Value)
