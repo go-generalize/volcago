@@ -1145,7 +1145,11 @@ func (repo *lockRepository) searchByParam(v interface{}, param *LockSearchParam)
 	}()
 	if param.ID != nil {
 		for _, chain := range param.ID.QueryGroup {
-			query = query.Where(firestore.DocumentID, chain.Operator, chain.Value)
+			id, ok := chain.Value.(string)
+			if !ok {
+				continue
+			}
+			query = query.Where(firestore.DocumentID, chain.Operator, repo.GetDocRef(id))
 		}
 		if direction := param.ID.OrderByDirection; direction > 0 {
 			query = query.OrderBy(firestore.DocumentID, direction)
