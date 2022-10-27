@@ -587,7 +587,7 @@ func TestFirestoreQuery(t *testing.T) {
 		}
 
 		if len(tasks) != 1 {
-			tr.Fatalf("unexpected length: %d (expected: %d)", len(tasks), 10)
+			tr.Fatalf("unexpected length: %d (expected: %d)", len(tasks), 1)
 		}
 	})
 
