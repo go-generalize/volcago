@@ -39,6 +39,15 @@ func (g *structGenerator) getFuncMap() template.FuncMap {
 		"HasMap": func(types string) bool {
 			return strings.HasPrefix(types, typeMap)
 		},
+		"PrimitiveMap": func(types string) string {
+			fieldType := strings.TrimPrefix(types, typeMap)
+			switch fieldType {
+			case typeInt, typeInt64, typeFloat64, typeString, typeBool:
+				return types
+			default:
+				return typeInterfaceMap
+			}
+		},
 		"PluralForm": func(word string) string {
 			return plural.Convert(word)
 		},

@@ -11,6 +11,8 @@ import (
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	model "github.com/go-generalize/volcago/examples"
 )
 
 //go:generate mockgen -source $GOFILE -destination mock/mock_task_gen/mock_task_gen.go
@@ -18,38 +20,38 @@ import (
 // TaskRepository - Repository of Task
 type TaskRepository interface {
 	// Single
-	Get(ctx context.Context, id string, opts ...GetOption) (*Task, error)
-	GetWithDoc(ctx context.Context, doc *firestore.DocumentRef, opts ...GetOption) (*Task, error)
-	Insert(ctx context.Context, subject *Task) (_ string, err error)
-	Update(ctx context.Context, subject *Task) (err error)
+	Get(ctx context.Context, id string, opts ...GetOption) (*model.Task, error)
+	GetWithDoc(ctx context.Context, doc *firestore.DocumentRef, opts ...GetOption) (*model.Task, error)
+	Insert(ctx context.Context, subject *model.Task) (_ string, err error)
+	Update(ctx context.Context, subject *model.Task) (err error)
 	StrictUpdate(ctx context.Context, id string, param *TaskUpdateParam, opts ...firestore.Precondition) error
-	Delete(ctx context.Context, subject *Task, opts ...DeleteOption) (err error)
+	Delete(ctx context.Context, subject *model.Task, opts ...DeleteOption) (err error)
 	DeleteByID(ctx context.Context, id string, opts ...DeleteOption) (err error)
 	// Multiple
-	GetMulti(ctx context.Context, ids []string, opts ...GetOption) ([]*Task, error)
-	InsertMulti(ctx context.Context, subjects []*Task) (_ []string, er error)
-	UpdateMulti(ctx context.Context, subjects []*Task) (er error)
-	DeleteMulti(ctx context.Context, subjects []*Task, opts ...DeleteOption) (er error)
+	GetMulti(ctx context.Context, ids []string, opts ...GetOption) ([]*model.Task, error)
+	InsertMulti(ctx context.Context, subjects []*model.Task) (_ []string, er error)
+	UpdateMulti(ctx context.Context, subjects []*model.Task) (er error)
+	DeleteMulti(ctx context.Context, subjects []*model.Task, opts ...DeleteOption) (er error)
 	DeleteMultiByIDs(ctx context.Context, ids []string, opts ...DeleteOption) (er error)
 	// Single(Transaction)
-	GetWithTx(tx *firestore.Transaction, id string, opts ...GetOption) (*Task, error)
-	GetWithDocWithTx(tx *firestore.Transaction, doc *firestore.DocumentRef, opts ...GetOption) (*Task, error)
-	InsertWithTx(ctx context.Context, tx *firestore.Transaction, subject *Task) (_ string, err error)
-	UpdateWithTx(ctx context.Context, tx *firestore.Transaction, subject *Task) (err error)
+	GetWithTx(tx *firestore.Transaction, id string, opts ...GetOption) (*model.Task, error)
+	GetWithDocWithTx(tx *firestore.Transaction, doc *firestore.DocumentRef, opts ...GetOption) (*model.Task, error)
+	InsertWithTx(ctx context.Context, tx *firestore.Transaction, subject *model.Task) (_ string, err error)
+	UpdateWithTx(ctx context.Context, tx *firestore.Transaction, subject *model.Task) (err error)
 	StrictUpdateWithTx(tx *firestore.Transaction, id string, param *TaskUpdateParam, opts ...firestore.Precondition) error
-	DeleteWithTx(ctx context.Context, tx *firestore.Transaction, subject *Task, opts ...DeleteOption) (err error)
+	DeleteWithTx(ctx context.Context, tx *firestore.Transaction, subject *model.Task, opts ...DeleteOption) (err error)
 	DeleteByIDWithTx(ctx context.Context, tx *firestore.Transaction, id string, opts ...DeleteOption) (err error)
 	// Multiple(Transaction)
-	GetMultiWithTx(tx *firestore.Transaction, ids []string, opts ...GetOption) ([]*Task, error)
-	InsertMultiWithTx(ctx context.Context, tx *firestore.Transaction, subjects []*Task) (_ []string, er error)
-	UpdateMultiWithTx(ctx context.Context, tx *firestore.Transaction, subjects []*Task) (er error)
-	DeleteMultiWithTx(ctx context.Context, tx *firestore.Transaction, subjects []*Task, opts ...DeleteOption) (er error)
+	GetMultiWithTx(tx *firestore.Transaction, ids []string, opts ...GetOption) ([]*model.Task, error)
+	InsertMultiWithTx(ctx context.Context, tx *firestore.Transaction, subjects []*model.Task) (_ []string, er error)
+	UpdateMultiWithTx(ctx context.Context, tx *firestore.Transaction, subjects []*model.Task) (er error)
+	DeleteMultiWithTx(ctx context.Context, tx *firestore.Transaction, subjects []*model.Task, opts ...DeleteOption) (er error)
 	DeleteMultiByIDsWithTx(ctx context.Context, tx *firestore.Transaction, ids []string, opts ...DeleteOption) (er error)
 	// Search
-	Search(ctx context.Context, param *TaskSearchParam, q *firestore.Query) ([]*Task, error)
-	SearchWithTx(tx *firestore.Transaction, param *TaskSearchParam, q *firestore.Query) ([]*Task, error)
-	SearchByParam(ctx context.Context, param *TaskSearchParam) ([]*Task, *PagingResult, error)
-	SearchByParamWithTx(tx *firestore.Transaction, param *TaskSearchParam) ([]*Task, *PagingResult, error)
+	Search(ctx context.Context, param *TaskSearchParam, q *firestore.Query) ([]*model.Task, error)
+	SearchWithTx(tx *firestore.Transaction, param *TaskSearchParam, q *firestore.Query) ([]*model.Task, error)
+	SearchByParam(ctx context.Context, param *TaskSearchParam) ([]*model.Task, *PagingResult, error)
+	SearchByParamWithTx(tx *firestore.Transaction, param *TaskSearchParam) ([]*model.Task, *PagingResult, error)
 	// misc
 	GetCollection() *firestore.CollectionRef
 	GetCollectionName() string
@@ -59,9 +61,9 @@ type TaskRepository interface {
 
 // TaskRepositoryMiddleware - middleware of TaskRepository
 type TaskRepositoryMiddleware interface {
-	BeforeInsert(ctx context.Context, subject *Task) (bool, error)
-	BeforeUpdate(ctx context.Context, old, subject *Task) (bool, error)
-	BeforeDelete(ctx context.Context, subject *Task, opts ...DeleteOption) (bool, error)
+	BeforeInsert(ctx context.Context, subject *model.Task) (bool, error)
+	BeforeUpdate(ctx context.Context, old, subject *model.Task) (bool, error)
+	BeforeDelete(ctx context.Context, subject *model.Task, opts ...DeleteOption) (bool, error)
 	BeforeDeleteByID(ctx context.Context, ids []string, opts ...DeleteOption) (bool, error)
 }
 
@@ -82,7 +84,7 @@ func NewTaskRepository(firestoreClient *firestore.Client, middleware ...TaskRepo
 	}
 }
 
-func (repo *taskRepository) beforeInsert(ctx context.Context, subject *Task) (RollbackFunc, error) {
+func (repo *taskRepository) beforeInsert(ctx context.Context, subject *model.Task) (RollbackFunc, error) {
 	repo.uniqueRepository.setMiddleware(ctx)
 	rb, err := repo.uniqueRepository.CheckUnique(ctx, nil, subject)
 	if err != nil {
@@ -102,7 +104,7 @@ func (repo *taskRepository) beforeInsert(ctx context.Context, subject *Task) (Ro
 	return rb, nil
 }
 
-func (repo *taskRepository) beforeUpdate(ctx context.Context, old, subject *Task) (RollbackFunc, error) {
+func (repo *taskRepository) beforeUpdate(ctx context.Context, old, subject *model.Task) (RollbackFunc, error) {
 	if ctx.Value(transactionInProgressKey{}) != nil && old == nil {
 		var err error
 		doc := repo.GetDocRef(subject.ID)
@@ -133,7 +135,7 @@ func (repo *taskRepository) beforeUpdate(ctx context.Context, old, subject *Task
 	return rb, nil
 }
 
-func (repo *taskRepository) beforeDelete(ctx context.Context, subject *Task, opts ...DeleteOption) (RollbackFunc, error) {
+func (repo *taskRepository) beforeDelete(ctx context.Context, subject *model.Task, opts ...DeleteOption) (RollbackFunc, error) {
 	repo.uniqueRepository.setMiddleware(ctx)
 	rb, err := repo.uniqueRepository.DeleteUnique(ctx, subject)
 	if err != nil {
@@ -173,7 +175,7 @@ func (repo *taskRepository) RunInTransaction() func(ctx context.Context, f func(
 	return repo.firestoreClient.RunTransaction
 }
 
-func (repo *taskRepository) saveIndexes(subject *Task) error {
+func (repo *taskRepository) saveIndexes(subject *model.Task) error {
 	idx := xim.NewIndexes(&xim.Config{
 		IgnoreCase:         true,
 		SaveNoFiltersIndex: true,
@@ -237,28 +239,28 @@ type TaskUpdateParam struct {
 
 // Search - search documents
 // The third argument is firestore.Query, basically you can pass nil
-func (repo *taskRepository) Search(ctx context.Context, param *TaskSearchParam, q *firestore.Query) ([]*Task, error) {
+func (repo *taskRepository) Search(ctx context.Context, param *TaskSearchParam, q *firestore.Query) ([]*model.Task, error) {
 	return repo.search(ctx, param, q)
 }
 
 // SearchByParam - search documents by search param
-func (repo *taskRepository) SearchByParam(ctx context.Context, param *TaskSearchParam) ([]*Task, *PagingResult, error) {
+func (repo *taskRepository) SearchByParam(ctx context.Context, param *TaskSearchParam) ([]*model.Task, *PagingResult, error) {
 	return repo.searchByParam(ctx, param)
 }
 
 // Get - get `Task` by `Task.ID`
-func (repo *taskRepository) Get(ctx context.Context, id string, opts ...GetOption) (*Task, error) {
+func (repo *taskRepository) Get(ctx context.Context, id string, opts ...GetOption) (*model.Task, error) {
 	doc := repo.GetDocRef(id)
 	return repo.get(ctx, doc, opts...)
 }
 
 // GetWithDoc - get `Task` by *firestore.DocumentRef
-func (repo *taskRepository) GetWithDoc(ctx context.Context, doc *firestore.DocumentRef, opts ...GetOption) (*Task, error) {
+func (repo *taskRepository) GetWithDoc(ctx context.Context, doc *firestore.DocumentRef, opts ...GetOption) (*model.Task, error) {
 	return repo.get(ctx, doc, opts...)
 }
 
 // Insert - insert of `Task`
-func (repo *taskRepository) Insert(ctx context.Context, subject *Task) (_ string, err error) {
+func (repo *taskRepository) Insert(ctx context.Context, subject *model.Task) (_ string, err error) {
 	rb, err := repo.beforeInsert(ctx, subject)
 	if err != nil {
 		return "", xerrors.Errorf("before insert error: %w", err)
@@ -279,7 +281,7 @@ func (repo *taskRepository) Insert(ctx context.Context, subject *Task) (_ string
 }
 
 // Update - update of `Task`
-func (repo *taskRepository) Update(ctx context.Context, subject *Task) (err error) {
+func (repo *taskRepository) Update(ctx context.Context, subject *model.Task) (err error) {
 	doc := repo.GetDocRef(subject.ID)
 
 	old, err := repo.get(ctx, doc)
@@ -315,7 +317,7 @@ func (repo *taskRepository) StrictUpdate(ctx context.Context, id string, param *
 }
 
 // Delete - delete of `Task`
-func (repo *taskRepository) Delete(ctx context.Context, subject *Task, opts ...DeleteOption) (err error) {
+func (repo *taskRepository) Delete(ctx context.Context, subject *model.Task, opts ...DeleteOption) (err error) {
 	rb, err := repo.beforeDelete(ctx, subject, opts...)
 	if err != nil {
 		return xerrors.Errorf("before delete error: %w", err)
@@ -353,12 +355,12 @@ func (repo *taskRepository) DeleteByID(ctx context.Context, id string, opts ...D
 }
 
 // GetMulti - get `Task` in bulk by array of `Task.ID`
-func (repo *taskRepository) GetMulti(ctx context.Context, ids []string, opts ...GetOption) ([]*Task, error) {
+func (repo *taskRepository) GetMulti(ctx context.Context, ids []string, opts ...GetOption) ([]*model.Task, error) {
 	return repo.getMulti(ctx, ids, opts...)
 }
 
 // InsertMulti - bulk insert of `Task`
-func (repo *taskRepository) InsertMulti(ctx context.Context, subjects []*Task) (_ []string, er error) {
+func (repo *taskRepository) InsertMulti(ctx context.Context, subjects []*model.Task) (_ []string, er error) {
 	var rbs []RollbackFunc
 	defer func() {
 		if er == nil {
@@ -423,7 +425,7 @@ func (repo *taskRepository) InsertMulti(ctx context.Context, subjects []*Task) (
 }
 
 // UpdateMulti - bulk update of `Task`
-func (repo *taskRepository) UpdateMulti(ctx context.Context, subjects []*Task) (er error) {
+func (repo *taskRepository) UpdateMulti(ctx context.Context, subjects []*model.Task) (er error) {
 	var rbs []RollbackFunc
 	defer func() {
 		if er == nil {
@@ -455,7 +457,7 @@ func (repo *taskRepository) UpdateMulti(ctx context.Context, subjects []*Task) (
 			return xerrors.Errorf("error in Get method [%v]: %w", subject.ID, err)
 		}
 
-		old := new(Task)
+		old := new(model.Task)
 		if err = snapShot.DataTo(&old); err != nil {
 			return xerrors.Errorf("error in DataTo method: %w", err)
 		}
@@ -489,7 +491,7 @@ func (repo *taskRepository) UpdateMulti(ctx context.Context, subjects []*Task) (
 }
 
 // DeleteMulti - bulk delete of `Task`
-func (repo *taskRepository) DeleteMulti(ctx context.Context, subjects []*Task, opts ...DeleteOption) (er error) {
+func (repo *taskRepository) DeleteMulti(ctx context.Context, subjects []*model.Task, opts ...DeleteOption) (er error) {
 	var rbs []RollbackFunc
 	defer func() {
 		if er == nil {
@@ -547,7 +549,7 @@ func (repo *taskRepository) DeleteMulti(ctx context.Context, subjects []*Task, o
 
 // DeleteMultiByIDs - delete `Task` in bulk by array of `Task.ID`
 func (repo *taskRepository) DeleteMultiByIDs(ctx context.Context, ids []string, opts ...DeleteOption) (er error) {
-	subjects := make([]*Task, len(ids))
+	subjects := make([]*model.Task, len(ids))
 
 	opt := GetOption{}
 	if len(opts) > 0 {
@@ -565,28 +567,28 @@ func (repo *taskRepository) DeleteMultiByIDs(ctx context.Context, ids []string, 
 }
 
 // SearchWithTx - search documents in transaction
-func (repo *taskRepository) SearchWithTx(tx *firestore.Transaction, param *TaskSearchParam, q *firestore.Query) ([]*Task, error) {
+func (repo *taskRepository) SearchWithTx(tx *firestore.Transaction, param *TaskSearchParam, q *firestore.Query) ([]*model.Task, error) {
 	return repo.search(tx, param, q)
 }
 
 // SearchByParamWithTx - search documents by search param in transaction
-func (repo *taskRepository) SearchByParamWithTx(tx *firestore.Transaction, param *TaskSearchParam) ([]*Task, *PagingResult, error) {
+func (repo *taskRepository) SearchByParamWithTx(tx *firestore.Transaction, param *TaskSearchParam) ([]*model.Task, *PagingResult, error) {
 	return repo.searchByParam(tx, param)
 }
 
 // GetWithTx - get `Task` by `Task.ID` in transaction
-func (repo *taskRepository) GetWithTx(tx *firestore.Transaction, id string, opts ...GetOption) (*Task, error) {
+func (repo *taskRepository) GetWithTx(tx *firestore.Transaction, id string, opts ...GetOption) (*model.Task, error) {
 	doc := repo.GetDocRef(id)
 	return repo.get(tx, doc, opts...)
 }
 
 // GetWithDocWithTx - get `Task` by *firestore.DocumentRef in transaction
-func (repo *taskRepository) GetWithDocWithTx(tx *firestore.Transaction, doc *firestore.DocumentRef, opts ...GetOption) (*Task, error) {
+func (repo *taskRepository) GetWithDocWithTx(tx *firestore.Transaction, doc *firestore.DocumentRef, opts ...GetOption) (*model.Task, error) {
 	return repo.get(tx, doc, opts...)
 }
 
 // InsertWithTx - insert of `Task` in transaction
-func (repo *taskRepository) InsertWithTx(ctx context.Context, tx *firestore.Transaction, subject *Task) (_ string, err error) {
+func (repo *taskRepository) InsertWithTx(ctx context.Context, tx *firestore.Transaction, subject *model.Task) (_ string, err error) {
 	rb, err := repo.beforeInsert(context.WithValue(ctx, transactionInProgressKey{}, 1), subject)
 	if err != nil {
 		return "", xerrors.Errorf("before insert error: %w", err)
@@ -607,7 +609,7 @@ func (repo *taskRepository) InsertWithTx(ctx context.Context, tx *firestore.Tran
 }
 
 // UpdateWithTx - update of `Task` in transaction
-func (repo *taskRepository) UpdateWithTx(ctx context.Context, tx *firestore.Transaction, subject *Task) (err error) {
+func (repo *taskRepository) UpdateWithTx(ctx context.Context, tx *firestore.Transaction, subject *model.Task) (err error) {
 	rb, err := repo.beforeUpdate(context.WithValue(ctx, transactionInProgressKey{}, 1), nil, subject)
 	if err != nil {
 		return xerrors.Errorf("before update error: %w", err)
@@ -633,7 +635,7 @@ func (repo *taskRepository) StrictUpdateWithTx(tx *firestore.Transaction, id str
 }
 
 // DeleteWithTx - delete of `Task` in transaction
-func (repo *taskRepository) DeleteWithTx(ctx context.Context, tx *firestore.Transaction, subject *Task, opts ...DeleteOption) (err error) {
+func (repo *taskRepository) DeleteWithTx(ctx context.Context, tx *firestore.Transaction, subject *model.Task, opts ...DeleteOption) (err error) {
 	rb, err := repo.beforeDelete(context.WithValue(ctx, transactionInProgressKey{}, 1), subject, opts...)
 	if err != nil {
 		return xerrors.Errorf("before delete error: %w", err)
@@ -672,12 +674,12 @@ func (repo *taskRepository) DeleteByIDWithTx(ctx context.Context, tx *firestore.
 }
 
 // GetMultiWithTx - get `Task` in bulk by array of `Task.ID` in transaction
-func (repo *taskRepository) GetMultiWithTx(tx *firestore.Transaction, ids []string, opts ...GetOption) ([]*Task, error) {
+func (repo *taskRepository) GetMultiWithTx(tx *firestore.Transaction, ids []string, opts ...GetOption) ([]*model.Task, error) {
 	return repo.getMulti(tx, ids, opts...)
 }
 
 // InsertMultiWithTx - bulk insert of `Task` in transaction
-func (repo *taskRepository) InsertMultiWithTx(ctx context.Context, tx *firestore.Transaction, subjects []*Task) (_ []string, er error) {
+func (repo *taskRepository) InsertMultiWithTx(ctx context.Context, tx *firestore.Transaction, subjects []*model.Task) (_ []string, er error) {
 	ctx = context.WithValue(ctx, transactionInProgressKey{}, 1)
 	var rbs []RollbackFunc
 	defer func() {
@@ -720,7 +722,7 @@ func (repo *taskRepository) InsertMultiWithTx(ctx context.Context, tx *firestore
 }
 
 // UpdateMultiWithTx - bulk update of `Task` in transaction
-func (repo *taskRepository) UpdateMultiWithTx(ctx context.Context, tx *firestore.Transaction, subjects []*Task) (er error) {
+func (repo *taskRepository) UpdateMultiWithTx(ctx context.Context, tx *firestore.Transaction, subjects []*model.Task) (er error) {
 	ctx = context.WithValue(ctx, transactionInProgressKey{}, 1)
 	var rbs []RollbackFunc
 	defer func() {
@@ -761,7 +763,7 @@ func (repo *taskRepository) UpdateMultiWithTx(ctx context.Context, tx *firestore
 }
 
 // DeleteMultiWithTx - bulk delete of `Task` in transaction
-func (repo *taskRepository) DeleteMultiWithTx(ctx context.Context, tx *firestore.Transaction, subjects []*Task, opts ...DeleteOption) (er error) {
+func (repo *taskRepository) DeleteMultiWithTx(ctx context.Context, tx *firestore.Transaction, subjects []*model.Task, opts ...DeleteOption) (er error) {
 	var rbs []RollbackFunc
 	defer func() {
 		if er == nil {
@@ -856,7 +858,7 @@ func (repo *taskRepository) DeleteMultiByIDsWithTx(ctx context.Context, tx *fire
 	return nil
 }
 
-func (repo *taskRepository) get(v interface{}, doc *firestore.DocumentRef, _ ...GetOption) (*Task, error) {
+func (repo *taskRepository) get(v interface{}, doc *firestore.DocumentRef, _ ...GetOption) (*model.Task, error) {
 	var (
 		snapShot *firestore.DocumentSnapshot
 		err      error
@@ -878,7 +880,7 @@ func (repo *taskRepository) get(v interface{}, doc *firestore.DocumentRef, _ ...
 		return nil, xerrors.Errorf("error in Get method: %w", err)
 	}
 
-	subject := new(Task)
+	subject := new(model.Task)
 	if err := snapShot.DataTo(&subject); err != nil {
 		return nil, xerrors.Errorf("error in DataTo method: %w", err)
 	}
@@ -888,7 +890,7 @@ func (repo *taskRepository) get(v interface{}, doc *firestore.DocumentRef, _ ...
 	return subject, nil
 }
 
-func (repo *taskRepository) getMulti(v interface{}, ids []string, _ ...GetOption) ([]*Task, error) {
+func (repo *taskRepository) getMulti(v interface{}, ids []string, _ ...GetOption) ([]*model.Task, error) {
 	var (
 		snapShots []*firestore.DocumentSnapshot
 		err       error
@@ -914,7 +916,7 @@ func (repo *taskRepository) getMulti(v interface{}, ids []string, _ ...GetOption
 		return nil, xerrors.Errorf("error in GetAll method: %w", err)
 	}
 
-	subjects := make([]*Task, 0, len(ids))
+	subjects := make([]*model.Task, 0, len(ids))
 	mErr := NewMultiErrors()
 	for i, snapShot := range snapShots {
 		if !snapShot.Exists() {
@@ -922,7 +924,7 @@ func (repo *taskRepository) getMulti(v interface{}, ids []string, _ ...GetOption
 			continue
 		}
 
-		subject := new(Task)
+		subject := new(model.Task)
 		if err = snapShot.DataTo(&subject); err != nil {
 			return nil, xerrors.Errorf("error in DataTo method: %w", err)
 		}
@@ -938,7 +940,7 @@ func (repo *taskRepository) getMulti(v interface{}, ids []string, _ ...GetOption
 	return subjects, mErr
 }
 
-func (repo *taskRepository) insert(v interface{}, subject *Task) (string, error) {
+func (repo *taskRepository) insert(v interface{}, subject *model.Task) (string, error) {
 	var (
 		dr  = repo.GetCollection().NewDoc()
 		err error
@@ -965,7 +967,7 @@ func (repo *taskRepository) insert(v interface{}, subject *Task) (string, error)
 	return dr.ID, nil
 }
 
-func (repo *taskRepository) update(v interface{}, subject *Task) error {
+func (repo *taskRepository) update(v interface{}, subject *model.Task) error {
 	var (
 		dr  = repo.GetDocRef(subject.ID)
 		err error
@@ -993,7 +995,7 @@ func (repo *taskRepository) strictUpdate(v interface{}, id string, param *TaskUp
 		err error
 	)
 
-	updates := updater(Task{}, param)
+	updates := updater(model.Task{}, param)
 
 	switch x := v.(type) {
 	case *firestore.Transaction:
@@ -1031,7 +1033,7 @@ func (repo *taskRepository) deleteByID(v interface{}, id string) error {
 	return nil
 }
 
-func (repo *taskRepository) runQuery(v interface{}, query firestore.Query) ([]*Task, error) {
+func (repo *taskRepository) runQuery(v interface{}, query firestore.Query) ([]*model.Task, error) {
 	var iter *firestore.DocumentIterator
 
 	switch x := v.(type) {
@@ -1045,7 +1047,7 @@ func (repo *taskRepository) runQuery(v interface{}, query firestore.Query) ([]*T
 
 	defer iter.Stop()
 
-	subjects := make([]*Task, 0)
+	subjects := make([]*model.Task, 0)
 
 	for {
 		doc, err := iter.Next()
@@ -1056,7 +1058,7 @@ func (repo *taskRepository) runQuery(v interface{}, query firestore.Query) ([]*T
 			return nil, xerrors.Errorf("error in Next method: %w", err)
 		}
 
-		subject := new(Task)
+		subject := new(model.Task)
 
 		if err = doc.DataTo(&subject); err != nil {
 			return nil, xerrors.Errorf("error in DataTo method: %w", err)
@@ -1070,7 +1072,7 @@ func (repo *taskRepository) runQuery(v interface{}, query firestore.Query) ([]*T
 }
 
 // BUG(54m): there may be potential bugs
-func (repo *taskRepository) searchByParam(v interface{}, param *TaskSearchParam) ([]*Task, *PagingResult, error) {
+func (repo *taskRepository) searchByParam(v interface{}, param *TaskSearchParam) ([]*model.Task, *PagingResult, error) {
 	query := func() firestore.Query {
 		return repo.GetCollection().Query
 	}()
@@ -1407,7 +1409,7 @@ func (repo *taskRepository) searchByParam(v interface{}, param *TaskSearchParam)
 	return subjects, pagingResult, nil
 }
 
-func (repo *taskRepository) search(v interface{}, param *TaskSearchParam, q *firestore.Query) ([]*Task, error) {
+func (repo *taskRepository) search(v interface{}, param *TaskSearchParam, q *firestore.Query) ([]*model.Task, error) {
 	if (param == nil && q == nil) || (param != nil && q != nil) {
 		return nil, xerrors.New("either one should be nil")
 	}

@@ -3,6 +3,7 @@ package examples
 import "time"
 
 //go:generate ../bin/volcago Task
+//go:generate ../bin/volcago -o repository Task
 
 type Inner struct {
 	A string `firestore:"a"`
@@ -28,6 +29,7 @@ type Task struct {
 	Flag         map[string]float64 `firestore:"flag"`
 	Indexes      map[string]bool    ``
 	Inner        Inner              `firestore:"inner"`
+	InnerMap     map[string]Inner   `firestore:"innerMap"`
 }
 
 type TaskKind string

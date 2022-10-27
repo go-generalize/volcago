@@ -1413,7 +1413,7 @@ func (repo *{{ .RepositoryStructName }}) searchByParam(v interface{}, param *{{ 
 	if param.{{ $fi.Field }} != nil {
 {{- 		if eq $IsMap true }}
 		for _, chain := range param.{{ $fi.Field }}.QueryGroup {
-			items, ok := chain.Value.({{ $fi.FieldType }})
+			items, ok := chain.Value.({{ PrimitiveMap $fi.FieldType }})
 			if !ok {
 				continue
 			}
