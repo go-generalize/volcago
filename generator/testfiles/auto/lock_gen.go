@@ -211,6 +211,7 @@ func (repo *lockRepository) RunInTransaction() func(ctx context.Context, f func(
 
 // LockSearchParam - params for search
 type LockSearchParam struct {
+	ID        *QueryChainer
 	Text      *QueryChainer
 	Text2     *QueryChainer
 	Flag      *QueryChainer
@@ -1127,6 +1128,15 @@ func (repo *lockRepository) searchByParam(v interface{}, param *LockSearchParam)
 	query := func() firestore.Query {
 		return repo.GetCollection().Query
 	}()
+	if param.ID != nil {
+		for _, chain := range param.ID.QueryGroup {
+			query = query.Where(firestore.DocumentID, chain.Operator, chain.Value)
+		}
+		if direction := param.ID.OrderByDirection; direction > 0 {
+			query = query.OrderBy(firestore.DocumentID, direction)
+			query = param.ID.BuildCursorQuery(query)
+		}
+	}
 	if param.Text != nil {
 		for _, chain := range param.Text.QueryGroup {
 			query = query.Where("text", chain.Operator, chain.Value)

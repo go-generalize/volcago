@@ -216,6 +216,7 @@ func (repo *historyRepository) Free() {
 
 // HistorySearchParam - params for search
 type HistorySearchParam struct {
+	ID              *QueryChainer
 	IsSubCollection *QueryChainer
 
 	CursorKey   string
@@ -1110,6 +1111,15 @@ func (repo *historyRepository) searchByParam(v interface{}, param *HistorySearch
 		}
 		return repo.GetCollection().Query
 	}()
+	if param.ID != nil {
+		for _, chain := range param.ID.QueryGroup {
+			query = query.Where(firestore.DocumentID, chain.Operator, chain.Value)
+		}
+		if direction := param.ID.OrderByDirection; direction > 0 {
+			query = query.OrderBy(firestore.DocumentID, direction)
+			query = param.ID.BuildCursorQuery(query)
+		}
+	}
 	if param.IsSubCollection != nil {
 		for _, chain := range param.IsSubCollection.QueryGroup {
 			query = query.Where("IsSubCollection", chain.Operator, chain.Value)

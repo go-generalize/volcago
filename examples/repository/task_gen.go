@@ -202,6 +202,7 @@ func (repo *taskRepository) saveIndexes(subject *model.Task) error {
 
 // TaskSearchParam - params for search
 type TaskSearchParam struct {
+	ID           *QueryChainer
 	Desc         *QueryChainer
 	Created      *QueryChainer
 	ReservedDate *QueryChainer
@@ -1081,6 +1082,15 @@ func (repo *taskRepository) searchByParam(v interface{}, param *TaskSearchParam)
 		SaveNoFiltersIndex: true,
 	})
 
+	if param.ID != nil {
+		for _, chain := range param.ID.QueryGroup {
+			query = query.Where(firestore.DocumentID, chain.Operator, chain.Value)
+		}
+		if direction := param.ID.OrderByDirection; direction > 0 {
+			query = query.OrderBy(firestore.DocumentID, direction)
+			query = param.ID.BuildCursorQuery(query)
+		}
+	}
 	if param.Desc != nil {
 		for _, chain := range param.Desc.QueryGroup {
 			query = query.Where("description", chain.Operator, chain.Value)
