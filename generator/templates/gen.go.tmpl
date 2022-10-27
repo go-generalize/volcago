@@ -1424,6 +1424,14 @@ func (repo *{{ .RepositoryStructName }}) searchByParam(v interface{}, param *{{ 
 		for _, chain := range param.{{ $fi.Field }}.QueryGroup {
 			query = query.Where("{{ $fi.FsTag }}", chain.Operator, chain.Value)
 		}
+{{- 		else if $fi.IsDocumentID }}
+		for _, chain := range param.{{ $fi.Field }}.QueryGroup {
+			query = query.Where(firestore.DocumentID, chain.Operator, chain.Value)
+		}
+		if direction := param.{{ $fi.Field }}.OrderByDirection; direction > 0 {
+			query = query.OrderBy(firestore.DocumentID, direction)
+			query = param.{{ $fi.Field }}.BuildCursorQuery(query)
+		}
 {{- 		else }}
 		for _, chain := range param.{{ $fi.Field }}.QueryGroup {
 			query = query.Where("{{ $fi.FsTag }}", chain.Operator, chain.Value)
