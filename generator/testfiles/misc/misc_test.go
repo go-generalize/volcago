@@ -169,6 +169,17 @@ func Test_updater(t *testing.T) {
 				{FieldPath: firestore.FieldPath{"version"}, Value: 1},
 			},
 		},
+		{
+			args: args{
+				v: article{},
+				param: &articleUpdateParam{
+					Page: "section",
+				},
+			},
+			want: []firestore.Update{
+				{FieldPath: firestore.FieldPath{"page"}, Value: "section"},
+			},
+		},
 	}
 
 	for _, tt := range tests {
