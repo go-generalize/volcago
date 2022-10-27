@@ -22,6 +22,7 @@ type FieldInfo struct {
 	Field          string
 	FieldType      string
 	IsUnique       bool
+	IsDocumentID   bool
 	IndexerTag     string
 	Indexes        []*IndexesInfo
 	NullableFields []string
