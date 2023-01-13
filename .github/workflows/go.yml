@@ -10,12 +10,12 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    services:
-      firestore:
-        image: google/cloud-sdk
-        ports:
-          - 8000:8000
-        options: -ti
+#    services:
+#      firestore:
+#        image: google/cloud-sdk
+#        ports:
+#          - 8000:8000
+#        options: -ti
 
     env:
       GO111MODULE: on
