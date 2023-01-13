@@ -19,7 +19,7 @@ jobs:
 
     env:
       GO111MODULE: on
-      FIRESTORE_EMULATOR_HOST: 127.0.0.1:8000
+      FIRESTORE_EMULATOR_HOST: localhost:8000
 
     steps:
       - name: Setup gcloud
@@ -59,4 +59,5 @@ jobs:
 
       - name: Run tests
         run: |
+          curl http://localhost:8000 --silent --retry 30 --retry-delay 1 --retry-connrefused
           make test TEST_OPT='-tags="emulator"'
