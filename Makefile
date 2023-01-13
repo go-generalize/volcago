@@ -1,9 +1,15 @@
 TEST_OPT=""
+GOLANGCI_LINT_VERSION := 1.50.1
 
 .PHONY: bootstrap
 bootstrap:
 	mkdir -p bin
 	GOBIN=$(PWD)/bin go install github.com/golang/mock/mockgen@latest
+
+.PHONY: bootstrap_golangci_lint
+bootstrap_golangci_lint:
+	mkdir -p ./bin
+	GOBIN=${PWD}/bin go install github.com/golangci/golangci-lint/cmd/golangci-lint@v$(GOLANGCI_LINT_VERSION)
 
 .PHONY: test
 test: goimports
@@ -18,8 +24,11 @@ code_clean:
 	cd generator/testfiles && rm -rf */*_gen.go
 
 .PHONY: lint
-lint:
-	golangci-lint run --config ".github/.golangci.yml" --fast
+lint: lint_golangci_lint
+
+.PHONY: lint_golangci_lint
+lint_golangci_lint:
+	./bin/golangci-lint run --config=".github/.golangci.yml" --fast ./...
 
 .PHONY: build
 build:
