@@ -60,3 +60,4 @@ jobs:
       - name: Run tests
         run: |
           make test TEST_OPT='-tags="emulator"'
+        timeout-minutes: 5
