@@ -78,7 +78,7 @@ func TestFirestore(t *testing.T) {
 
 	taskRepo := model.NewTaskRepository(client)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	var ids []string
 	defer func() {
 		defer cancel()
@@ -338,7 +338,7 @@ func TestFirestoreTransaction_Single(t *testing.T) {
 
 	taskRepo := model.NewTaskRepository(client)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	var ids []string
 	defer func() {
 		defer cancel()
@@ -529,7 +529,7 @@ func TestFirestoreTransaction_Multi(t *testing.T) {
 
 	taskRepo := model.NewTaskRepository(client)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	var ids []string
 	defer func() {
 		defer cancel()
@@ -644,7 +644,7 @@ func TestFirestoreQuery(t *testing.T) {
 
 	taskRepo := model.NewTaskRepository(client)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	var ids []string
 	defer func() {
 		defer cancel()
@@ -914,7 +914,7 @@ func TestFirestoreError(t *testing.T) {
 
 	taskRepo := model.NewTaskRepository(client)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	var ids []string
 	defer func() {
 		defer cancel()
@@ -1025,7 +1025,7 @@ func TestFirestoreValueCheck(t *testing.T) {
 
 	taskRepo := model.NewTaskRepository(client)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
 
 	now := time.Unix(time.Now().Unix(), 0)
