@@ -22,18 +22,10 @@ jobs:
       FIRESTORE_EMULATOR_HOST: 127.0.0.1:8000
 
     steps:
-      - name: Setup gcloud
-        uses: google-github-actions/setup-gcloud@main
+      - name: Start Firestore
+        uses: mickfeech/firestore-emulator-action@0.0.12
         with:
-          version: "latest"
-
-      - name: Install firestore emulator
-        run: |
-          gcloud components install beta --quiet
-          gcloud components install cloud-firestore-emulator --quiet
-
-      - name: Start firestore emulator
-        run: gcloud beta emulators firestore start --host-port=localhost:8000
+          fireStoreProjectID: pname
 
       - name: Set up Go 1.18
         uses: actions/setup-go@v3
