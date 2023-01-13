@@ -6,8 +6,9 @@ linters-settings:
     min-occurrences: 2
   goimports:
     local-prefixes: github.com/golangci/golangci-lint
-  golint:
-    min-confidence: 0.3
+  revive:
+    ignore-generated-header: false
+    confidence: 0.3
   govet:
     check-shadowing: true
   lll:
@@ -33,8 +34,8 @@ linters:
     - gofmt
     # goimports
     - goimports
-    # golint
-    - golint
+    # golint代替
+    - revive
     # 引数がフォーマット文字列と一致しないものを検出
     - govet
     # 意味のない再代入を検出
@@ -42,9 +43,9 @@ linters:
     # スペルチェック
     - misspell
     # for中などで固定されてない変数を検出
-    - scopelint
+    - exportloopref
     # 構造体の未使用フィールドを検出
-    - structcheck
+    - staticcheck
     # 不要な型変換を検出
     - unconvert
     # 未使用のものを検出
@@ -54,14 +55,17 @@ linters:
 
 issues:
   exclude:
-    - 'shadow: declaration of "err" shadows declaration at'
+    - declaration of "(err|ctx)" shadows declaration at
   exclude-rules:
     - path: _test\.go
       linters:
         - gomnd
         - dupl
+    - linters:
+        - staticcheck
+      text: "SA1019: xerrors."
 
 service:
-  golangci-lint-version: 1.23.x
+  golangci-lint-version: 1.49.x
   prepare:
     - echo "here I can run custom commands, but no preparation needed for this repo"
