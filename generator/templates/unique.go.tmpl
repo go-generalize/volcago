@@ -28,9 +28,6 @@ type UniqueRepositoryMiddleware interface {
 	WrapError(ctx context.Context, err error, uniques []*Unique) error
 }
 
-// RollbackFunc - rollback function
-type RollbackFunc func(context.Context) error
-
 type uniqueRepository struct {
 	collectionName   string
 	targetCollection string
@@ -118,17 +115,13 @@ func (repo *uniqueRepository) getUniqueItems(value interface{}) ([]*Unique, bool
 }
 
 // CheckUnique - unique constraint check(Insert/Update)
-func (repo *uniqueRepository) CheckUnique(ctx context.Context, old, subject interface{}) (RollbackFunc, error) {
+func (repo *uniqueRepository) CheckUnique(ctx context.Context, old, subject interface{}) error {
 	if subject == nil {
-		return nil, xerrors.New("nil is not allowed")
-	} else if ctx.Value(transactionInProgressKey{}) != nil {
-		ctx = context.Background()
+		return xerrors.New("nil is not allowed")
 	}
 
-	rbInsert := make([]Unique, 0)
-	rbDelete := make([]Unique, 0)
-
-	if err := repo.firestoreClient.RunTransaction(ctx, func(cx context.Context, tx *firestore.Transaction) (err error) {
+	bg := context.Background()
+	cb := func(cx context.Context, tx *firestore.Transaction) (err error) {
 		sustain := make(map[Unique]struct{}, 0)
 		deleteTarget := make(map[Unique]struct{}, 0)
 
@@ -144,7 +137,7 @@ func (repo *uniqueRepository) CheckUnique(ctx context.Context, old, subject inte
 			}
 
 			for _, unique := range items {
-				u, err := repo.get(tx, unique.ID)
+				u, err := repo.getWithoutTx(bg, unique.ID)
 				if err != nil {
 					if xerrors.Is(err, ErrNotFound) {
 						continue
@@ -185,7 +178,7 @@ func (repo *uniqueRepository) CheckUnique(ctx context.Context, old, subject inte
 		{
 			uniques := make([]*Unique, 0)
 			for _, unique := range surveyTarget {
-				u, err := repo.get(tx, unique.ID)
+				u, err := repo.getWithoutTx(bg, unique.ID)
 				if err != nil {
 					if xerrors.Is(err, ErrNotFound) {
 						continue
@@ -204,7 +197,6 @@ func (repo *uniqueRepository) CheckUnique(ctx context.Context, old, subject inte
 		// NOTE(54m): Delete unique items
 		for u := range deleteTarget {
 			delete(sustain, u)
-			rbInsert = append(rbInsert, u)
 			if err := repo.deleteByID(tx, u.ID); err != nil {
 				return xerrors.Errorf("failed to delete(Tx): %w", err)
 			}
@@ -212,31 +204,39 @@ func (repo *uniqueRepository) CheckUnique(ctx context.Context, old, subject inte
 
 		// NOTE(54m): Insert unique item
 		for _, u := range surveyTarget {
-			rbDelete = append(rbDelete, *u)
 			if err := repo.insert(tx, u); err != nil {
 				return xerrors.Errorf("failed to insert(Tx): %w", err)
 			}
 		}
 
 		return nil
-	}); err != nil {
-		return nil, xerrors.Errorf("could not run transaction: %w", err)
 	}
 
-	return repo.makeRollbackFunc(rbInsert, rbDelete), nil
+	var err error
+	if tx := ctx.Value(transactionInProgressKey{}); tx != nil {
+		err = cb(ctx, tx.(*firestore.Transaction))
+	} else {
+		err = repo.firestoreClient.RunTransaction(ctx, cb)
+	}
+
+	if err != nil {
+		if status.Code(err) == codes.AlreadyExists {
+			return repo.wrapError(ctx, ErrUniqueConstraint, []*Unique{&Unique{}})
+		}
+		return xerrors.Errorf("could not run transaction: %w", err)
+	}
+
+	return nil
 }
 
 // DeleteUnique - delete the document for unique constraints
-func (repo *uniqueRepository) DeleteUnique(ctx context.Context, subject interface{}) (RollbackFunc, error) {
+func (repo *uniqueRepository) DeleteUnique(ctx context.Context, subject interface{}) error {
 	if subject == nil {
-		return nil, xerrors.New("nil is not allowed")
-	} else if ctx.Value(transactionInProgressKey{}) != nil {
-		ctx = context.Background()
+		return xerrors.New("nil is not allowed")
 	}
 
-	rbInsert := make([]Unique, 0)
-
-	if err := repo.firestoreClient.RunTransaction(ctx, func(cx context.Context, tx *firestore.Transaction) error {
+	bg := context.Background()
+	cb := func(cx context.Context, tx *firestore.Transaction) error {
 		deleteTarget := make(map[Unique]struct{}, 0)
 
 		items, ok := repo.getUniqueItems(subject)
@@ -245,7 +245,7 @@ func (repo *uniqueRepository) DeleteUnique(ctx context.Context, subject interfac
 		}
 
 		for _, unique := range items {
-			u, err := repo.get(tx, unique.ID)
+			u, err := repo.getWithoutTx(bg, unique.ID)
 			if err != nil {
 				if xerrors.Is(err, ErrNotFound) {
 					continue
@@ -260,48 +260,26 @@ func (repo *uniqueRepository) DeleteUnique(ctx context.Context, subject interfac
 
 		// NOTE(54m): Delete unique items
 		for u := range deleteTarget {
-			rbInsert = append(rbInsert, u)
 			if err := repo.deleteByID(tx, u.ID); err != nil {
 				return xerrors.Errorf("failed to delete(Tx): %w", err)
 			}
 		}
 
 		return nil
-	}); err != nil {
-		return nil, xerrors.Errorf("could not run transaction: %w", err)
+	}
+	
+	var err error
+	if tx := ctx.Value(transactionInProgressKey{}); tx != nil {
+		err = cb(ctx, tx.(*firestore.Transaction))
+	} else {
+		err = repo.firestoreClient.RunTransaction(ctx, cb)
 	}
 
-	return repo.makeRollbackFunc(rbInsert, []Unique{}), nil
-}
-
-func (repo *uniqueRepository) makeRollbackFunc(rbInsert, rbDelete []Unique) RollbackFunc {
-	return func(ctx context.Context) error {
-		if ctx.Value(transactionInProgressKey{}) != nil {
-			ctx = context.Background()
-		}
-		if err := repo.firestoreClient.RunTransaction(ctx, func(cx context.Context, tx *firestore.Transaction) error {
-			for _, unique := range rbInsert {
-				// escape: scopelint
-				if err := repo.insert(tx, &Unique{
-					ID:         unique.ID,
-					Collection: unique.Collection,
-					Data:       unique.Data,
-					Value:      unique.Value,
-				}); err != nil {
-					return xerrors.Errorf("failed to insert(Tx): %w", err)
-				}
-			}
-			for _, unique := range rbDelete {
-				if err := repo.deleteByID(tx, unique.ID); err != nil {
-					return xerrors.Errorf("failed to delete(Tx): %w", err)
-				}
-			}
-			return nil
-		}); err != nil {
-			return xerrors.Errorf("could not run rollback(unique): %w", err)
-		}
-		return nil
+	if err != nil {
+		return xerrors.Errorf("could not run transaction: %w", err)
 	}
+
+	return nil
 }
 
 func (repo *uniqueRepository) getCollection() *firestore.CollectionRef {
@@ -332,11 +310,31 @@ func (repo *uniqueRepository) get(tx *firestore.Transaction, id string) (*Unique
 	return subject, nil
 }
 
+func (repo *uniqueRepository) getWithoutTx(ctx context.Context, id string) (*Unique, error) {
+	doc := repo.getDocRef(id)
+
+	snapShot, err := doc.Get(ctx)
+	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			return nil, ErrNotFound
+		}
+		return nil, xerrors.Errorf("error in Get method: %w", err)
+	}
+
+	subject := new(Unique)
+	if err := snapShot.DataTo(&subject); err != nil {
+		return nil, xerrors.Errorf("error in DataTo method: %w", err)
+	}
+	subject.ID = snapShot.Ref.ID
+
+	return subject, nil
+}
+
 func (repo *uniqueRepository) insert(tx *firestore.Transaction, subject *Unique) error {
 	dr := repo.getDocRef(subject.ID)
 
-	if err := tx.Set(dr, subject); err != nil {
-		return xerrors.Errorf("error in Set method(Tx): %w", err)
+	if err := tx.Create(dr, subject); err != nil {
+		return xerrors.Errorf("error in Create method(Tx): %w", err)
 	}
 	subject.ID = dr.ID
 

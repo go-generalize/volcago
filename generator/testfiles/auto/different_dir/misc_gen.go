@@ -137,6 +137,9 @@ func updateBuilder(v, param interface{}) map[string]firestore.Update {
 		}
 
 		pfv := pv.FieldByName(ft.Name)
+		if pfv.Interface() == nil && !isReservedType(fv) && fv.Kind() == reflect.Ptr {
+			pfv.Set(reflect.New(fv.Type().Elem()))
+		}
 
 		switch fv.Kind() {
 		case reflect.Ptr:
@@ -146,6 +149,9 @@ func updateBuilder(v, param interface{}) map[string]firestore.Update {
 		case reflect.Struct:
 			if isReservedType(fv) {
 				break
+			}
+			if pfv.Interface() == nil {
+				continue
 			}
 			for key, update := range updateBuilder(fv.Interface(), pfv.Interface()) {
 				update.FieldPath = append(firestore.FieldPath{path}, update.FieldPath...)

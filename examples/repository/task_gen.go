@@ -84,75 +84,75 @@ func NewTaskRepository(firestoreClient *firestore.Client, middleware ...TaskRepo
 	}
 }
 
-func (repo *taskRepository) beforeInsert(ctx context.Context, subject *model.Task) (RollbackFunc, error) {
+func (repo *taskRepository) beforeInsert(ctx context.Context, subject *model.Task) error {
 	repo.uniqueRepository.setMiddleware(ctx)
-	rb, err := repo.uniqueRepository.CheckUnique(ctx, nil, subject)
+	err := repo.uniqueRepository.CheckUnique(ctx, nil, subject)
 	if err != nil {
-		return nil, xerrors.Errorf("unique.middleware error: %w", err)
+		return xerrors.Errorf("unique.middleware error: %w", err)
 	}
 
 	for _, m := range repo.middleware {
 		c, err := m.BeforeInsert(ctx, subject)
 		if err != nil {
-			return nil, xerrors.Errorf("beforeInsert.middleware error(uniqueRB=%t): %w", rb(ctx) == nil, err)
+			return xerrors.Errorf("beforeInsert.middleware error: %w", err)
 		}
 		if !c {
 			continue
 		}
 	}
 
-	return rb, nil
+	return nil
 }
 
-func (repo *taskRepository) beforeUpdate(ctx context.Context, old, subject *model.Task) (RollbackFunc, error) {
+func (repo *taskRepository) beforeUpdate(ctx context.Context, old, subject *model.Task) error {
 	if ctx.Value(transactionInProgressKey{}) != nil && old == nil {
 		var err error
 		doc := repo.GetDocRef(subject.ID)
 		old, err = repo.get(context.Background(), doc)
 		if err != nil {
 			if status.Code(err) == codes.NotFound {
-				return nil, ErrNotFound
+				return ErrNotFound
 			}
-			return nil, xerrors.Errorf("error in Get method: %w", err)
+			return xerrors.Errorf("error in Get method: %w", err)
 		}
 	}
 	repo.uniqueRepository.setMiddleware(ctx)
-	rb, err := repo.uniqueRepository.CheckUnique(ctx, old, subject)
+	err := repo.uniqueRepository.CheckUnique(ctx, old, subject)
 	if err != nil {
-		return nil, xerrors.Errorf("unique.middleware error: %w", err)
+		return xerrors.Errorf("unique.middleware error: %w", err)
 	}
 
 	for _, m := range repo.middleware {
 		c, err := m.BeforeUpdate(ctx, old, subject)
 		if err != nil {
-			return nil, xerrors.Errorf("beforeUpdate.middleware error: %w", err)
+			return xerrors.Errorf("beforeUpdate.middleware error: %w", err)
 		}
 		if !c {
 			continue
 		}
 	}
 
-	return rb, nil
+	return nil
 }
 
-func (repo *taskRepository) beforeDelete(ctx context.Context, subject *model.Task, opts ...DeleteOption) (RollbackFunc, error) {
+func (repo *taskRepository) beforeDelete(ctx context.Context, subject *model.Task, opts ...DeleteOption) error {
 	repo.uniqueRepository.setMiddleware(ctx)
-	rb, err := repo.uniqueRepository.DeleteUnique(ctx, subject)
+	err := repo.uniqueRepository.DeleteUnique(ctx, subject)
 	if err != nil {
-		return nil, xerrors.Errorf("unique.middleware error: %w", err)
+		return xerrors.Errorf("unique.middleware error: %w", err)
 	}
 
 	for _, m := range repo.middleware {
 		c, err := m.BeforeDelete(ctx, subject, opts...)
 		if err != nil {
-			return nil, xerrors.Errorf("beforeDelete.middleware error: %w", err)
+			return xerrors.Errorf("beforeDelete.middleware error: %w", err)
 		}
 		if !c {
 			continue
 		}
 	}
 
-	return rb, nil
+	return nil
 }
 
 // GetCollection - *firestore.CollectionRef getter
@@ -262,17 +262,9 @@ func (repo *taskRepository) GetWithDoc(ctx context.Context, doc *firestore.Docum
 
 // Insert - insert of `Task`
 func (repo *taskRepository) Insert(ctx context.Context, subject *model.Task) (_ string, err error) {
-	rb, err := repo.beforeInsert(ctx, subject)
-	if err != nil {
+	if err := repo.beforeInsert(ctx, subject); err != nil {
 		return "", xerrors.Errorf("before insert error: %w", err)
 	}
-	defer func() {
-		if err != nil {
-			if er := rb(ctx); er != nil {
-				err = xerrors.Errorf("unique check error %+v, original error: %w", er, err)
-			}
-		}
-	}()
 
 	if err = repo.saveIndexes(subject); err != nil {
 		return "", xerrors.Errorf("failed to saveIndexes: %w", err)
@@ -293,17 +285,9 @@ func (repo *taskRepository) Update(ctx context.Context, subject *model.Task) (er
 		return xerrors.Errorf("error in Get method: %w", err)
 	}
 
-	rb, err := repo.beforeUpdate(ctx, old, subject)
-	if err != nil {
+	if err := repo.beforeUpdate(ctx, old, subject); err != nil {
 		return xerrors.Errorf("before update error: %w", err)
 	}
-	defer func() {
-		if err != nil {
-			if er := rb(ctx); er != nil {
-				err = xerrors.Errorf("unique check error %+v, original error: %w", er, err)
-			}
-		}
-	}()
 
 	if err := repo.saveIndexes(subject); err != nil {
 		return xerrors.Errorf("failed to saveIndexes: %w", err)
@@ -319,17 +303,9 @@ func (repo *taskRepository) StrictUpdate(ctx context.Context, id string, param *
 
 // Delete - delete of `Task`
 func (repo *taskRepository) Delete(ctx context.Context, subject *model.Task, opts ...DeleteOption) (err error) {
-	rb, err := repo.beforeDelete(ctx, subject, opts...)
-	if err != nil {
+	if err := repo.beforeDelete(ctx, subject, opts...); err != nil {
 		return xerrors.Errorf("before delete error: %w", err)
 	}
-	defer func() {
-		if err != nil {
-			if er := rb(ctx); er != nil {
-				err = xerrors.Errorf("unique delete error %+v, original error: %w", er, err)
-			}
-		}
-	}()
 
 	return repo.deleteByID(ctx, subject.ID)
 }
@@ -340,17 +316,10 @@ func (repo *taskRepository) DeleteByID(ctx context.Context, id string, opts ...D
 	if err != nil {
 		return xerrors.Errorf("error in Get method: %w", err)
 	}
-	rb, err := repo.beforeDelete(ctx, subject, opts...)
-	if err != nil {
+
+	if err := repo.beforeDelete(ctx, subject, opts...); err != nil {
 		return xerrors.Errorf("before delete error: %w", err)
 	}
-	defer func() {
-		if err != nil {
-			if er := rb(ctx); er != nil {
-				err = xerrors.Errorf("unique delete error %+v, original error: %w", er, err)
-			}
-		}
-	}()
 
 	return repo.Delete(ctx, subject, opts...)
 }
@@ -362,22 +331,6 @@ func (repo *taskRepository) GetMulti(ctx context.Context, ids []string, opts ...
 
 // InsertMulti - bulk insert of `Task`
 func (repo *taskRepository) InsertMulti(ctx context.Context, subjects []*model.Task) (_ []string, er error) {
-	var rbs []RollbackFunc
-	defer func() {
-		if er == nil {
-			return
-		}
-		if len(rbs) == 0 {
-			return
-		}
-		errs := make([]error, 0)
-		for _, rb := range rbs {
-			if err := rb(ctx); err != nil {
-				errs = append(errs, err)
-			}
-		}
-		er = xerrors.Errorf("unique check error %+v, original error: %w", errs, er)
-	}()
 
 	ids := make([]string, 0, len(subjects))
 	batches := make([]*firestore.WriteBatch, 0)
@@ -396,11 +349,9 @@ func (repo *taskRepository) InsertMulti(ctx context.Context, subjects []*model.T
 			}
 		}
 
-		rb, err := repo.beforeInsert(ctx, subject)
-		if err != nil {
+		if err := repo.beforeInsert(ctx, subject); err != nil {
 			return nil, xerrors.Errorf("before insert error(%d) [%v]: %w", i, subject.ID, err)
 		}
-		rbs = append(rbs, rb)
 
 		if err := repo.saveIndexes(subjects[i]); err != nil {
 			return nil, xerrors.Errorf("failed to saveIndexes: %w", err)
@@ -427,22 +378,6 @@ func (repo *taskRepository) InsertMulti(ctx context.Context, subjects []*model.T
 
 // UpdateMulti - bulk update of `Task`
 func (repo *taskRepository) UpdateMulti(ctx context.Context, subjects []*model.Task) (er error) {
-	var rbs []RollbackFunc
-	defer func() {
-		if er == nil {
-			return
-		}
-		if len(rbs) == 0 {
-			return
-		}
-		errs := make([]error, 0)
-		for _, rb := range rbs {
-			if err := rb(ctx); err != nil {
-				errs = append(errs, err)
-			}
-		}
-		er = xerrors.Errorf("unique check error %+v, original error: %w", errs, er)
-	}()
 
 	batches := make([]*firestore.WriteBatch, 0)
 	batch := repo.firestoreClient.Batch()
@@ -463,11 +398,9 @@ func (repo *taskRepository) UpdateMulti(ctx context.Context, subjects []*model.T
 			return xerrors.Errorf("error in DataTo method: %w", err)
 		}
 
-		rb, err := repo.beforeUpdate(ctx, old, subject)
-		if err != nil {
+		if err := repo.beforeUpdate(ctx, old, subject); err != nil {
 			return xerrors.Errorf("before update error(%d) [%v]: %w", i, subject.ID, err)
 		}
-		rbs = append(rbs, rb)
 
 		if err := repo.saveIndexes(subjects[i]); err != nil {
 			return xerrors.Errorf("failed to saveIndexes: %w", err)
@@ -493,22 +426,6 @@ func (repo *taskRepository) UpdateMulti(ctx context.Context, subjects []*model.T
 
 // DeleteMulti - bulk delete of `Task`
 func (repo *taskRepository) DeleteMulti(ctx context.Context, subjects []*model.Task, opts ...DeleteOption) (er error) {
-	var rbs []RollbackFunc
-	defer func() {
-		if er == nil {
-			return
-		}
-		if len(rbs) == 0 {
-			return
-		}
-		errs := make([]error, 0)
-		for _, rb := range rbs {
-			if err := rb(ctx); err != nil {
-				errs = append(errs, err)
-			}
-		}
-		er = xerrors.Errorf("unique delete error %+v, original error: %w", errs, er)
-	}()
 
 	batches := make([]*firestore.WriteBatch, 0)
 	batch := repo.firestoreClient.Batch()
@@ -523,11 +440,9 @@ func (repo *taskRepository) DeleteMulti(ctx context.Context, subjects []*model.T
 			return xerrors.Errorf("error in Get method [%v]: %w", subject.ID, err)
 		}
 
-		rb, err := repo.beforeDelete(ctx, subject, opts...)
-		if err != nil {
+		if err := repo.beforeDelete(ctx, subject, opts...); err != nil {
 			return xerrors.Errorf("before delete error(%d) [%v]: %w", i, subject.ID, err)
 		}
-		rbs = append(rbs, rb)
 
 		batch.Delete(ref)
 
@@ -590,17 +505,9 @@ func (repo *taskRepository) GetWithDocWithTx(tx *firestore.Transaction, doc *fir
 
 // InsertWithTx - insert of `Task` in transaction
 func (repo *taskRepository) InsertWithTx(ctx context.Context, tx *firestore.Transaction, subject *model.Task) (_ string, err error) {
-	rb, err := repo.beforeInsert(context.WithValue(ctx, transactionInProgressKey{}, 1), subject)
-	if err != nil {
+	if err := repo.beforeInsert(context.WithValue(ctx, transactionInProgressKey{}, tx), subject); err != nil {
 		return "", xerrors.Errorf("before insert error: %w", err)
 	}
-	defer func() {
-		if err != nil {
-			if er := rb(ctx); er != nil {
-				err = xerrors.Errorf("unique check error %+v, original error: %w", er, err)
-			}
-		}
-	}()
 
 	if err := repo.saveIndexes(subject); err != nil {
 		return "", xerrors.Errorf("failed to saveIndexes: %w", err)
@@ -611,17 +518,9 @@ func (repo *taskRepository) InsertWithTx(ctx context.Context, tx *firestore.Tran
 
 // UpdateWithTx - update of `Task` in transaction
 func (repo *taskRepository) UpdateWithTx(ctx context.Context, tx *firestore.Transaction, subject *model.Task) (err error) {
-	rb, err := repo.beforeUpdate(context.WithValue(ctx, transactionInProgressKey{}, 1), nil, subject)
-	if err != nil {
+	if err := repo.beforeUpdate(context.WithValue(ctx, transactionInProgressKey{}, tx), nil, subject); err != nil {
 		return xerrors.Errorf("before update error: %w", err)
 	}
-	defer func() {
-		if err != nil {
-			if er := rb(ctx); er != nil {
-				err = xerrors.Errorf("unique check error %+v, original error: %w", er, err)
-			}
-		}
-	}()
 
 	if err := repo.saveIndexes(subject); err != nil {
 		return xerrors.Errorf("failed to saveIndexes: %w", err)
@@ -637,17 +536,9 @@ func (repo *taskRepository) StrictUpdateWithTx(tx *firestore.Transaction, id str
 
 // DeleteWithTx - delete of `Task` in transaction
 func (repo *taskRepository) DeleteWithTx(ctx context.Context, tx *firestore.Transaction, subject *model.Task, opts ...DeleteOption) (err error) {
-	rb, err := repo.beforeDelete(context.WithValue(ctx, transactionInProgressKey{}, 1), subject, opts...)
-	if err != nil {
+	if err := repo.beforeDelete(context.WithValue(ctx, transactionInProgressKey{}, tx), subject, opts...); err != nil {
 		return xerrors.Errorf("before delete error: %w", err)
 	}
-	defer func() {
-		if err != nil {
-			if er := rb(ctx); er != nil {
-				err = xerrors.Errorf("unique check error %+v, original error: %w", er, err)
-			}
-		}
-	}()
 
 	return repo.deleteByID(tx, subject.ID)
 }
@@ -659,17 +550,9 @@ func (repo *taskRepository) DeleteByIDWithTx(ctx context.Context, tx *firestore.
 		return xerrors.Errorf("error in Get method: %w", err)
 	}
 
-	rb, err := repo.beforeDelete(context.WithValue(ctx, transactionInProgressKey{}, 1), subject, opts...)
-	if err != nil {
+	if err := repo.beforeDelete(context.WithValue(ctx, transactionInProgressKey{}, tx), subject, opts...); err != nil {
 		return xerrors.Errorf("before delete error: %w", err)
 	}
-	defer func() {
-		if err != nil {
-			if er := rb(ctx); er != nil {
-				err = xerrors.Errorf("unique delete error %+v, original error: %w", er, err)
-			}
-		}
-	}()
 
 	return repo.deleteByID(tx, id)
 }
@@ -681,32 +564,13 @@ func (repo *taskRepository) GetMultiWithTx(tx *firestore.Transaction, ids []stri
 
 // InsertMultiWithTx - bulk insert of `Task` in transaction
 func (repo *taskRepository) InsertMultiWithTx(ctx context.Context, tx *firestore.Transaction, subjects []*model.Task) (_ []string, er error) {
-	ctx = context.WithValue(ctx, transactionInProgressKey{}, 1)
-	var rbs []RollbackFunc
-	defer func() {
-		if er == nil {
-			return
-		}
-		if len(rbs) == 0 {
-			return
-		}
-		errs := make([]error, 0)
-		for _, rb := range rbs {
-			if err := rb(ctx); err != nil {
-				errs = append(errs, err)
-			}
-		}
-		er = xerrors.Errorf("unique check error %+v, original error: %w", errs, er)
-	}()
 
 	ids := make([]string, len(subjects))
 
 	for i := range subjects {
-		rb, err := repo.beforeInsert(ctx, subjects[i])
-		if err != nil {
+		if err := repo.beforeInsert(ctx, subjects[i]); err != nil {
 			return nil, xerrors.Errorf("before insert error(%d) [%v]: %w", i, subjects[i].ID, err)
 		}
-		rbs = append(rbs, rb)
 
 		if err := repo.saveIndexes(subjects[i]); err != nil {
 			return nil, xerrors.Errorf("failed to saveIndexes: %w", err)
@@ -724,31 +588,12 @@ func (repo *taskRepository) InsertMultiWithTx(ctx context.Context, tx *firestore
 
 // UpdateMultiWithTx - bulk update of `Task` in transaction
 func (repo *taskRepository) UpdateMultiWithTx(ctx context.Context, tx *firestore.Transaction, subjects []*model.Task) (er error) {
-	ctx = context.WithValue(ctx, transactionInProgressKey{}, 1)
-	var rbs []RollbackFunc
-	defer func() {
-		if er == nil {
-			return
-		}
-		if len(rbs) == 0 {
-			return
-		}
-		errs := make([]error, 0)
-		for _, rb := range rbs {
-			if err := rb(ctx); err != nil {
-				errs = append(errs, err)
-			}
-		}
-		er = xerrors.Errorf("unique check error %+v, original error: %w", errs, er)
-	}()
+	ctx = context.WithValue(ctx, transactionInProgressKey{}, tx)
 
-	ctx = context.WithValue(ctx, transactionInProgressKey{}, 1)
 	for i := range subjects {
-		rb, err := repo.beforeUpdate(ctx, nil, subjects[i])
-		if err != nil {
+		if err := repo.beforeUpdate(ctx, nil, subjects[i]); err != nil {
 			return xerrors.Errorf("before update error(%d) [%v]: %w", i, subjects[i].ID, err)
 		}
-		rbs = append(rbs, rb)
 	}
 
 	for i := range subjects {
@@ -765,22 +610,6 @@ func (repo *taskRepository) UpdateMultiWithTx(ctx context.Context, tx *firestore
 
 // DeleteMultiWithTx - bulk delete of `Task` in transaction
 func (repo *taskRepository) DeleteMultiWithTx(ctx context.Context, tx *firestore.Transaction, subjects []*model.Task, opts ...DeleteOption) (er error) {
-	var rbs []RollbackFunc
-	defer func() {
-		if er == nil {
-			return
-		}
-		if len(rbs) == 0 {
-			return
-		}
-		errs := make([]error, 0)
-		for _, rb := range rbs {
-			if err := rb(ctx); err != nil {
-				errs = append(errs, err)
-			}
-		}
-		er = xerrors.Errorf("unique delete error %+v, original error: %w", errs, er)
-	}()
 
 	var isHardDeleteMode bool
 	if len(opts) > 0 {
@@ -798,11 +627,9 @@ func (repo *taskRepository) DeleteMultiWithTx(ctx context.Context, tx *firestore
 			return xerrors.Errorf("error in get method(%d) [%v]: %w", i, subjects[i].ID, err)
 		}
 
-		rb, err := repo.beforeDelete(context.WithValue(ctx, transactionInProgressKey{}, 1), subjects[i], opts...)
-		if err != nil {
+		if err := repo.beforeDelete(context.WithValue(ctx, transactionInProgressKey{}, tx), subjects[i], opts...); err != nil {
 			return xerrors.Errorf("before delete error(%d) [%v]: %w", i, subjects[i].ID, err)
 		}
-		rbs = append(rbs, rb)
 	}
 
 	for i := range subjects {
@@ -816,22 +643,6 @@ func (repo *taskRepository) DeleteMultiWithTx(ctx context.Context, tx *firestore
 
 // DeleteMultiByIDWithTx - delete `Task` in bulk by array of `Task.ID` in transaction
 func (repo *taskRepository) DeleteMultiByIDsWithTx(ctx context.Context, tx *firestore.Transaction, ids []string, opts ...DeleteOption) (er error) {
-	var rbs []RollbackFunc
-	defer func() {
-		if er == nil {
-			return
-		}
-		if len(rbs) == 0 {
-			return
-		}
-		errs := make([]error, 0)
-		for _, rb := range rbs {
-			if err := rb(ctx); err != nil {
-				errs = append(errs, err)
-			}
-		}
-		er = xerrors.Errorf("unique delete error %+v, original error: %w", errs, er)
-	}()
 
 	for i := range ids {
 		dr := repo.GetDocRef(ids[i])
@@ -843,11 +654,9 @@ func (repo *taskRepository) DeleteMultiByIDsWithTx(ctx context.Context, tx *fire
 			return xerrors.Errorf("error in get method(%d) [%v]: %w", i, ids[i], err)
 		}
 
-		rb, err := repo.beforeDelete(context.WithValue(ctx, transactionInProgressKey{}, 1), subject, opts...)
-		if err != nil {
+		if err := repo.beforeDelete(context.WithValue(ctx, transactionInProgressKey{}, tx), subject, opts...); err != nil {
 			return xerrors.Errorf("before delete error(%d) [%v]: %w", i, subject.ID, err)
 		}
-		rbs = append(rbs, rb)
 	}
 
 	for i := range ids {

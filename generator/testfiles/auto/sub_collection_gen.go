@@ -95,75 +95,75 @@ func NewSubCollectionCollectionGroupRepository(firestoreClient *firestore.Client
 	}
 }
 
-func (repo *subCollectionRepository) beforeInsert(ctx context.Context, subject *SubCollection) (RollbackFunc, error) {
+func (repo *subCollectionRepository) beforeInsert(ctx context.Context, subject *SubCollection) error {
 	repo.uniqueRepository.setMiddleware(ctx)
-	rb, err := repo.uniqueRepository.CheckUnique(ctx, nil, subject)
+	err := repo.uniqueRepository.CheckUnique(ctx, nil, subject)
 	if err != nil {
-		return nil, xerrors.Errorf("unique.middleware error: %w", err)
+		return xerrors.Errorf("unique.middleware error: %w", err)
 	}
 
 	for _, m := range repo.middleware {
 		c, err := m.BeforeInsert(ctx, subject)
 		if err != nil {
-			return nil, xerrors.Errorf("beforeInsert.middleware error(uniqueRB=%t): %w", rb(ctx) == nil, err)
+			return xerrors.Errorf("beforeInsert.middleware error: %w", err)
 		}
 		if !c {
 			continue
 		}
 	}
 
-	return rb, nil
+	return nil
 }
 
-func (repo *subCollectionRepository) beforeUpdate(ctx context.Context, old, subject *SubCollection) (RollbackFunc, error) {
+func (repo *subCollectionRepository) beforeUpdate(ctx context.Context, old, subject *SubCollection) error {
 	if ctx.Value(transactionInProgressKey{}) != nil && old == nil {
 		var err error
 		doc := repo.GetDocRef(subject.ID)
 		old, err = repo.get(context.Background(), doc)
 		if err != nil {
 			if status.Code(err) == codes.NotFound {
-				return nil, ErrNotFound
+				return ErrNotFound
 			}
-			return nil, xerrors.Errorf("error in Get method: %w", err)
+			return xerrors.Errorf("error in Get method: %w", err)
 		}
 	}
 	repo.uniqueRepository.setMiddleware(ctx)
-	rb, err := repo.uniqueRepository.CheckUnique(ctx, old, subject)
+	err := repo.uniqueRepository.CheckUnique(ctx, old, subject)
 	if err != nil {
-		return nil, xerrors.Errorf("unique.middleware error: %w", err)
+		return xerrors.Errorf("unique.middleware error: %w", err)
 	}
 
 	for _, m := range repo.middleware {
 		c, err := m.BeforeUpdate(ctx, old, subject)
 		if err != nil {
-			return nil, xerrors.Errorf("beforeUpdate.middleware error: %w", err)
+			return xerrors.Errorf("beforeUpdate.middleware error: %w", err)
 		}
 		if !c {
 			continue
 		}
 	}
 
-	return rb, nil
+	return nil
 }
 
-func (repo *subCollectionRepository) beforeDelete(ctx context.Context, subject *SubCollection, opts ...DeleteOption) (RollbackFunc, error) {
+func (repo *subCollectionRepository) beforeDelete(ctx context.Context, subject *SubCollection, opts ...DeleteOption) error {
 	repo.uniqueRepository.setMiddleware(ctx)
-	rb, err := repo.uniqueRepository.DeleteUnique(ctx, subject)
+	err := repo.uniqueRepository.DeleteUnique(ctx, subject)
 	if err != nil {
-		return nil, xerrors.Errorf("unique.middleware error: %w", err)
+		return xerrors.Errorf("unique.middleware error: %w", err)
 	}
 
 	for _, m := range repo.middleware {
 		c, err := m.BeforeDelete(ctx, subject, opts...)
 		if err != nil {
-			return nil, xerrors.Errorf("beforeDelete.middleware error: %w", err)
+			return xerrors.Errorf("beforeDelete.middleware error: %w", err)
 		}
 		if !c {
 			continue
 		}
 	}
 
-	return rb, nil
+	return nil
 }
 
 // GetCollection - *firestore.CollectionRef getter
@@ -216,6 +216,7 @@ func (repo *subCollectionRepository) Free() {
 
 // SubCollectionSearchParam - params for search
 type SubCollectionSearchParam struct {
+	ID   *QueryChainer
 	Flag *QueryChainer
 
 	CursorKey   string
@@ -260,17 +261,9 @@ func (repo *subCollectionRepository) Insert(ctx context.Context, subject *SubCol
 	if repo.collectionGroup != nil {
 		return "", ErrNotAvailableCG
 	}
-	rb, err := repo.beforeInsert(ctx, subject)
-	if err != nil {
+	if err := repo.beforeInsert(ctx, subject); err != nil {
 		return "", xerrors.Errorf("before insert error: %w", err)
 	}
-	defer func() {
-		if err != nil {
-			if er := rb(ctx); er != nil {
-				err = xerrors.Errorf("unique check error %+v, original error: %w", er, err)
-			}
-		}
-	}()
 
 	return repo.insert(ctx, subject)
 }
@@ -290,17 +283,9 @@ func (repo *subCollectionRepository) Update(ctx context.Context, subject *SubCol
 		return xerrors.Errorf("error in Get method: %w", err)
 	}
 
-	rb, err := repo.beforeUpdate(ctx, old, subject)
-	if err != nil {
+	if err := repo.beforeUpdate(ctx, old, subject); err != nil {
 		return xerrors.Errorf("before update error: %w", err)
 	}
-	defer func() {
-		if err != nil {
-			if er := rb(ctx); er != nil {
-				err = xerrors.Errorf("unique check error %+v, original error: %w", er, err)
-			}
-		}
-	}()
 
 	return repo.update(ctx, subject)
 }
@@ -318,17 +303,9 @@ func (repo *subCollectionRepository) Delete(ctx context.Context, subject *SubCol
 	if repo.collectionGroup != nil {
 		return ErrNotAvailableCG
 	}
-	rb, err := repo.beforeDelete(ctx, subject, opts...)
-	if err != nil {
+	if err := repo.beforeDelete(ctx, subject, opts...); err != nil {
 		return xerrors.Errorf("before delete error: %w", err)
 	}
-	defer func() {
-		if err != nil {
-			if er := rb(ctx); er != nil {
-				err = xerrors.Errorf("unique delete error %+v, original error: %w", er, err)
-			}
-		}
-	}()
 
 	return repo.deleteByID(ctx, subject.ID)
 }
@@ -341,6 +318,10 @@ func (repo *subCollectionRepository) DeleteByID(ctx context.Context, id string, 
 	subject, err := repo.Get(ctx, id)
 	if err != nil {
 		return xerrors.Errorf("error in Get method: %w", err)
+	}
+
+	if err := repo.beforeDelete(ctx, subject, opts...); err != nil {
+		return xerrors.Errorf("before delete error: %w", err)
 	}
 
 	return repo.Delete(ctx, subject, opts...)
@@ -359,22 +340,6 @@ func (repo *subCollectionRepository) InsertMulti(ctx context.Context, subjects [
 	if repo.collectionGroup != nil {
 		return nil, ErrNotAvailableCG
 	}
-	var rbs []RollbackFunc
-	defer func() {
-		if er == nil {
-			return
-		}
-		if len(rbs) == 0 {
-			return
-		}
-		errs := make([]error, 0)
-		for _, rb := range rbs {
-			if err := rb(ctx); err != nil {
-				errs = append(errs, err)
-			}
-		}
-		er = xerrors.Errorf("unique check error %+v, original error: %w", errs, er)
-	}()
 
 	ids := make([]string, 0, len(subjects))
 	batches := make([]*firestore.WriteBatch, 0)
@@ -393,11 +358,9 @@ func (repo *subCollectionRepository) InsertMulti(ctx context.Context, subjects [
 			}
 		}
 
-		rb, err := repo.beforeInsert(ctx, subject)
-		if err != nil {
+		if err := repo.beforeInsert(ctx, subject); err != nil {
 			return nil, xerrors.Errorf("before insert error(%d) [%v]: %w", i, subject.ID, err)
 		}
-		rbs = append(rbs, rb)
 
 		batch.Set(ref, subject)
 		ids = append(ids, ref.ID)
@@ -423,22 +386,6 @@ func (repo *subCollectionRepository) UpdateMulti(ctx context.Context, subjects [
 	if repo.collectionGroup != nil {
 		return ErrNotAvailableCG
 	}
-	var rbs []RollbackFunc
-	defer func() {
-		if er == nil {
-			return
-		}
-		if len(rbs) == 0 {
-			return
-		}
-		errs := make([]error, 0)
-		for _, rb := range rbs {
-			if err := rb(ctx); err != nil {
-				errs = append(errs, err)
-			}
-		}
-		er = xerrors.Errorf("unique check error %+v, original error: %w", errs, er)
-	}()
 
 	batches := make([]*firestore.WriteBatch, 0)
 	batch := repo.firestoreClient.Batch()
@@ -459,11 +406,9 @@ func (repo *subCollectionRepository) UpdateMulti(ctx context.Context, subjects [
 			return xerrors.Errorf("error in DataTo method: %w", err)
 		}
 
-		rb, err := repo.beforeUpdate(ctx, old, subject)
-		if err != nil {
+		if err := repo.beforeUpdate(ctx, old, subject); err != nil {
 			return xerrors.Errorf("before update error(%d) [%v]: %w", i, subject.ID, err)
 		}
-		rbs = append(rbs, rb)
 
 		batch.Set(ref, subject)
 		i++
@@ -488,22 +433,6 @@ func (repo *subCollectionRepository) DeleteMulti(ctx context.Context, subjects [
 	if repo.collectionGroup != nil {
 		return ErrNotAvailableCG
 	}
-	var rbs []RollbackFunc
-	defer func() {
-		if er == nil {
-			return
-		}
-		if len(rbs) == 0 {
-			return
-		}
-		errs := make([]error, 0)
-		for _, rb := range rbs {
-			if err := rb(ctx); err != nil {
-				errs = append(errs, err)
-			}
-		}
-		er = xerrors.Errorf("unique delete error %+v, original error: %w", errs, er)
-	}()
 
 	batches := make([]*firestore.WriteBatch, 0)
 	batch := repo.firestoreClient.Batch()
@@ -518,11 +447,9 @@ func (repo *subCollectionRepository) DeleteMulti(ctx context.Context, subjects [
 			return xerrors.Errorf("error in Get method [%v]: %w", subject.ID, err)
 		}
 
-		rb, err := repo.beforeDelete(ctx, subject, opts...)
-		if err != nil {
+		if err := repo.beforeDelete(ctx, subject, opts...); err != nil {
 			return xerrors.Errorf("before delete error(%d) [%v]: %w", i, subject.ID, err)
 		}
-		rbs = append(rbs, rb)
 
 		batch.Delete(ref)
 
@@ -597,17 +524,9 @@ func (repo *subCollectionRepository) InsertWithTx(ctx context.Context, tx *fires
 	if repo.collectionGroup != nil {
 		return "", ErrNotAvailableCG
 	}
-	rb, err := repo.beforeInsert(context.WithValue(ctx, transactionInProgressKey{}, 1), subject)
-	if err != nil {
+	if err := repo.beforeInsert(context.WithValue(ctx, transactionInProgressKey{}, tx), subject); err != nil {
 		return "", xerrors.Errorf("before insert error: %w", err)
 	}
-	defer func() {
-		if err != nil {
-			if er := rb(ctx); er != nil {
-				err = xerrors.Errorf("unique check error %+v, original error: %w", er, err)
-			}
-		}
-	}()
 
 	return repo.insert(tx, subject)
 }
@@ -617,17 +536,9 @@ func (repo *subCollectionRepository) UpdateWithTx(ctx context.Context, tx *fires
 	if repo.collectionGroup != nil {
 		return ErrNotAvailableCG
 	}
-	rb, err := repo.beforeUpdate(context.WithValue(ctx, transactionInProgressKey{}, 1), nil, subject)
-	if err != nil {
+	if err := repo.beforeUpdate(context.WithValue(ctx, transactionInProgressKey{}, tx), nil, subject); err != nil {
 		return xerrors.Errorf("before update error: %w", err)
 	}
-	defer func() {
-		if err != nil {
-			if er := rb(ctx); er != nil {
-				err = xerrors.Errorf("unique check error %+v, original error: %w", er, err)
-			}
-		}
-	}()
 
 	return repo.update(tx, subject)
 }
@@ -645,17 +556,9 @@ func (repo *subCollectionRepository) DeleteWithTx(ctx context.Context, tx *fires
 	if repo.collectionGroup != nil {
 		return ErrNotAvailableCG
 	}
-	rb, err := repo.beforeDelete(context.WithValue(ctx, transactionInProgressKey{}, 1), subject, opts...)
-	if err != nil {
+	if err := repo.beforeDelete(context.WithValue(ctx, transactionInProgressKey{}, tx), subject, opts...); err != nil {
 		return xerrors.Errorf("before delete error: %w", err)
 	}
-	defer func() {
-		if err != nil {
-			if er := rb(ctx); er != nil {
-				err = xerrors.Errorf("unique check error %+v, original error: %w", er, err)
-			}
-		}
-	}()
 
 	return repo.deleteByID(tx, subject.ID)
 }
@@ -670,17 +573,9 @@ func (repo *subCollectionRepository) DeleteByIDWithTx(ctx context.Context, tx *f
 		return xerrors.Errorf("error in Get method: %w", err)
 	}
 
-	rb, err := repo.beforeDelete(context.WithValue(ctx, transactionInProgressKey{}, 1), subject, opts...)
-	if err != nil {
+	if err := repo.beforeDelete(context.WithValue(ctx, transactionInProgressKey{}, tx), subject, opts...); err != nil {
 		return xerrors.Errorf("before delete error: %w", err)
 	}
-	defer func() {
-		if err != nil {
-			if er := rb(ctx); er != nil {
-				err = xerrors.Errorf("unique delete error %+v, original error: %w", er, err)
-			}
-		}
-	}()
 
 	return repo.deleteByID(tx, id)
 }
@@ -698,32 +593,13 @@ func (repo *subCollectionRepository) InsertMultiWithTx(ctx context.Context, tx *
 	if repo.collectionGroup != nil {
 		return nil, ErrNotAvailableCG
 	}
-	ctx = context.WithValue(ctx, transactionInProgressKey{}, 1)
-	var rbs []RollbackFunc
-	defer func() {
-		if er == nil {
-			return
-		}
-		if len(rbs) == 0 {
-			return
-		}
-		errs := make([]error, 0)
-		for _, rb := range rbs {
-			if err := rb(ctx); err != nil {
-				errs = append(errs, err)
-			}
-		}
-		er = xerrors.Errorf("unique check error %+v, original error: %w", errs, er)
-	}()
 
 	ids := make([]string, len(subjects))
 
 	for i := range subjects {
-		rb, err := repo.beforeInsert(ctx, subjects[i])
-		if err != nil {
+		if err := repo.beforeInsert(ctx, subjects[i]); err != nil {
 			return nil, xerrors.Errorf("before insert error(%d) [%v]: %w", i, subjects[i].ID, err)
 		}
-		rbs = append(rbs, rb)
 
 		id, err := repo.insert(tx, subjects[i])
 		if err != nil {
@@ -740,31 +616,12 @@ func (repo *subCollectionRepository) UpdateMultiWithTx(ctx context.Context, tx *
 	if repo.collectionGroup != nil {
 		return ErrNotAvailableCG
 	}
-	ctx = context.WithValue(ctx, transactionInProgressKey{}, 1)
-	var rbs []RollbackFunc
-	defer func() {
-		if er == nil {
-			return
-		}
-		if len(rbs) == 0 {
-			return
-		}
-		errs := make([]error, 0)
-		for _, rb := range rbs {
-			if err := rb(ctx); err != nil {
-				errs = append(errs, err)
-			}
-		}
-		er = xerrors.Errorf("unique check error %+v, original error: %w", errs, er)
-	}()
+	ctx = context.WithValue(ctx, transactionInProgressKey{}, tx)
 
-	ctx = context.WithValue(ctx, transactionInProgressKey{}, 1)
 	for i := range subjects {
-		rb, err := repo.beforeUpdate(ctx, nil, subjects[i])
-		if err != nil {
+		if err := repo.beforeUpdate(ctx, nil, subjects[i]); err != nil {
 			return xerrors.Errorf("before update error(%d) [%v]: %w", i, subjects[i].ID, err)
 		}
-		rbs = append(rbs, rb)
 	}
 
 	for i := range subjects {
@@ -781,22 +638,6 @@ func (repo *subCollectionRepository) DeleteMultiWithTx(ctx context.Context, tx *
 	if repo.collectionGroup != nil {
 		return ErrNotAvailableCG
 	}
-	var rbs []RollbackFunc
-	defer func() {
-		if er == nil {
-			return
-		}
-		if len(rbs) == 0 {
-			return
-		}
-		errs := make([]error, 0)
-		for _, rb := range rbs {
-			if err := rb(ctx); err != nil {
-				errs = append(errs, err)
-			}
-		}
-		er = xerrors.Errorf("unique delete error %+v, original error: %w", errs, er)
-	}()
 
 	var isHardDeleteMode bool
 	if len(opts) > 0 {
@@ -814,11 +655,9 @@ func (repo *subCollectionRepository) DeleteMultiWithTx(ctx context.Context, tx *
 			return xerrors.Errorf("error in get method(%d) [%v]: %w", i, subjects[i].ID, err)
 		}
 
-		rb, err := repo.beforeDelete(context.WithValue(ctx, transactionInProgressKey{}, 1), subjects[i], opts...)
-		if err != nil {
+		if err := repo.beforeDelete(context.WithValue(ctx, transactionInProgressKey{}, tx), subjects[i], opts...); err != nil {
 			return xerrors.Errorf("before delete error(%d) [%v]: %w", i, subjects[i].ID, err)
 		}
-		rbs = append(rbs, rb)
 	}
 
 	for i := range subjects {
@@ -835,22 +674,6 @@ func (repo *subCollectionRepository) DeleteMultiByIDsWithTx(ctx context.Context,
 	if repo.collectionGroup != nil {
 		return ErrNotAvailableCG
 	}
-	var rbs []RollbackFunc
-	defer func() {
-		if er == nil {
-			return
-		}
-		if len(rbs) == 0 {
-			return
-		}
-		errs := make([]error, 0)
-		for _, rb := range rbs {
-			if err := rb(ctx); err != nil {
-				errs = append(errs, err)
-			}
-		}
-		er = xerrors.Errorf("unique delete error %+v, original error: %w", errs, er)
-	}()
 
 	for i := range ids {
 		dr := repo.GetDocRef(ids[i])
@@ -862,11 +685,9 @@ func (repo *subCollectionRepository) DeleteMultiByIDsWithTx(ctx context.Context,
 			return xerrors.Errorf("error in get method(%d) [%v]: %w", i, ids[i], err)
 		}
 
-		rb, err := repo.beforeDelete(context.WithValue(ctx, transactionInProgressKey{}, 1), subject, opts...)
-		if err != nil {
+		if err := repo.beforeDelete(context.WithValue(ctx, transactionInProgressKey{}, tx), subject, opts...); err != nil {
 			return xerrors.Errorf("before delete error(%d) [%v]: %w", i, subject.ID, err)
 		}
-		rbs = append(rbs, rb)
 	}
 
 	for i := range ids {
@@ -1099,6 +920,28 @@ func (repo *subCollectionRepository) searchByParam(v interface{}, param *SubColl
 		}
 		return repo.GetCollection().Query
 	}()
+	if param.ID != nil {
+		for _, chain := range param.ID.QueryGroup {
+			var value interface{}
+			switch val := chain.Value.(type) {
+			case string:
+				value = repo.GetDocRef(val)
+			case []string:
+				docRefs := make([]*firestore.DocumentRef, len(val))
+				for i := range val {
+					docRefs[i] = repo.GetDocRef(val[i])
+				}
+				value = docRefs
+			default:
+				return nil, nil, xerrors.Errorf("document id can only be of type `string` and `[]string`. value: %#v", chain.Value)
+			}
+			query = query.Where(firestore.DocumentID, chain.Operator, value)
+		}
+		if direction := param.ID.OrderByDirection; direction > 0 {
+			query = query.OrderBy(firestore.DocumentID, direction)
+			query = param.ID.BuildCursorQuery(query)
+		}
+	}
 	if param.Flag != nil {
 		for _, chain := range param.Flag.QueryGroup {
 			query = query.Where("flag", chain.Operator, chain.Value)
