@@ -97,93 +97,93 @@ func (repo *lockMeta2Repository) setMetaWithStrictUpdate(param *LockMeta2UpdateP
 	param.Version = firestore.Increment(1)
 }
 
-func (repo *lockMeta2Repository) beforeInsert(ctx context.Context, subject *LockMeta2) (RollbackFunc, error) {
+func (repo *lockMeta2Repository) beforeInsert(ctx context.Context, subject *LockMeta2) error {
 	if subject.Version != 0 {
-		return nil, xerrors.Errorf("insert data must be Version == 0 %+v: %w", subject, ErrVersionConflict)
+		return xerrors.Errorf("insert data must be Version == 0 %+v: %w", subject, ErrVersionConflict)
 	}
 	if subject.DeletedAt != nil {
-		return nil, xerrors.Errorf("insert data must be DeletedAt == nil: %+v", subject)
+		return xerrors.Errorf("insert data must be DeletedAt == nil: %+v", subject)
 	}
 	repo.setMeta(subject, true)
 	repo.uniqueRepository.setMiddleware(ctx)
-	rb, err := repo.uniqueRepository.CheckUnique(ctx, nil, subject)
+	err := repo.uniqueRepository.CheckUnique(ctx, nil, subject)
 	if err != nil {
-		return nil, xerrors.Errorf("unique.middleware error: %w", err)
+		return xerrors.Errorf("unique.middleware error: %w", err)
 	}
 
 	for _, m := range repo.middleware {
 		c, err := m.BeforeInsert(ctx, subject)
 		if err != nil {
-			return nil, xerrors.Errorf("beforeInsert.middleware error(uniqueRB=%t): %w", rb(ctx) == nil, err)
+			return xerrors.Errorf("beforeInsert.middleware error: %w", err)
 		}
 		if !c {
 			continue
 		}
 	}
 
-	return rb, nil
+	return nil
 }
 
-func (repo *lockMeta2Repository) beforeUpdate(ctx context.Context, old, subject *LockMeta2) (RollbackFunc, error) {
+func (repo *lockMeta2Repository) beforeUpdate(ctx context.Context, old, subject *LockMeta2) error {
 	if ctx.Value(transactionInProgressKey{}) != nil && old == nil {
 		var err error
 		doc := repo.GetDocRef(subject.ID)
 		old, err = repo.get(context.Background(), doc)
 		if err != nil {
 			if status.Code(err) == codes.NotFound {
-				return nil, ErrNotFound
+				return ErrNotFound
 			}
-			return nil, xerrors.Errorf("error in Get method: %w", err)
+			return xerrors.Errorf("error in Get method: %w", err)
 		}
 	}
 	if old.Version > subject.Version {
-		return nil, xerrors.Errorf(
+		return xerrors.Errorf(
 			"The data in the database is newer: (db version: %d, target version: %d) %+v: %w",
 			old.Version, subject.Version, subject, ErrVersionConflict,
 		)
 	}
 	if subject.DeletedAt != nil {
-		return nil, xerrors.Errorf("update data must be DeletedAt == nil: %+v", subject)
+		return xerrors.Errorf("update data must be DeletedAt == nil: %+v", subject)
 	}
 	repo.setMeta(subject, false)
 	repo.uniqueRepository.setMiddleware(ctx)
-	rb, err := repo.uniqueRepository.CheckUnique(ctx, old, subject)
+	err := repo.uniqueRepository.CheckUnique(ctx, old, subject)
 	if err != nil {
-		return nil, xerrors.Errorf("unique.middleware error: %w", err)
+		return xerrors.Errorf("unique.middleware error: %w", err)
 	}
 
 	for _, m := range repo.middleware {
 		c, err := m.BeforeUpdate(ctx, old, subject)
 		if err != nil {
-			return nil, xerrors.Errorf("beforeUpdate.middleware error: %w", err)
+			return xerrors.Errorf("beforeUpdate.middleware error: %w", err)
 		}
 		if !c {
 			continue
 		}
 	}
 
-	return rb, nil
+	return nil
 }
 
-func (repo *lockMeta2Repository) beforeDelete(ctx context.Context, subject *LockMeta2, opts ...DeleteOption) (RollbackFunc, error) {
+func (repo *lockMeta2Repository) beforeDelete(ctx context.Context, subject *LockMeta2, opts ...DeleteOption) error {
 	repo.setMeta(subject, false)
 	repo.uniqueRepository.setMiddleware(ctx)
-	rb, err := repo.uniqueRepository.DeleteUnique(ctx, subject)
+	err := repo.uniqueRepository.DeleteUnique(ctx, subject)
 	if err != nil {
-		return nil, xerrors.Errorf("unique.middleware error: %w", err)
+		return xerrors.Errorf("unique.middleware error: %w", err)
 	}
 
 	for _, m := range repo.middleware {
 		c, err := m.BeforeDelete(ctx, subject, opts...)
 		if err != nil {
-			return nil, xerrors.Errorf("beforeDelete.middleware error: %w", err)
+			return xerrors.Errorf("beforeDelete.middleware error: %w", err)
 		}
 		if !c {
 			continue
 		}
 	}
 
-	return rb, nil
+	return nil
 }
 
 // GetCollection - *firestore.CollectionRef getter
@@ -208,6 +208,7 @@ func (repo *lockMeta2Repository) RunInTransaction() func(ctx context.Context, f 
 
 // LockMeta2SearchParam - params for search
 type LockMeta2SearchParam struct {
+	ID        *QueryChainer
 	Text      *QueryChainer
 	Flag      *QueryChainer
 	CreatedAt *QueryChainer
@@ -260,17 +261,9 @@ func (repo *lockMeta2Repository) GetWithDoc(ctx context.Context, doc *firestore.
 
 // Insert - insert of `LockMeta2`
 func (repo *lockMeta2Repository) Insert(ctx context.Context, subject *LockMeta2) (_ string, err error) {
-	rb, err := repo.beforeInsert(ctx, subject)
-	if err != nil {
+	if err := repo.beforeInsert(ctx, subject); err != nil {
 		return "", xerrors.Errorf("before insert error: %w", err)
 	}
-	defer func() {
-		if err != nil {
-			if er := rb(ctx); er != nil {
-				err = xerrors.Errorf("unique check error %+v, original error: %w", er, err)
-			}
-		}
-	}()
 
 	return repo.insert(ctx, subject)
 }
@@ -287,17 +280,9 @@ func (repo *lockMeta2Repository) Update(ctx context.Context, subject *LockMeta2)
 		return xerrors.Errorf("error in Get method: %w", err)
 	}
 
-	rb, err := repo.beforeUpdate(ctx, old, subject)
-	if err != nil {
+	if err := repo.beforeUpdate(ctx, old, subject); err != nil {
 		return xerrors.Errorf("before update error: %w", err)
 	}
-	defer func() {
-		if err != nil {
-			if er := rb(ctx); er != nil {
-				err = xerrors.Errorf("unique check error %+v, original error: %w", er, err)
-			}
-		}
-	}()
 
 	return repo.update(ctx, subject)
 }
@@ -309,6 +294,10 @@ func (repo *lockMeta2Repository) StrictUpdate(ctx context.Context, id string, pa
 
 // Delete - delete of `LockMeta2`
 func (repo *lockMeta2Repository) Delete(ctx context.Context, subject *LockMeta2, opts ...DeleteOption) (err error) {
+	if err := repo.beforeDelete(ctx, subject, opts...); err != nil {
+		return xerrors.Errorf("before delete error: %w", err)
+	}
+
 	if len(opts) > 0 && opts[0].Mode == DeleteModeSoft {
 		t := time.Now()
 		subject.DeletedAt = &t
@@ -318,18 +307,6 @@ func (repo *lockMeta2Repository) Delete(ctx context.Context, subject *LockMeta2,
 		return nil
 	}
 
-	rb, err := repo.beforeDelete(ctx, subject, opts...)
-	if err != nil {
-		return xerrors.Errorf("before delete error: %w", err)
-	}
-	defer func() {
-		if err != nil {
-			if er := rb(ctx); er != nil {
-				err = xerrors.Errorf("unique delete error %+v, original error: %w", er, err)
-			}
-		}
-	}()
-
 	return repo.deleteByID(ctx, subject.ID)
 }
 
@@ -338,6 +315,10 @@ func (repo *lockMeta2Repository) DeleteByID(ctx context.Context, id string, opts
 	subject, err := repo.Get(ctx, id)
 	if err != nil {
 		return xerrors.Errorf("error in Get method: %w", err)
+	}
+
+	if err := repo.beforeDelete(ctx, subject, opts...); err != nil {
+		return xerrors.Errorf("before delete error: %w", err)
 	}
 
 	if len(opts) > 0 && opts[0].Mode == DeleteModeSoft {
@@ -359,22 +340,6 @@ func (repo *lockMeta2Repository) GetMulti(ctx context.Context, ids []string, opt
 
 // InsertMulti - bulk insert of `LockMeta2`
 func (repo *lockMeta2Repository) InsertMulti(ctx context.Context, subjects []*LockMeta2) (_ []string, er error) {
-	var rbs []RollbackFunc
-	defer func() {
-		if er == nil {
-			return
-		}
-		if len(rbs) == 0 {
-			return
-		}
-		errs := make([]error, 0)
-		for _, rb := range rbs {
-			if err := rb(ctx); err != nil {
-				errs = append(errs, err)
-			}
-		}
-		er = xerrors.Errorf("unique check error %+v, original error: %w", errs, er)
-	}()
 
 	ids := make([]string, 0, len(subjects))
 	batches := make([]*firestore.WriteBatch, 0)
@@ -393,11 +358,9 @@ func (repo *lockMeta2Repository) InsertMulti(ctx context.Context, subjects []*Lo
 			}
 		}
 
-		rb, err := repo.beforeInsert(ctx, subject)
-		if err != nil {
+		if err := repo.beforeInsert(ctx, subject); err != nil {
 			return nil, xerrors.Errorf("before insert error(%d) [%v]: %w", i, subject.ID, err)
 		}
-		rbs = append(rbs, rb)
 
 		batch.Set(ref, subject)
 		ids = append(ids, ref.ID)
@@ -420,22 +383,6 @@ func (repo *lockMeta2Repository) InsertMulti(ctx context.Context, subjects []*Lo
 
 // UpdateMulti - bulk update of `LockMeta2`
 func (repo *lockMeta2Repository) UpdateMulti(ctx context.Context, subjects []*LockMeta2) (er error) {
-	var rbs []RollbackFunc
-	defer func() {
-		if er == nil {
-			return
-		}
-		if len(rbs) == 0 {
-			return
-		}
-		errs := make([]error, 0)
-		for _, rb := range rbs {
-			if err := rb(ctx); err != nil {
-				errs = append(errs, err)
-			}
-		}
-		er = xerrors.Errorf("unique check error %+v, original error: %w", errs, er)
-	}()
 
 	batches := make([]*firestore.WriteBatch, 0)
 	batch := repo.firestoreClient.Batch()
@@ -456,11 +403,9 @@ func (repo *lockMeta2Repository) UpdateMulti(ctx context.Context, subjects []*Lo
 			return xerrors.Errorf("error in DataTo method: %w", err)
 		}
 
-		rb, err := repo.beforeUpdate(ctx, old, subject)
-		if err != nil {
+		if err := repo.beforeUpdate(ctx, old, subject); err != nil {
 			return xerrors.Errorf("before update error(%d) [%v]: %w", i, subject.ID, err)
 		}
-		rbs = append(rbs, rb)
 
 		batch.Set(ref, subject)
 		i++
@@ -482,22 +427,6 @@ func (repo *lockMeta2Repository) UpdateMulti(ctx context.Context, subjects []*Lo
 
 // DeleteMulti - bulk delete of `LockMeta2`
 func (repo *lockMeta2Repository) DeleteMulti(ctx context.Context, subjects []*LockMeta2, opts ...DeleteOption) (er error) {
-	var rbs []RollbackFunc
-	defer func() {
-		if er == nil {
-			return
-		}
-		if len(rbs) == 0 {
-			return
-		}
-		errs := make([]error, 0)
-		for _, rb := range rbs {
-			if err := rb(ctx); err != nil {
-				errs = append(errs, err)
-			}
-		}
-		er = xerrors.Errorf("unique delete error %+v, original error: %w", errs, er)
-	}()
 
 	batches := make([]*firestore.WriteBatch, 0)
 	batch := repo.firestoreClient.Batch()
@@ -512,11 +441,9 @@ func (repo *lockMeta2Repository) DeleteMulti(ctx context.Context, subjects []*Lo
 			return xerrors.Errorf("error in Get method [%v]: %w", subject.ID, err)
 		}
 
-		rb, err := repo.beforeDelete(ctx, subject, opts...)
-		if err != nil {
+		if err := repo.beforeDelete(ctx, subject, opts...); err != nil {
 			return xerrors.Errorf("before delete error(%d) [%v]: %w", i, subject.ID, err)
 		}
-		rbs = append(rbs, rb)
 
 		if len(opts) > 0 && opts[0].Mode == DeleteModeSoft {
 			t := time.Now()
@@ -585,34 +512,18 @@ func (repo *lockMeta2Repository) GetWithDocWithTx(tx *firestore.Transaction, doc
 
 // InsertWithTx - insert of `LockMeta2` in transaction
 func (repo *lockMeta2Repository) InsertWithTx(ctx context.Context, tx *firestore.Transaction, subject *LockMeta2) (_ string, err error) {
-	rb, err := repo.beforeInsert(context.WithValue(ctx, transactionInProgressKey{}, 1), subject)
-	if err != nil {
+	if err := repo.beforeInsert(context.WithValue(ctx, transactionInProgressKey{}, tx), subject); err != nil {
 		return "", xerrors.Errorf("before insert error: %w", err)
 	}
-	defer func() {
-		if err != nil {
-			if er := rb(ctx); er != nil {
-				err = xerrors.Errorf("unique check error %+v, original error: %w", er, err)
-			}
-		}
-	}()
 
 	return repo.insert(tx, subject)
 }
 
 // UpdateWithTx - update of `LockMeta2` in transaction
 func (repo *lockMeta2Repository) UpdateWithTx(ctx context.Context, tx *firestore.Transaction, subject *LockMeta2) (err error) {
-	rb, err := repo.beforeUpdate(context.WithValue(ctx, transactionInProgressKey{}, 1), nil, subject)
-	if err != nil {
+	if err := repo.beforeUpdate(context.WithValue(ctx, transactionInProgressKey{}, tx), nil, subject); err != nil {
 		return xerrors.Errorf("before update error: %w", err)
 	}
-	defer func() {
-		if err != nil {
-			if er := rb(ctx); er != nil {
-				err = xerrors.Errorf("unique check error %+v, original error: %w", er, err)
-			}
-		}
-	}()
 
 	return repo.update(tx, subject)
 }
@@ -624,6 +535,10 @@ func (repo *lockMeta2Repository) StrictUpdateWithTx(tx *firestore.Transaction, i
 
 // DeleteWithTx - delete of `LockMeta2` in transaction
 func (repo *lockMeta2Repository) DeleteWithTx(ctx context.Context, tx *firestore.Transaction, subject *LockMeta2, opts ...DeleteOption) (err error) {
+	if err := repo.beforeDelete(context.WithValue(ctx, transactionInProgressKey{}, tx), subject, opts...); err != nil {
+		return xerrors.Errorf("before delete error: %w", err)
+	}
+
 	if len(opts) > 0 && opts[0].Mode == DeleteModeSoft {
 		t := time.Now()
 		subject.DeletedAt = &t
@@ -632,18 +547,6 @@ func (repo *lockMeta2Repository) DeleteWithTx(ctx context.Context, tx *firestore
 		}
 		return nil
 	}
-
-	rb, err := repo.beforeDelete(context.WithValue(ctx, transactionInProgressKey{}, 1), subject, opts...)
-	if err != nil {
-		return xerrors.Errorf("before delete error: %w", err)
-	}
-	defer func() {
-		if err != nil {
-			if er := rb(ctx); er != nil {
-				err = xerrors.Errorf("unique check error %+v, original error: %w", er, err)
-			}
-		}
-	}()
 
 	return repo.deleteByID(tx, subject.ID)
 }
@@ -664,17 +567,9 @@ func (repo *lockMeta2Repository) DeleteByIDWithTx(ctx context.Context, tx *fires
 		return nil
 	}
 
-	rb, err := repo.beforeDelete(context.WithValue(ctx, transactionInProgressKey{}, 1), subject, opts...)
-	if err != nil {
+	if err := repo.beforeDelete(context.WithValue(ctx, transactionInProgressKey{}, tx), subject, opts...); err != nil {
 		return xerrors.Errorf("before delete error: %w", err)
 	}
-	defer func() {
-		if err != nil {
-			if er := rb(ctx); er != nil {
-				err = xerrors.Errorf("unique delete error %+v, original error: %w", er, err)
-			}
-		}
-	}()
 
 	return repo.deleteByID(tx, id)
 }
@@ -686,32 +581,13 @@ func (repo *lockMeta2Repository) GetMultiWithTx(tx *firestore.Transaction, ids [
 
 // InsertMultiWithTx - bulk insert of `LockMeta2` in transaction
 func (repo *lockMeta2Repository) InsertMultiWithTx(ctx context.Context, tx *firestore.Transaction, subjects []*LockMeta2) (_ []string, er error) {
-	ctx = context.WithValue(ctx, transactionInProgressKey{}, 1)
-	var rbs []RollbackFunc
-	defer func() {
-		if er == nil {
-			return
-		}
-		if len(rbs) == 0 {
-			return
-		}
-		errs := make([]error, 0)
-		for _, rb := range rbs {
-			if err := rb(ctx); err != nil {
-				errs = append(errs, err)
-			}
-		}
-		er = xerrors.Errorf("unique check error %+v, original error: %w", errs, er)
-	}()
 
 	ids := make([]string, len(subjects))
 
 	for i := range subjects {
-		rb, err := repo.beforeInsert(ctx, subjects[i])
-		if err != nil {
+		if err := repo.beforeInsert(ctx, subjects[i]); err != nil {
 			return nil, xerrors.Errorf("before insert error(%d) [%v]: %w", i, subjects[i].ID, err)
 		}
-		rbs = append(rbs, rb)
 
 		id, err := repo.insert(tx, subjects[i])
 		if err != nil {
@@ -725,31 +601,12 @@ func (repo *lockMeta2Repository) InsertMultiWithTx(ctx context.Context, tx *fire
 
 // UpdateMultiWithTx - bulk update of `LockMeta2` in transaction
 func (repo *lockMeta2Repository) UpdateMultiWithTx(ctx context.Context, tx *firestore.Transaction, subjects []*LockMeta2) (er error) {
-	ctx = context.WithValue(ctx, transactionInProgressKey{}, 1)
-	var rbs []RollbackFunc
-	defer func() {
-		if er == nil {
-			return
-		}
-		if len(rbs) == 0 {
-			return
-		}
-		errs := make([]error, 0)
-		for _, rb := range rbs {
-			if err := rb(ctx); err != nil {
-				errs = append(errs, err)
-			}
-		}
-		er = xerrors.Errorf("unique check error %+v, original error: %w", errs, er)
-	}()
+	ctx = context.WithValue(ctx, transactionInProgressKey{}, tx)
 
-	ctx = context.WithValue(ctx, transactionInProgressKey{}, 1)
 	for i := range subjects {
-		rb, err := repo.beforeUpdate(ctx, nil, subjects[i])
-		if err != nil {
+		if err := repo.beforeUpdate(ctx, nil, subjects[i]); err != nil {
 			return xerrors.Errorf("before update error(%d) [%v]: %w", i, subjects[i].ID, err)
 		}
-		rbs = append(rbs, rb)
 	}
 
 	for i := range subjects {
@@ -763,22 +620,6 @@ func (repo *lockMeta2Repository) UpdateMultiWithTx(ctx context.Context, tx *fire
 
 // DeleteMultiWithTx - bulk delete of `LockMeta2` in transaction
 func (repo *lockMeta2Repository) DeleteMultiWithTx(ctx context.Context, tx *firestore.Transaction, subjects []*LockMeta2, opts ...DeleteOption) (er error) {
-	var rbs []RollbackFunc
-	defer func() {
-		if er == nil {
-			return
-		}
-		if len(rbs) == 0 {
-			return
-		}
-		errs := make([]error, 0)
-		for _, rb := range rbs {
-			if err := rb(ctx); err != nil {
-				errs = append(errs, err)
-			}
-		}
-		er = xerrors.Errorf("unique delete error %+v, original error: %w", errs, er)
-	}()
 
 	t := time.Now()
 	var isHardDeleteMode bool
@@ -797,11 +638,9 @@ func (repo *lockMeta2Repository) DeleteMultiWithTx(ctx context.Context, tx *fire
 			return xerrors.Errorf("error in get method(%d) [%v]: %w", i, subjects[i].ID, err)
 		}
 
-		rb, err := repo.beforeDelete(context.WithValue(ctx, transactionInProgressKey{}, 1), subjects[i], opts...)
-		if err != nil {
+		if err := repo.beforeDelete(context.WithValue(ctx, transactionInProgressKey{}, tx), subjects[i], opts...); err != nil {
 			return xerrors.Errorf("before delete error(%d) [%v]: %w", i, subjects[i].ID, err)
 		}
-		rbs = append(rbs, rb)
 
 		if !isHardDeleteMode {
 			subjects[i].DeletedAt = &t
@@ -826,22 +665,6 @@ func (repo *lockMeta2Repository) DeleteMultiWithTx(ctx context.Context, tx *fire
 
 // DeleteMultiByIDWithTx - delete `LockMeta2` in bulk by array of `LockMeta2.ID` in transaction
 func (repo *lockMeta2Repository) DeleteMultiByIDsWithTx(ctx context.Context, tx *firestore.Transaction, ids []string, opts ...DeleteOption) (er error) {
-	var rbs []RollbackFunc
-	defer func() {
-		if er == nil {
-			return
-		}
-		if len(rbs) == 0 {
-			return
-		}
-		errs := make([]error, 0)
-		for _, rb := range rbs {
-			if err := rb(ctx); err != nil {
-				errs = append(errs, err)
-			}
-		}
-		er = xerrors.Errorf("unique delete error %+v, original error: %w", errs, er)
-	}()
 
 	t := time.Now()
 	for i := range ids {
@@ -854,11 +677,9 @@ func (repo *lockMeta2Repository) DeleteMultiByIDsWithTx(ctx context.Context, tx 
 			return xerrors.Errorf("error in get method(%d) [%v]: %w", i, ids[i], err)
 		}
 
-		rb, err := repo.beforeDelete(context.WithValue(ctx, transactionInProgressKey{}, 1), subject, opts...)
-		if err != nil {
+		if err := repo.beforeDelete(context.WithValue(ctx, transactionInProgressKey{}, tx), subject, opts...); err != nil {
 			return xerrors.Errorf("before delete error(%d) [%v]: %w", i, subject.ID, err)
 		}
-		rbs = append(rbs, rb)
 
 		if len(opts) > 0 && opts[0].Mode == DeleteModeSoft {
 			subject.DeletedAt = &t
@@ -1112,6 +933,28 @@ func (repo *lockMeta2Repository) searchByParam(v interface{}, param *LockMeta2Se
 	query := func() firestore.Query {
 		return repo.GetCollection().Query
 	}()
+	if param.ID != nil {
+		for _, chain := range param.ID.QueryGroup {
+			var value interface{}
+			switch val := chain.Value.(type) {
+			case string:
+				value = repo.GetDocRef(val)
+			case []string:
+				docRefs := make([]*firestore.DocumentRef, len(val))
+				for i := range val {
+					docRefs[i] = repo.GetDocRef(val[i])
+				}
+				value = docRefs
+			default:
+				return nil, nil, xerrors.Errorf("document id can only be of type `string` and `[]string`. value: %#v", chain.Value)
+			}
+			query = query.Where(firestore.DocumentID, chain.Operator, value)
+		}
+		if direction := param.ID.OrderByDirection; direction > 0 {
+			query = query.OrderBy(firestore.DocumentID, direction)
+			query = param.ID.BuildCursorQuery(query)
+		}
+	}
 	if param.Text != nil {
 		for _, chain := range param.Text.QueryGroup {
 			query = query.Where("text", chain.Operator, chain.Value)

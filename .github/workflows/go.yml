@@ -13,8 +13,6 @@ jobs:
     services:
       firestore:
         image: google/cloud-sdk
-        ports:
-          - 8000:8000
         options: -ti
 
     env:
@@ -22,10 +20,18 @@ jobs:
       FIRESTORE_EMULATOR_HOST: 127.0.0.1:8000
 
     steps:
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@main
+        with:
+          version: "latest"
+
       - name: Install firestore emulator
-        run: docker exec $(docker ps -f "ancestor=google/cloud-sdk" -q) apt install -y google-cloud-sdk-firestore-emulator
+        run: |
+          gcloud components install beta --quiet
+          gcloud components install cloud-firestore-emulator --quiet
+
       - name: Start firestore emulator
-        run: docker exec -d $(docker ps -f "ancestor=google/cloud-sdk" -q) gcloud beta emulators firestore start --project=pname --host-port 0.0.0.0:8000
+        run: gcloud beta emulators firestore start --host-port=localhost:8000 &
 
       - name: Set up Go 1.18
         uses: actions/setup-go@v3
@@ -48,6 +54,10 @@ jobs:
             echo 'Please run "make gen_samples"'
             exit 1
           fi
+
+      - name: Check firestore emulator
+        run: |
+          curl http://localhost:8000 --silent --retry 30 --retry-delay 1 --retry-connrefused
 
       - name: Run tests
         run: |

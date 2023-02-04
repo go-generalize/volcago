@@ -208,6 +208,46 @@ func (mr *MockLockRepositoryMockRecorder) Get(ctx, id interface{}, opts ...inter
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockLockRepository)(nil).Get), varargs...)
 }
 
+// GetByText2 mocks base method.
+func (m *MockLockRepository) GetByText2(ctx context.Context, text2 string, opts ...model.GetOption) (*model.Lock, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, text2}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetByText2", varargs...)
+	ret0, _ := ret[0].(*model.Lock)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByText2 indicates an expected call of GetByText2.
+func (mr *MockLockRepositoryMockRecorder) GetByText2(ctx, text2 interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, text2}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByText2", reflect.TypeOf((*MockLockRepository)(nil).GetByText2), varargs...)
+}
+
+// GetByText2WithTx mocks base method.
+func (m *MockLockRepository) GetByText2WithTx(tx *firestore.Transaction, text2 string, opts ...model.GetOption) (*model.Lock, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{tx, text2}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetByText2WithTx", varargs...)
+	ret0, _ := ret[0].(*model.Lock)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByText2WithTx indicates an expected call of GetByText2WithTx.
+func (mr *MockLockRepositoryMockRecorder) GetByText2WithTx(tx, text2 interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{tx, text2}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByText2WithTx", reflect.TypeOf((*MockLockRepository)(nil).GetByText2WithTx), varargs...)
+}
+
 // GetCollection mocks base method.
 func (m *MockLockRepository) GetCollection() *firestore.CollectionRef {
 	m.ctrl.T.Helper()
