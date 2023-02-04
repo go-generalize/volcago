@@ -312,7 +312,8 @@ func TestFirestore(t *testing.T) {
 			if _, err = taskRepo.Insert(ctx, tk); err == nil {
 				ttrr.Fatalf("expected err != nil")
 			} else if !xerrors.Is(err, model.ErrUniqueConstraint) {
-				ttrr.Fatalf("expected err == ErrUniqueConstraint")
+				fmt.Printf("[CheckUnique] Fin %+v\n", tk)
+				ttrr.Fatalf("expected err == ErrUniqueConstraint: %+v", err)
 			}
 
 			// Check if the documents in the Unique collection can be deleted.
@@ -507,7 +508,7 @@ func TestFirestoreTransaction_Single(t *testing.T) {
 		}); err == nil {
 			tr.Fatalf("unexpected err != nil")
 		} else if !xerrors.Is(err, model.ErrUniqueConstraint) {
-			tr.Fatalf("unexpected err == ErrUniqueConstraint")
+			tr.Fatalf("unexpected err == ErrUniqueConstraint err:%+v", err)
 		}
 	})
 
@@ -601,7 +602,7 @@ func TestFirestoreTransaction_Multi(t *testing.T) {
 		}); err == nil {
 			tr.Fatalf("unexpected err != nil")
 		} else if !xerrors.Is(err, model.ErrUniqueConstraint) {
-			tr.Fatalf("unexpected err == ErrUniqueConstraint")
+			tr.Fatalf("unexpected err == ErrUniqueConstraint err:%+v", err)
 		}
 	})
 
