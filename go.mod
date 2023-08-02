@@ -3,7 +3,7 @@ module github.com/go-generalize/volcago
 go 1.18
 
 require (
-	cloud.google.com/go/firestore v1.11.0
+	cloud.google.com/go/firestore v1.12.0
 	github.com/fatih/structtag v1.2.0
 	github.com/go-generalize/go-easyparser v0.3.3
 	github.com/go-utils/cont v0.1.2
