@@ -13,7 +13,7 @@ require (
 	github.com/go-utils/xim v0.1.2
 	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.5.9
-	github.com/iancoleman/strcase v0.2.0
+	github.com/iancoleman/strcase v0.3.0
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2
 	google.golang.org/api v0.133.0
 	google.golang.org/genproto v0.0.0-20230706204954-ccb25ca9f130
