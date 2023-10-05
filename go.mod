@@ -15,7 +15,7 @@ require (
 	github.com/google/go-cmp v0.5.9
 	github.com/iancoleman/strcase v0.3.0
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2
-	google.golang.org/api v0.143.0
+	google.golang.org/api v0.144.0
 	google.golang.org/genproto v0.0.0-20230913181813-007df8e322eb
 	google.golang.org/grpc v1.58.2
 )
