@@ -34,7 +34,7 @@ jobs:
         run: gcloud beta emulators firestore start --host-port=localhost:8000 &
 
       - name: Set up Go 1.18
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: 1.18
         id: go
