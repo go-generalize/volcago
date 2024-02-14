@@ -102,6 +102,9 @@ func newStructGenerator(typ *types.Object, structName, appVersion string, opt Ge
 			return nil, xerrors.Errorf("failed to get import path for current directory: %w", err)
 		}
 
+		// Convert backslash into slash for Windows
+		importPath = filepath.ToSlash(importPath)
+
 		g.param.StructNameRef = "model." + g.structName
 		g.param.ModelImportPath = importPath
 	}
