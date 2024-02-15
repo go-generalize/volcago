@@ -17,6 +17,10 @@ import (
 	"golang.org/x/xerrors"
 )
 
+const (
+	goFileExtension = ".go"
+)
+
 type structGenerator struct {
 	param templateParameter
 
@@ -52,7 +56,7 @@ func newStructGenerator(typ *types.Object, structName, appVersion string, opt Ge
 
 	name := g.typ.Position.Filename
 
-	g.param.FileName = strings.TrimSuffix(filepath.Base(name), ".go")
+	g.param.FileName = strings.TrimSuffix(filepath.Base(name), goFileExtension)
 	g.param.GeneratedFileName = g.param.FileName + "_gen"
 	g.param.MetaFieldsEnabled = hasMetaFields
 	g.param.IsSubCollection = g.opt.Subcollection
@@ -83,8 +87,8 @@ func newStructGenerator(typ *types.Object, structName, appVersion string, opt Ge
 		mop := g.opt.MockOutputPath
 
 		mop = strings.ReplaceAll(mop, "{{ .GeneratedFileName }}", g.param.GeneratedFileName)
-		if !strings.HasSuffix(mop, ".go") {
-			mop += ".go"
+		if !strings.HasSuffix(mop, goFileExtension) {
+			mop += goFileExtension
 		}
 		return mop
 	}()
@@ -265,7 +269,7 @@ func (g *structGenerator) parseTypeImpl(rawKey, firestoreKey string, obj *types.
 		if err != nil {
 			log.Printf(
 				"%s: tag for %s in struct %s in %s",
-				pos, e.RawTag, g.structName, g.param.GeneratedFileName+".go",
+				pos, e.RawTag, g.structName, g.param.GeneratedFileName+goFileExtension,
 			)
 			continue
 		}
@@ -384,7 +388,7 @@ func (g *structGenerator) generate() error {
 		tmplName      string
 		generatedName string
 	}{
-		{"gen.go.tmpl", g.param.GeneratedFileName + ".go"},
+		{"gen.go.tmpl", g.param.GeneratedFileName + goFileExtension},
 		{"label.go.tmpl", g.param.FileName + "_label_gen.go"},
 		{"constant.go.tmpl", "constant_gen.go"},
 		{"errors.go.tmpl", "errors_gen.go"},
