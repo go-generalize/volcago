@@ -60,6 +60,7 @@ type templateParameter struct {
 	FieldInfoForIndexes *FieldInfo
 	BoolCriteriaCnt     int
 	SliceExist          bool
+	UseLo               bool
 
 	AutomaticGeneration bool
 	IsSubCollection     bool

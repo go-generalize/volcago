@@ -521,6 +521,21 @@ func TestFirestoreQuery(t *testing.T) {
 					Name: "slice_nested",
 				},
 			},
+			NestedSubTask: model.SubTask{
+				Name: fmt.Sprintf("nested_sub_task_%d", i),
+				NestedSubSubTask: model.SubSubTask{
+					Name: fmt.Sprintf("nested_sub_sub_task_%d", i),
+				},
+				NestedRefSubSubTask: &model.SubSubTask{
+					Name: fmt.Sprintf("nested_sub_ref_sub_task_%d", i),
+				},
+			},
+			NestedRefSubTask: &model.SubTask{
+				Name: fmt.Sprintf("nested_ref_sub_task_%d", i),
+				NestedRefSubSubTask: &model.SubSubTask{
+					Name: fmt.Sprintf("nested_ref_sub_ref_sub_task_%d", i),
+				},
+			},
 		}
 		tks = append(tks, tk)
 	}
@@ -735,6 +750,62 @@ func TestFirestoreQuery(t *testing.T) {
 		}
 
 		if len(tasks) != 0 {
+			tr.Fatalf("unexpected length: %d (expected: %d)", len(tasks), 10)
+		}
+	})
+
+	t.Run("Nested Object(1件)", func(tr *testing.T) {
+		param := &model.TaskSearchParam{}
+		param.NestedSubTask.Name = model.NewQueryChainer().Equal("nested_sub_task_1")
+
+		tasks, err := taskRepo.Search(ctx, param, nil)
+		if err != nil {
+			tr.Fatalf("%+v", err)
+		}
+
+		if len(tasks) != 1 {
+			tr.Fatalf("unexpected length: %d (expected: %d)", len(tasks), 10)
+		}
+	})
+
+	t.Run("Nested Nested Object(1件)", func(tr *testing.T) {
+		param := &model.TaskSearchParam{}
+		param.NestedSubTask.NestedSubSubTask.Name = model.NewQueryChainer().Equal("nested_sub_sub_task_1")
+
+		tasks, err := taskRepo.Search(ctx, param, nil)
+		if err != nil {
+			tr.Fatalf("%+v", err)
+		}
+
+		if len(tasks) != 1 {
+			tr.Fatalf("unexpected length: %d (expected: %d)", len(tasks), 10)
+		}
+	})
+
+	t.Run("Nullable Nested Object(1件)", func(tr *testing.T) {
+		param := &model.TaskSearchParam{}
+		param.NestedRefSubTask.Name = model.NewQueryChainer().Equal("nested_ref_sub_task_1")
+
+		tasks, err := taskRepo.Search(ctx, param, nil)
+		if err != nil {
+			tr.Fatalf("%+v", err)
+		}
+
+		if len(tasks) != 1 {
+			tr.Fatalf("unexpected length: %d (expected: %d)", len(tasks), 10)
+		}
+	})
+
+	t.Run("Nullable Nested Nullable Nested Object(1件)", func(tr *testing.T) {
+		param := &model.TaskSearchParam{}
+		param.NestedRefSubTask.NestedRefSubSubTask.Name = model.NewQueryChainer().Equal("nested_ref_sub_ref_sub_task_1")
+
+		tasks, err := taskRepo.Search(ctx, param, nil)
+		if err != nil {
+			tr.Fatalf("%+v", err)
+		}
+
+		if len(tasks) != 1 {
 			tr.Fatalf("unexpected length: %d (expected: %d)", len(tasks), 10)
 		}
 	})

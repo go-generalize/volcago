@@ -7,6 +7,7 @@ import (
 
 	"cloud.google.com/go/firestore"
 	"github.com/go-utils/xim"
+	"github.com/samber/lo"
 	"golang.org/x/xerrors"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
@@ -186,7 +187,7 @@ func (repo *taskRepository) saveIndexes(subject *Task) error {
 		idx.AddSomething(TaskIndexLabelProportionEqual, subject.Proportion)
 		idx.Add(TaskIndexLabelTaskKindEqual, string(subject.TaskKind))
 		idx.Add(TaskIndexLabelInner_AEqual, string(subject.Inner.A))
-		idx.Add(TaskIndexLabelInnerRef_AEqual, string(subject.InnerRef.A))
+		idx.Add(TaskIndexLabelInnerRef_AEqual, string(lo.FromPtr(subject.InnerRef).A))
 	}
 	indexes, err := idx.Build()
 	if err != nil {
