@@ -21,6 +21,8 @@ func NewGenerator(dir string) (*Generator, error) {
 		return fo.BasePackage
 	})
 
+	psr.IgnoreOmittedJSONField = true
+
 	if err != nil {
 		return nil, xerrors.Errorf("failed to initialize parser: %w", err)
 	}
