@@ -235,7 +235,7 @@ func (g *structGenerator) parseTypeImpl(rawKey, firestoreKey string, obj *types.
 		typeName := getGoTypeFromEPTypes(e.Type)
 		pos := e.Position.String()
 
-		if typeName == "" {
+		if isNestedStruct(e.Type) {
 			var o *types.Object
 			switch entry := e.Type.(type) {
 			case *types.Object:

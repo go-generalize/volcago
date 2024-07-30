@@ -221,17 +221,21 @@ type LockSearchParam struct {
 	Flag         *QueryChainer
 	Interface    *QueryChainer
 	MapInterface *QueryChainer
-	Nested       *QueryChainer
-	NestedPtr    *QueryChainer
-	SliceString  *QueryChainer
-	SliceNested  *QueryChainer
-	CreatedAt    *QueryChainer
-	CreatedBy    *QueryChainer
-	UpdatedAt    *QueryChainer
-	UpdatedBy    *QueryChainer
-	DeletedAt    *QueryChainer
-	DeletedBy    *QueryChainer
-	Version      *QueryChainer
+	Nested       struct {
+		Name *QueryChainer
+	}
+	NestedPtr struct {
+		Name *QueryChainer
+	}
+	SliceString *QueryChainer
+	SliceNested *QueryChainer
+	CreatedAt   *QueryChainer
+	CreatedBy   *QueryChainer
+	UpdatedAt   *QueryChainer
+	UpdatedBy   *QueryChainer
+	DeletedAt   *QueryChainer
+	DeletedBy   *QueryChainer
+	Version     *QueryChainer
 
 	IncludeSoftDeleted bool
 	CursorKey          string
@@ -243,17 +247,21 @@ type LockUpdateParam struct {
 	Flag         interface{}
 	Interface    interface{}
 	MapInterface interface{}
-	Nested       interface{}
-	NestedPtr    interface{}
-	SliceString  interface{}
-	SliceNested  interface{}
-	CreatedAt    interface{}
-	CreatedBy    interface{}
-	UpdatedAt    interface{}
-	UpdatedBy    interface{}
-	DeletedAt    interface{}
-	DeletedBy    interface{}
-	Version      interface{}
+	Nested       struct {
+		Name interface{}
+	}
+	NestedPtr struct {
+		Name interface{}
+	}
+	SliceString interface{}
+	SliceNested interface{}
+	CreatedAt   interface{}
+	CreatedBy   interface{}
+	UpdatedAt   interface{}
+	UpdatedBy   interface{}
+	DeletedAt   interface{}
+	DeletedBy   interface{}
+	Version     interface{}
 }
 
 // Search - search documents
@@ -1023,22 +1031,22 @@ func (repo *lockRepository) searchByParam(v interface{}, param *LockSearchParam)
 			}
 		}
 	}
-	if param.Nested != nil {
-		for _, chain := range param.Nested.QueryGroup {
-			query = query.Where("nested", chain.Operator, chain.Value)
+	if param.Nested.Name != nil {
+		for _, chain := range param.Nested.Name.QueryGroup {
+			query = query.Where("nested.name", chain.Operator, chain.Value)
 		}
-		if direction := param.Nested.OrderByDirection; direction > 0 {
-			query = query.OrderBy("nested", direction)
-			query = param.Nested.BuildCursorQuery(query)
+		if direction := param.Nested.Name.OrderByDirection; direction > 0 {
+			query = query.OrderBy("nested.name", direction)
+			query = param.Nested.Name.BuildCursorQuery(query)
 		}
 	}
-	if param.NestedPtr != nil {
-		for _, chain := range param.NestedPtr.QueryGroup {
-			query = query.Where("nested_ptr", chain.Operator, chain.Value)
+	if param.NestedPtr.Name != nil {
+		for _, chain := range param.NestedPtr.Name.QueryGroup {
+			query = query.Where("nested_ptr.name", chain.Operator, chain.Value)
 		}
-		if direction := param.NestedPtr.OrderByDirection; direction > 0 {
-			query = query.OrderBy("nested_ptr", direction)
-			query = param.NestedPtr.BuildCursorQuery(query)
+		if direction := param.NestedPtr.Name.OrderByDirection; direction > 0 {
+			query = query.OrderBy("nested_ptr.name", direction)
+			query = param.NestedPtr.Name.BuildCursorQuery(query)
 		}
 	}
 	if param.SliceString != nil {

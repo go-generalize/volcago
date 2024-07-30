@@ -94,3 +94,13 @@ func getGoTypeFromEPTypes(t eptypes.Type) string {
 
 	panic("unsupported: " + reflect.TypeOf(t).String())
 }
+
+func isNestedStruct(t eptypes.Type) bool {
+	switch t := t.(type) {
+	case *eptypes.Nullable:
+		return isNestedStruct(t.Inner)
+	case *eptypes.Object:
+		return true
+	}
+	return false
+}
