@@ -6,7 +6,7 @@ import "time"
 //go:generate ../bin/volcago -o repository Task
 
 type Inner struct {
-	A string `firestore:"a"`
+	A string `firestore:"a" indexer:"e"`
 }
 
 type Embedded struct {
@@ -29,6 +29,7 @@ type Task struct {
 	Flag         map[string]float64 `firestore:"flag"`
 	Indexes      map[string]bool    ``
 	Inner        Inner              `firestore:"inner"`
+	InnerRef     *Inner             `firestore:"innerRef"`
 	InnerMap     map[string]Inner   `firestore:"innerMap"`
 }
 

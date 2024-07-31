@@ -214,14 +214,14 @@ func (g *structGenerator) parseIndexesField(tags *structtag.Tags) error {
 }
 
 func (g *structGenerator) parseType() error {
-	if err := g.parseTypeImpl("", "", g.typ); err != nil {
+	if err := g.parseTypeImpl("", "", g.typ, []string{}); err != nil {
 		return xerrors.Errorf("failed to parse struct: %w", err)
 	}
 
 	return nil
 }
 
-func (g *structGenerator) parseTypeImpl(rawKey, firestoreKey string, obj *types.Object) error {
+func (g *structGenerator) parseTypeImpl(rawKey, firestoreKey string, obj *types.Object, nullableFields []string) error {
 	entries := make([]types.ObjectEntry, 0, len(obj.Entries))
 	for _, e := range obj.Entries {
 		entries = append(entries, e)
@@ -235,13 +235,15 @@ func (g *structGenerator) parseTypeImpl(rawKey, firestoreKey string, obj *types.
 		typeName := getGoTypeFromEPTypes(e.Type)
 		pos := e.Position.String()
 
-		if typeName == "" {
+		if isNestedStruct(e.Type) {
+			isNullable := false
 			var o *types.Object
 			switch entry := e.Type.(type) {
 			case *types.Object:
 				o = entry
 			case *types.Nullable:
 				o = entry.Inner.(*types.Object)
+				isNullable = true
 			default:
 				panic("unreachable")
 			}
@@ -258,7 +260,12 @@ func (g *structGenerator) parseTypeImpl(rawKey, firestoreKey string, obj *types.
 				fieldFirestoreKey = strings.Join(sliceutil.RemoveEmpty([]string{fieldFirestoreKey, t.Name}), ".")
 			}
 
-			if err = g.parseTypeImpl(fieldRawKey, fieldFirestoreKey, o); err != nil {
+			if isNullable {
+				g.param.UseLo = true
+				nullableFields = append(nullableFields, fieldRawKey)
+			}
+
+			if err = g.parseTypeImpl(fieldRawKey, fieldFirestoreKey, o, nullableFields); err != nil {
 				return xerrors.Errorf("failed to parse %s: %w", e.RawName, err)
 			}
 			continue
@@ -291,10 +298,11 @@ func (g *structGenerator) parseTypeImpl(rawKey, firestoreKey string, obj *types.
 
 		if e.RawTag == "" {
 			fieldInfo := &FieldInfo{
-				FsTag:     strings.Join(sliceutil.RemoveEmpty([]string{firestoreKey, e.RawName}), "."),
-				Field:     strings.Join(sliceutil.RemoveEmpty([]string{rawKey, e.RawName}), "."),
-				FieldType: typeName,
-				Indexes:   make([]*IndexesInfo, 0),
+				FsTag:          strings.Join(sliceutil.RemoveEmpty([]string{firestoreKey, e.RawName}), "."),
+				Field:          strings.Join(sliceutil.RemoveEmpty([]string{rawKey, e.RawName}), "."),
+				FieldType:      typeName,
+				Indexes:        make([]*IndexesInfo, 0),
+				NullableFields: nullableFields,
 			}
 			if _, err = g.appendIndexer(nil, firestoreKey, fieldInfo); err != nil {
 				return xerrors.Errorf("%s: %w", pos, err)
@@ -308,10 +316,11 @@ func (g *structGenerator) parseTypeImpl(rawKey, firestoreKey string, obj *types.
 		tag, err := tags.Get("firestore_key")
 		if err != nil {
 			fieldInfo := &FieldInfo{
-				FsTag:     strings.Join(sliceutil.RemoveEmpty([]string{firestoreKey, e.RawName}), "."),
-				Field:     strings.Join(sliceutil.RemoveEmpty([]string{rawKey, e.RawName}), "."),
-				FieldType: typeName,
-				Indexes:   make([]*IndexesInfo, 0),
+				FsTag:          strings.Join(sliceutil.RemoveEmpty([]string{firestoreKey, e.RawName}), "."),
+				Field:          strings.Join(sliceutil.RemoveEmpty([]string{rawKey, e.RawName}), "."),
+				FieldType:      typeName,
+				Indexes:        make([]*IndexesInfo, 0),
+				NullableFields: nullableFields,
 			}
 			if _, err = tags.Get("unique"); err == nil {
 				if typeName != typeString {
@@ -368,9 +377,10 @@ func (g *structGenerator) parseTypeImpl(rawKey, firestoreKey string, obj *types.
 
 		// NOTE: DocumentID検索用
 		fieldInfo := &FieldInfo{
-			Field:        strings.Join(sliceutil.RemoveEmpty([]string{rawKey, e.RawName}), "."),
-			FieldType:    typeName,
-			IsDocumentID: true,
+			Field:          strings.Join(sliceutil.RemoveEmpty([]string{rawKey, e.RawName}), "."),
+			FieldType:      typeName,
+			IsDocumentID:   true,
+			NullableFields: nullableFields,
 		}
 		g.param.FieldInfos = append(g.param.FieldInfos, fieldInfo)
 	}

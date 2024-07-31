@@ -47,12 +47,16 @@ const (
 	TaskIndexLabelFlagSuffix         = "f2"  // suffix-match of Flag
 	TaskIndexLabelFlagLike           = "f3"  // like-match of Flag
 	TaskIndexLabelFlagEqual          = "f4"  // perfect-match of Flag
-	TaskIndexLabelInnerPrefix        = "i1"  // prefix-match of Inner
-	TaskIndexLabelInnerSuffix        = "i2"  // suffix-match of Inner
-	TaskIndexLabelInnerLike          = "i3"  // like-match of Inner
-	TaskIndexLabelInnerEqual         = "i4"  // perfect-match of Inner
-	TaskIndexLabelInnerMapPrefix     = "i5"  // prefix-match of InnerMap
-	TaskIndexLabelInnerMapSuffix     = "i6"  // suffix-match of InnerMap
-	TaskIndexLabelInnerMapLike       = "i7"  // like-match of InnerMap
-	TaskIndexLabelInnerMapEqual      = "i8"  // perfect-match of InnerMap
+	TaskIndexLabelInner_AEqual       = "i4"  // perfect-match of Inner.A
+	TaskIndexLabelInner_ALike        = "i3"  // like-match of Inner.A
+	TaskIndexLabelInner_APrefix      = "i1"  // prefix-match of Inner.A
+	TaskIndexLabelInner_ASuffix      = "i2"  // suffix-match of Inner.A
+	TaskIndexLabelInnerRef_AEqual    = "i8"  // perfect-match of InnerRef.A
+	TaskIndexLabelInnerRef_ALike     = "i7"  // like-match of InnerRef.A
+	TaskIndexLabelInnerRef_APrefix   = "i5"  // prefix-match of InnerRef.A
+	TaskIndexLabelInnerRef_ASuffix   = "i6"  // suffix-match of InnerRef.A
+	TaskIndexLabelInnerMapPrefix     = "i9"  // prefix-match of InnerMap
+	TaskIndexLabelInnerMapSuffix     = "in1" // suffix-match of InnerMap
+	TaskIndexLabelInnerMapLike       = "in2" // like-match of InnerMap
+	TaskIndexLabelInnerMapEqual      = "in3" // perfect-match of InnerMap
 )

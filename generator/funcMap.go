@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-utils/cont"
 	"github.com/go-utils/plural"
+	"github.com/samber/lo"
 )
 
 func (g *structGenerator) getFuncMap() template.FuncMap {
@@ -295,6 +296,21 @@ func (g *structGenerator) getFuncMap() template.FuncMap {
 			}
 
 			return nil
+		},
+		"FieldValue": func(variableName string, fieldInfo *FieldInfo) string {
+			names := strings.Split(fieldInfo.Field, ".")
+			s := ""
+			for i, name := range names {
+				if i == 0 {
+					s = fmt.Sprintf("%s.%s", variableName, name)
+				} else {
+					s = fmt.Sprintf("%s.%s", s, name)
+				}
+				if lo.Contains(fieldInfo.NullableFields, strings.Join(names[:i+1], ".")) {
+					s = fmt.Sprintf("lo.FromPtr(%s)", s)
+				}
+			}
+			return s
 		},
 		"ToLower": func(s string) string {
 			return strings.ToLower(s)

@@ -7,6 +7,7 @@ import (
 
 	"cloud.google.com/go/firestore"
 	"github.com/go-utils/xim"
+	"github.com/samber/lo"
 	"golang.org/x/xerrors"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
@@ -184,6 +185,12 @@ func (repo *taskRepository) saveIndexes(subject *Task) error {
 		idx.AddPrefixes(TaskIndexLabelDescPrefix, string(subject.Desc))
 		idx.AddSuffixes(TaskIndexLabelDescSuffix, string(subject.Desc))
 		idx.AddSomething(TaskIndexLabelProportionEqual, subject.Proportion)
+		idx.Add(TaskIndexLabelNestedSubTask_NameEqual, string(subject.NestedSubTask.Name))
+		idx.Add(TaskIndexLabelNestedSubTask_NestedSubSubTask_NameEqual, string(subject.NestedSubTask.NestedSubSubTask.Name))
+		idx.Add(TaskIndexLabelNestedSubTask_NestedRefSubSubTask_NameEqual, string(lo.FromPtr(subject.NestedSubTask.NestedRefSubSubTask).Name))
+		idx.Add(TaskIndexLabelNestedRefSubTask_NameEqual, string(lo.FromPtr(subject.NestedRefSubTask).Name))
+		idx.Add(TaskIndexLabelNestedRefSubTask_NestedSubSubTask_NameEqual, string(lo.FromPtr(subject.NestedRefSubTask).NestedSubSubTask.Name))
+		idx.Add(TaskIndexLabelNestedRefSubTask_NestedRefSubSubTask_NameEqual, string(lo.FromPtr(lo.FromPtr(subject.NestedRefSubTask).NestedRefSubSubTask).Name))
 	}
 	indexes, err := idx.Build()
 	if err != nil {
@@ -199,17 +206,35 @@ func (repo *taskRepository) saveIndexes(subject *Task) error {
 
 // TaskSearchParam - params for search
 type TaskSearchParam struct {
-	ID           *QueryChainer
-	Desc         *QueryChainer
-	Created      *QueryChainer
-	Done         *QueryChainer
-	Done2        *QueryChainer
-	Count        *QueryChainer
-	Count64      *QueryChainer
-	NameList     *QueryChainer
-	Proportion   *QueryChainer
-	Flag         *QueryChainer
-	SliceSubTask *QueryChainer
+	ID            *QueryChainer
+	Desc          *QueryChainer
+	Created       *QueryChainer
+	Done          *QueryChainer
+	Done2         *QueryChainer
+	Count         *QueryChainer
+	Count64       *QueryChainer
+	NameList      *QueryChainer
+	Proportion    *QueryChainer
+	Flag          *QueryChainer
+	SliceSubTask  *QueryChainer
+	NestedSubTask struct {
+		Name             *QueryChainer
+		NestedSubSubTask struct {
+			Name *QueryChainer
+		}
+		NestedRefSubSubTask struct {
+			Name *QueryChainer
+		}
+	}
+	NestedRefSubTask struct {
+		Name             *QueryChainer
+		NestedSubSubTask struct {
+			Name *QueryChainer
+		}
+		NestedRefSubSubTask struct {
+			Name *QueryChainer
+		}
+	}
 
 	CursorKey   string
 	CursorLimit int
@@ -217,16 +242,34 @@ type TaskSearchParam struct {
 
 // TaskUpdateParam - params for strict updates
 type TaskUpdateParam struct {
-	Desc         interface{}
-	Created      interface{}
-	Done         interface{}
-	Done2        interface{}
-	Count        interface{}
-	Count64      interface{}
-	NameList     interface{}
-	Proportion   interface{}
-	Flag         interface{}
-	SliceSubTask interface{}
+	Desc          interface{}
+	Created       interface{}
+	Done          interface{}
+	Done2         interface{}
+	Count         interface{}
+	Count64       interface{}
+	NameList      interface{}
+	Proportion    interface{}
+	Flag          interface{}
+	SliceSubTask  interface{}
+	NestedSubTask struct {
+		Name             interface{}
+		NestedSubSubTask struct {
+			Name interface{}
+		}
+		NestedRefSubSubTask struct {
+			Name interface{}
+		}
+	}
+	NestedRefSubTask struct {
+		Name             interface{}
+		NestedSubSubTask struct {
+			Name interface{}
+		}
+		NestedRefSubSubTask struct {
+			Name interface{}
+		}
+	}
 }
 
 // Search - search documents
@@ -1099,6 +1142,150 @@ func (repo *taskRepository) searchByParam(v interface{}, param *TaskSearchParam)
 	if param.SliceSubTask != nil {
 		for _, chain := range param.SliceSubTask.QueryGroup {
 			query = query.Where("slice_sub_task", chain.Operator, chain.Value)
+		}
+	}
+	if param.NestedSubTask.Name != nil {
+		for _, chain := range param.NestedSubTask.Name.QueryGroup {
+			query = query.Where("nested_sub_task.name", chain.Operator, chain.Value)
+		}
+		if direction := param.NestedSubTask.Name.OrderByDirection; direction > 0 {
+			query = query.OrderBy("nested_sub_task.name", direction)
+			query = param.NestedSubTask.Name.BuildCursorQuery(query)
+		}
+		value, ok := param.NestedSubTask.Name.Filter.Value.(string)
+		// The value of the "indexer" tag = "e"
+		for _, filter := range param.NestedSubTask.Name.Filter.FilterTypes {
+			switch filter {
+			// Treat `Add` or otherwise as `Equal`.
+			case FilterTypeAdd:
+				fallthrough
+			default:
+				if !ok {
+					filters.AddSomething(TaskIndexLabelNestedSubTask_NameEqual, param.NestedSubTask.Name.Filter.Value)
+					continue
+				}
+				filters.Add(TaskIndexLabelNestedSubTask_NameEqual, value)
+			}
+		}
+	}
+	if param.NestedSubTask.NestedSubSubTask.Name != nil {
+		for _, chain := range param.NestedSubTask.NestedSubSubTask.Name.QueryGroup {
+			query = query.Where("nested_sub_task.nested_sub_task.name", chain.Operator, chain.Value)
+		}
+		if direction := param.NestedSubTask.NestedSubSubTask.Name.OrderByDirection; direction > 0 {
+			query = query.OrderBy("nested_sub_task.nested_sub_task.name", direction)
+			query = param.NestedSubTask.NestedSubSubTask.Name.BuildCursorQuery(query)
+		}
+		value, ok := param.NestedSubTask.NestedSubSubTask.Name.Filter.Value.(string)
+		// The value of the "indexer" tag = "e"
+		for _, filter := range param.NestedSubTask.NestedSubSubTask.Name.Filter.FilterTypes {
+			switch filter {
+			// Treat `Add` or otherwise as `Equal`.
+			case FilterTypeAdd:
+				fallthrough
+			default:
+				if !ok {
+					filters.AddSomething(TaskIndexLabelNestedSubTask_NestedSubSubTask_NameEqual, param.NestedSubTask.NestedSubSubTask.Name.Filter.Value)
+					continue
+				}
+				filters.Add(TaskIndexLabelNestedSubTask_NestedSubSubTask_NameEqual, value)
+			}
+		}
+	}
+	if param.NestedSubTask.NestedRefSubSubTask.Name != nil {
+		for _, chain := range param.NestedSubTask.NestedRefSubSubTask.Name.QueryGroup {
+			query = query.Where("nested_sub_task.nested_ref_sub_task.name", chain.Operator, chain.Value)
+		}
+		if direction := param.NestedSubTask.NestedRefSubSubTask.Name.OrderByDirection; direction > 0 {
+			query = query.OrderBy("nested_sub_task.nested_ref_sub_task.name", direction)
+			query = param.NestedSubTask.NestedRefSubSubTask.Name.BuildCursorQuery(query)
+		}
+		value, ok := param.NestedSubTask.NestedRefSubSubTask.Name.Filter.Value.(string)
+		// The value of the "indexer" tag = "e"
+		for _, filter := range param.NestedSubTask.NestedRefSubSubTask.Name.Filter.FilterTypes {
+			switch filter {
+			// Treat `Add` or otherwise as `Equal`.
+			case FilterTypeAdd:
+				fallthrough
+			default:
+				if !ok {
+					filters.AddSomething(TaskIndexLabelNestedSubTask_NestedRefSubSubTask_NameEqual, param.NestedSubTask.NestedRefSubSubTask.Name.Filter.Value)
+					continue
+				}
+				filters.Add(TaskIndexLabelNestedSubTask_NestedRefSubSubTask_NameEqual, value)
+			}
+		}
+	}
+	if param.NestedRefSubTask.Name != nil {
+		for _, chain := range param.NestedRefSubTask.Name.QueryGroup {
+			query = query.Where("nested_ref_sub_task.name", chain.Operator, chain.Value)
+		}
+		if direction := param.NestedRefSubTask.Name.OrderByDirection; direction > 0 {
+			query = query.OrderBy("nested_ref_sub_task.name", direction)
+			query = param.NestedRefSubTask.Name.BuildCursorQuery(query)
+		}
+		value, ok := param.NestedRefSubTask.Name.Filter.Value.(string)
+		// The value of the "indexer" tag = "e"
+		for _, filter := range param.NestedRefSubTask.Name.Filter.FilterTypes {
+			switch filter {
+			// Treat `Add` or otherwise as `Equal`.
+			case FilterTypeAdd:
+				fallthrough
+			default:
+				if !ok {
+					filters.AddSomething(TaskIndexLabelNestedRefSubTask_NameEqual, param.NestedRefSubTask.Name.Filter.Value)
+					continue
+				}
+				filters.Add(TaskIndexLabelNestedRefSubTask_NameEqual, value)
+			}
+		}
+	}
+	if param.NestedRefSubTask.NestedSubSubTask.Name != nil {
+		for _, chain := range param.NestedRefSubTask.NestedSubSubTask.Name.QueryGroup {
+			query = query.Where("nested_ref_sub_task.nested_sub_task.name", chain.Operator, chain.Value)
+		}
+		if direction := param.NestedRefSubTask.NestedSubSubTask.Name.OrderByDirection; direction > 0 {
+			query = query.OrderBy("nested_ref_sub_task.nested_sub_task.name", direction)
+			query = param.NestedRefSubTask.NestedSubSubTask.Name.BuildCursorQuery(query)
+		}
+		value, ok := param.NestedRefSubTask.NestedSubSubTask.Name.Filter.Value.(string)
+		// The value of the "indexer" tag = "e"
+		for _, filter := range param.NestedRefSubTask.NestedSubSubTask.Name.Filter.FilterTypes {
+			switch filter {
+			// Treat `Add` or otherwise as `Equal`.
+			case FilterTypeAdd:
+				fallthrough
+			default:
+				if !ok {
+					filters.AddSomething(TaskIndexLabelNestedRefSubTask_NestedSubSubTask_NameEqual, param.NestedRefSubTask.NestedSubSubTask.Name.Filter.Value)
+					continue
+				}
+				filters.Add(TaskIndexLabelNestedRefSubTask_NestedSubSubTask_NameEqual, value)
+			}
+		}
+	}
+	if param.NestedRefSubTask.NestedRefSubSubTask.Name != nil {
+		for _, chain := range param.NestedRefSubTask.NestedRefSubSubTask.Name.QueryGroup {
+			query = query.Where("nested_ref_sub_task.nested_ref_sub_task.name", chain.Operator, chain.Value)
+		}
+		if direction := param.NestedRefSubTask.NestedRefSubSubTask.Name.OrderByDirection; direction > 0 {
+			query = query.OrderBy("nested_ref_sub_task.nested_ref_sub_task.name", direction)
+			query = param.NestedRefSubTask.NestedRefSubSubTask.Name.BuildCursorQuery(query)
+		}
+		value, ok := param.NestedRefSubTask.NestedRefSubSubTask.Name.Filter.Value.(string)
+		// The value of the "indexer" tag = "e"
+		for _, filter := range param.NestedRefSubTask.NestedRefSubSubTask.Name.Filter.FilterTypes {
+			switch filter {
+			// Treat `Add` or otherwise as `Equal`.
+			case FilterTypeAdd:
+				fallthrough
+			default:
+				if !ok {
+					filters.AddSomething(TaskIndexLabelNestedRefSubTask_NestedRefSubSubTask_NameEqual, param.NestedRefSubTask.NestedRefSubSubTask.Name.Filter.Value)
+					continue
+				}
+				filters.Add(TaskIndexLabelNestedRefSubTask_NestedRefSubSubTask_NameEqual, value)
+			}
 		}
 	}
 

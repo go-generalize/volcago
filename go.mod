@@ -1,6 +1,6 @@
 module github.com/go-generalize/volcago
 
-go 1.22.3
+go 1.22
 
 require (
 	cloud.google.com/go/firestore v1.16.0
@@ -14,6 +14,8 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.6.0
 	github.com/iancoleman/strcase v0.3.0
+	github.com/samber/lo v1.46.0
+	go.uber.org/mock v0.4.0
 	golang.org/x/xerrors v0.0.0-20240716161551-93cc26a95ae9
 	google.golang.org/api v0.189.0
 	google.golang.org/genproto v0.0.0-20240730163845-b1a4ccb954bf

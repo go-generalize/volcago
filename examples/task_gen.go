@@ -7,6 +7,7 @@ import (
 
 	"cloud.google.com/go/firestore"
 	"github.com/go-utils/xim"
+	"github.com/samber/lo"
 	"golang.org/x/xerrors"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
@@ -185,6 +186,8 @@ func (repo *taskRepository) saveIndexes(subject *Task) error {
 		idx.AddSuffixes(TaskIndexLabelDescSuffix, string(subject.Desc))
 		idx.AddSomething(TaskIndexLabelProportionEqual, subject.Proportion)
 		idx.Add(TaskIndexLabelTaskKindEqual, string(subject.TaskKind))
+		idx.Add(TaskIndexLabelInner_AEqual, string(subject.Inner.A))
+		idx.Add(TaskIndexLabelInnerRef_AEqual, string(lo.FromPtr(subject.InnerRef).A))
 	}
 	indexes, err := idx.Build()
 	if err != nil {
@@ -212,8 +215,13 @@ type TaskSearchParam struct {
 	Proportion   *QueryChainer
 	TaskKind     *QueryChainer
 	Flag         *QueryChainer
-	Inner        *QueryChainer
-	InnerMap     *QueryChainer
+	Inner        struct {
+		A *QueryChainer
+	}
+	InnerRef struct {
+		A *QueryChainer
+	}
+	InnerMap *QueryChainer
 
 	CursorKey   string
 	CursorLimit int
@@ -232,8 +240,13 @@ type TaskUpdateParam struct {
 	Proportion   interface{}
 	TaskKind     interface{}
 	Flag         interface{}
-	Inner        interface{}
-	InnerMap     interface{}
+	Inner        struct {
+		A interface{}
+	}
+	InnerRef struct {
+		A interface{}
+	}
+	InnerMap interface{}
 }
 
 // Search - search documents
@@ -1150,26 +1163,51 @@ func (repo *taskRepository) searchByParam(v interface{}, param *TaskSearchParam)
 			}
 		}
 	}
-	if param.Inner != nil {
-		for _, chain := range param.Inner.QueryGroup {
-			query = query.Where("inner", chain.Operator, chain.Value)
+	if param.Inner.A != nil {
+		for _, chain := range param.Inner.A.QueryGroup {
+			query = query.Where("inner.a", chain.Operator, chain.Value)
 		}
-		if direction := param.Inner.OrderByDirection; direction > 0 {
-			query = query.OrderBy("inner", direction)
-			query = param.Inner.BuildCursorQuery(query)
+		if direction := param.Inner.A.OrderByDirection; direction > 0 {
+			query = query.OrderBy("inner.a", direction)
+			query = param.Inner.A.BuildCursorQuery(query)
 		}
-		value, ok := param.Inner.Filter.Value.(string)
-		for _, filter := range param.Inner.Filter.FilterTypes {
+		value, ok := param.Inner.A.Filter.Value.(string)
+		// The value of the "indexer" tag = "e"
+		for _, filter := range param.Inner.A.Filter.FilterTypes {
 			switch filter {
 			// Treat `Add` or otherwise as `Equal`.
 			case FilterTypeAdd:
 				fallthrough
 			default:
 				if !ok {
-					filters.AddSomething(TaskIndexLabelInnerEqual, param.Inner.Filter.Value)
+					filters.AddSomething(TaskIndexLabelInner_AEqual, param.Inner.A.Filter.Value)
 					continue
 				}
-				filters.Add(TaskIndexLabelInnerEqual, value)
+				filters.Add(TaskIndexLabelInner_AEqual, value)
+			}
+		}
+	}
+	if param.InnerRef.A != nil {
+		for _, chain := range param.InnerRef.A.QueryGroup {
+			query = query.Where("innerRef.a", chain.Operator, chain.Value)
+		}
+		if direction := param.InnerRef.A.OrderByDirection; direction > 0 {
+			query = query.OrderBy("innerRef.a", direction)
+			query = param.InnerRef.A.BuildCursorQuery(query)
+		}
+		value, ok := param.InnerRef.A.Filter.Value.(string)
+		// The value of the "indexer" tag = "e"
+		for _, filter := range param.InnerRef.A.Filter.FilterTypes {
+			switch filter {
+			// Treat `Add` or otherwise as `Equal`.
+			case FilterTypeAdd:
+				fallthrough
+			default:
+				if !ok {
+					filters.AddSomething(TaskIndexLabelInnerRef_AEqual, param.InnerRef.A.Filter.Value)
+					continue
+				}
+				filters.Add(TaskIndexLabelInnerRef_AEqual, value)
 			}
 		}
 	}
