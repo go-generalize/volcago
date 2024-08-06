@@ -4,7 +4,7 @@ GOLANGCI_LINT_VERSION := 1.50.1
 .PHONY: bootstrap
 bootstrap:
 	mkdir -p bin
-	GOBIN=$(PWD)/bin go install github.com/golang/mock/mockgen@latest
+	GOBIN=$(PWD)/bin go install go.uber.org/mock/mockgen@latest
 
 .PHONY: bootstrap_golangci_lint
 bootstrap_golangci_lint:
