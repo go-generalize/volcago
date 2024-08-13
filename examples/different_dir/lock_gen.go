@@ -1053,10 +1053,18 @@ func (repo *lockRepository) searchByParam(v interface{}, param *LockSearchParam)
 		for _, chain := range param.SliceString.QueryGroup {
 			query = query.Where("slice_string", chain.Operator, chain.Value)
 		}
+		if direction := param.SliceString.OrderByDirection; direction > 0 {
+			query = query.OrderBy("slice_string", direction)
+			query = param.SliceString.BuildCursorQuery(query)
+		}
 	}
 	if param.SliceNested != nil {
 		for _, chain := range param.SliceNested.QueryGroup {
 			query = query.Where("slice_nested", chain.Operator, chain.Value)
+		}
+		if direction := param.SliceNested.OrderByDirection; direction > 0 {
+			query = query.OrderBy("slice_nested", direction)
+			query = param.SliceNested.BuildCursorQuery(query)
 		}
 	}
 	if param.CreatedAt != nil {
