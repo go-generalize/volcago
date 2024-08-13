@@ -1232,10 +1232,6 @@ func (repo *{{ .RepositoryStructName }}) searchByParam(v interface{}, param *{{ 
 				query = query.WherePath(firestore.FieldPath{{ $bracketsStart }}"{{ $fi.FsTag }}", key{{ $bracketsEnd }}, chain.Operator, value)
 			}
 		}
-{{- 		else if eq $IsSlice true }}
-		for _, chain := range param.{{ $fi.Field }}.QueryGroup {
-			query = query.Where("{{ $fi.FsTag }}", chain.Operator, chain.Value)
-		}
 {{- 		else if $fi.IsDocumentID }}
 		for _, chain := range param.{{ $fi.Field }}.QueryGroup {
 			var value interface{}
