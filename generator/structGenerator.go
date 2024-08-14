@@ -302,7 +302,7 @@ func (g *structGenerator) parseTypeImpl(rawKey, firestoreKey string, obj *types.
 				Indexes:        make([]*IndexesInfo, 0),
 				NullableFields: nullableFields,
 			}
-			if _, err = g.appendIndexer(nil, firestoreKey, fieldInfo); err != nil {
+			if _, err = g.appendIndexer(nil, fieldInfo); err != nil {
 				return xerrors.Errorf("%s: %w", pos, err)
 			}
 			g.param.FieldInfos = append(g.param.FieldInfos, fieldInfo)
@@ -332,7 +332,7 @@ func (g *structGenerator) parseTypeImpl(rawKey, firestoreKey string, obj *types.
 				}
 				g.param.UniqueInfos = append(g.param.UniqueInfos, ui)
 			}
-			if fieldInfo, err = g.appendIndexer(tags, firestoreKey, fieldInfo); err != nil {
+			if fieldInfo, err = g.appendIndexer(tags, fieldInfo); err != nil {
 				return xerrors.Errorf("%s: %w", pos, err)
 			}
 			g.param.FieldInfos = append(g.param.FieldInfos, fieldInfo)
