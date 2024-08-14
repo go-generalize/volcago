@@ -58,6 +58,15 @@ type TaskRepository interface {
 	GetCollectionName() string
 	GetDocRef(id string) *firestore.DocumentRef
 	RunInTransaction() func(ctx context.Context, f func(context.Context, *firestore.Transaction) error, opts ...firestore.TransactionOption) (err error)
+	// get by unique field
+	GetByInnerCode(ctx context.Context, innerCode string) (*model.Task, error)
+	GetByInnerCodeWithTx(tx *firestore.Transaction, innerCode string) (*model.Task, error)
+	GetByInnerEmail(ctx context.Context, innerEmail string) (*model.Task, error)
+	GetByInnerEmailWithTx(tx *firestore.Transaction, innerEmail string) (*model.Task, error)
+	GetByInnerRefCode(ctx context.Context, innerRefCode string) (*model.Task, error)
+	GetByInnerRefCodeWithTx(tx *firestore.Transaction, innerRefCode string) (*model.Task, error)
+	GetByInnerRefEmail(ctx context.Context, innerRefEmail string) (*model.Task, error)
+	GetByInnerRefEmailWithTx(tx *firestore.Transaction, innerRefEmail string) (*model.Task, error)
 }
 
 // TaskRepositoryMiddleware - middleware of TaskRepository
@@ -189,7 +198,11 @@ func (repo *taskRepository) saveIndexes(subject *model.Task) error {
 		idx.AddSomething(TaskIndexLabelProportionEqual, subject.Proportion)
 		idx.Add(TaskIndexLabelTaskKindEqual, string(subject.TaskKind))
 		idx.Add(TaskIndexLabelInner_AEqual, string(subject.Inner.A))
+		idx.Add(TaskIndexLabelInner_CodeEqual, string(subject.Inner.Code))
+		idx.Add(TaskIndexLabelInner_EmailEqual, string(subject.Inner.Email))
 		idx.Add(TaskIndexLabelInnerRef_AEqual, string(lo.FromPtr(subject.InnerRef).A))
+		idx.Add(TaskIndexLabelInnerRef_CodeEqual, string(lo.FromPtr(subject.InnerRef).Code))
+		idx.Add(TaskIndexLabelInnerRef_EmailEqual, string(lo.FromPtr(subject.InnerRef).Email))
 	}
 	indexes, err := idx.Build()
 	if err != nil {
@@ -218,10 +231,14 @@ type TaskSearchParam struct {
 	TaskKind     *QueryChainer
 	Flag         *QueryChainer
 	Inner        struct {
-		A *QueryChainer
+		A     *QueryChainer
+		Code  *QueryChainer
+		Email *QueryChainer
 	}
 	InnerRef struct {
-		A *QueryChainer
+		A     *QueryChainer
+		Code  *QueryChainer
+		Email *QueryChainer
 	}
 	InnerMap *QueryChainer
 
@@ -1189,6 +1206,54 @@ func (repo *taskRepository) searchByParam(v interface{}, param *TaskSearchParam)
 			}
 		}
 	}
+	if param.Inner.Code != nil {
+		for _, chain := range param.Inner.Code.QueryGroup {
+			query = query.Where("inner.code", chain.Operator, chain.Value)
+		}
+		if direction := param.Inner.Code.OrderByDirection; direction > 0 {
+			query = query.OrderBy("inner.code", direction)
+			query = param.Inner.Code.BuildCursorQuery(query)
+		}
+		value, ok := param.Inner.Code.Filter.Value.(string)
+		// The value of the "indexer" tag = "e"
+		for _, filter := range param.Inner.Code.Filter.FilterTypes {
+			switch filter {
+			// Treat `Add` or otherwise as `Equal`.
+			case FilterTypeAdd:
+				fallthrough
+			default:
+				if !ok {
+					filters.AddSomething(TaskIndexLabelInner_CodeEqual, param.Inner.Code.Filter.Value)
+					continue
+				}
+				filters.Add(TaskIndexLabelInner_CodeEqual, value)
+			}
+		}
+	}
+	if param.Inner.Email != nil {
+		for _, chain := range param.Inner.Email.QueryGroup {
+			query = query.Where("inner.Email", chain.Operator, chain.Value)
+		}
+		if direction := param.Inner.Email.OrderByDirection; direction > 0 {
+			query = query.OrderBy("inner.Email", direction)
+			query = param.Inner.Email.BuildCursorQuery(query)
+		}
+		value, ok := param.Inner.Email.Filter.Value.(string)
+		// The value of the "indexer" tag = "e"
+		for _, filter := range param.Inner.Email.Filter.FilterTypes {
+			switch filter {
+			// Treat `Add` or otherwise as `Equal`.
+			case FilterTypeAdd:
+				fallthrough
+			default:
+				if !ok {
+					filters.AddSomething(TaskIndexLabelInner_EmailEqual, param.Inner.Email.Filter.Value)
+					continue
+				}
+				filters.Add(TaskIndexLabelInner_EmailEqual, value)
+			}
+		}
+	}
 	if param.InnerRef.A != nil {
 		for _, chain := range param.InnerRef.A.QueryGroup {
 			query = query.Where("innerRef.a", chain.Operator, chain.Value)
@@ -1210,6 +1275,54 @@ func (repo *taskRepository) searchByParam(v interface{}, param *TaskSearchParam)
 					continue
 				}
 				filters.Add(TaskIndexLabelInnerRef_AEqual, value)
+			}
+		}
+	}
+	if param.InnerRef.Code != nil {
+		for _, chain := range param.InnerRef.Code.QueryGroup {
+			query = query.Where("innerRef.code", chain.Operator, chain.Value)
+		}
+		if direction := param.InnerRef.Code.OrderByDirection; direction > 0 {
+			query = query.OrderBy("innerRef.code", direction)
+			query = param.InnerRef.Code.BuildCursorQuery(query)
+		}
+		value, ok := param.InnerRef.Code.Filter.Value.(string)
+		// The value of the "indexer" tag = "e"
+		for _, filter := range param.InnerRef.Code.Filter.FilterTypes {
+			switch filter {
+			// Treat `Add` or otherwise as `Equal`.
+			case FilterTypeAdd:
+				fallthrough
+			default:
+				if !ok {
+					filters.AddSomething(TaskIndexLabelInnerRef_CodeEqual, param.InnerRef.Code.Filter.Value)
+					continue
+				}
+				filters.Add(TaskIndexLabelInnerRef_CodeEqual, value)
+			}
+		}
+	}
+	if param.InnerRef.Email != nil {
+		for _, chain := range param.InnerRef.Email.QueryGroup {
+			query = query.Where("innerRef.Email", chain.Operator, chain.Value)
+		}
+		if direction := param.InnerRef.Email.OrderByDirection; direction > 0 {
+			query = query.OrderBy("innerRef.Email", direction)
+			query = param.InnerRef.Email.BuildCursorQuery(query)
+		}
+		value, ok := param.InnerRef.Email.Filter.Value.(string)
+		// The value of the "indexer" tag = "e"
+		for _, filter := range param.InnerRef.Email.Filter.FilterTypes {
+			switch filter {
+			// Treat `Add` or otherwise as `Equal`.
+			case FilterTypeAdd:
+				fallthrough
+			default:
+				if !ok {
+					filters.AddSomething(TaskIndexLabelInnerRef_EmailEqual, param.InnerRef.Email.Filter.Value)
+					continue
+				}
+				filters.Add(TaskIndexLabelInnerRef_EmailEqual, value)
 			}
 		}
 	}
@@ -1301,4 +1414,55 @@ func (repo *taskRepository) search(v interface{}, param *TaskSearchParam, q *fir
 	}
 
 	return repo.runQuery(v, query)
+}
+
+// GetByInnerCode - get by InnerCode
+func (repo *taskRepository) GetByInnerCode(ctx context.Context, innerCode string) (*model.Task, error) {
+	return repo.getByXXX(ctx, "inner.code", innerCode)
+}
+
+// GetByInnerCodeWithTx - get by InnerCode in transaction
+func (repo *taskRepository) GetByInnerCodeWithTx(tx *firestore.Transaction, innerCode string) (*model.Task, error) {
+	return repo.getByXXX(tx, "inner.code", innerCode)
+}
+
+// GetByInnerEmail - get by InnerEmail
+func (repo *taskRepository) GetByInnerEmail(ctx context.Context, innerEmail string) (*model.Task, error) {
+	return repo.getByXXX(ctx, "inner.Email", innerEmail)
+}
+
+// GetByInnerEmailWithTx - get by InnerEmail in transaction
+func (repo *taskRepository) GetByInnerEmailWithTx(tx *firestore.Transaction, innerEmail string) (*model.Task, error) {
+	return repo.getByXXX(tx, "inner.Email", innerEmail)
+}
+
+// GetByInnerRefCode - get by InnerRefCode
+func (repo *taskRepository) GetByInnerRefCode(ctx context.Context, innerRefCode string) (*model.Task, error) {
+	return repo.getByXXX(ctx, "innerRef.code", innerRefCode)
+}
+
+// GetByInnerRefCodeWithTx - get by InnerRefCode in transaction
+func (repo *taskRepository) GetByInnerRefCodeWithTx(tx *firestore.Transaction, innerRefCode string) (*model.Task, error) {
+	return repo.getByXXX(tx, "innerRef.code", innerRefCode)
+}
+
+// GetByInnerRefEmail - get by InnerRefEmail
+func (repo *taskRepository) GetByInnerRefEmail(ctx context.Context, innerRefEmail string) (*model.Task, error) {
+	return repo.getByXXX(ctx, "innerRef.Email", innerRefEmail)
+}
+
+// GetByInnerRefEmailWithTx - get by InnerRefEmail in transaction
+func (repo *taskRepository) GetByInnerRefEmailWithTx(tx *firestore.Transaction, innerRefEmail string) (*model.Task, error) {
+	return repo.getByXXX(tx, "innerRef.Email", innerRefEmail)
+}
+
+func (repo *taskRepository) getByXXX(v interface{}, field, value string) (*model.Task, error) {
+	query := repo.GetCollection().Query.Where(field, OpTypeEqual, value).Limit(1)
+	results, err := repo.runQuery(v, query)
+	if err != nil {
+		return nil, xerrors.Errorf("failed to run query: %w", err)
+	} else if len(results) == 0 {
+		return nil, ErrNotFound
+	}
+	return results[0], nil
 }

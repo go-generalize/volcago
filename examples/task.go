@@ -6,7 +6,9 @@ import "time"
 //go:generate ../bin/volcago -o repository Task
 
 type Inner struct {
-	A string `firestore:"a" indexer:"e"`
+	A     string `firestore:"a" indexer:"e"`
+	Code  string `firestore:"code" indexer:"e" unique:""`
+	Email string `indexer:"e" unique:""`
 }
 
 type Embedded struct {

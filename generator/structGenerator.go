@@ -235,6 +235,25 @@ func (g *structGenerator) parseTypeImpl(rawKey, firestoreKey string, obj *types.
 		typeName := getGoTypeFromEPTypes(e.Type)
 		pos := e.Position.String()
 
+		fieldRawKey := strings.Join(sliceutil.RemoveEmpty([]string{rawKey, e.RawName}), ".")
+		fieldFirestoreKey := firestoreKey
+
+		tags, err := structtag.Parse(e.RawTag)
+		if err != nil {
+			log.Printf(
+				"%s: tag for %s in struct %s in %s",
+				pos, e.RawTag, g.structName, g.param.GeneratedFileName+goFileExtension,
+			)
+			continue
+		}
+
+		fsTag, fsTagErr := tags.Get("firestore")
+		if fsTagErr != nil {
+			fieldFirestoreKey = strings.Join(sliceutil.RemoveEmpty([]string{fieldFirestoreKey, e.RawName}), ".")
+		} else {
+			fieldFirestoreKey = strings.Join(sliceutil.RemoveEmpty([]string{fieldFirestoreKey, fsTag.Name}), ".")
+		}
+
 		if isNestedStruct(e.Type) {
 			isNullable := false
 			var o *types.Object
@@ -246,18 +265,6 @@ func (g *structGenerator) parseTypeImpl(rawKey, firestoreKey string, obj *types.
 				isNullable = true
 			default:
 				panic("unreachable")
-			}
-
-			fieldRawKey := strings.Join(sliceutil.RemoveEmpty([]string{rawKey, e.RawName}), ".")
-			fieldFirestoreKey := firestoreKey
-
-			tags, err := structtag.Parse(e.RawTag)
-			if err != nil {
-				fieldFirestoreKey = strings.Join(sliceutil.RemoveEmpty([]string{fieldFirestoreKey, e.RawName}), ".")
-			} else if t, err := tags.Get("firestore"); err != nil {
-				fieldFirestoreKey = strings.Join(sliceutil.RemoveEmpty([]string{fieldFirestoreKey, e.RawName}), ".")
-			} else {
-				fieldFirestoreKey = strings.Join(sliceutil.RemoveEmpty([]string{fieldFirestoreKey, t.Name}), ".")
 			}
 
 			if isNullable {
@@ -275,15 +282,6 @@ func (g *structGenerator) parseTypeImpl(rawKey, firestoreKey string, obj *types.
 			g.param.SliceExist = true
 		}
 
-		tags, err := structtag.Parse(e.RawTag)
-		if err != nil {
-			log.Printf(
-				"%s: tag for %s in struct %s in %s",
-				pos, e.RawTag, g.structName, g.param.GeneratedFileName+goFileExtension,
-			)
-			continue
-		}
-
 		if isIgnoredField(tags) {
 			continue
 		}
@@ -298,8 +296,8 @@ func (g *structGenerator) parseTypeImpl(rawKey, firestoreKey string, obj *types.
 
 		if e.RawTag == "" {
 			fieldInfo := &FieldInfo{
-				FsTag:          strings.Join(sliceutil.RemoveEmpty([]string{firestoreKey, e.RawName}), "."),
-				Field:          strings.Join(sliceutil.RemoveEmpty([]string{rawKey, e.RawName}), "."),
+				FsTag:          fieldFirestoreKey,
+				Field:          fieldRawKey,
 				FieldType:      typeName,
 				Indexes:        make([]*IndexesInfo, 0),
 				NullableFields: nullableFields,
@@ -311,13 +309,11 @@ func (g *structGenerator) parseTypeImpl(rawKey, firestoreKey string, obj *types.
 			continue
 		}
 
-		fsTag, fsTagErr := tags.Get("firestore")
-
 		tag, err := tags.Get("firestore_key")
 		if err != nil {
 			fieldInfo := &FieldInfo{
-				FsTag:          strings.Join(sliceutil.RemoveEmpty([]string{firestoreKey, e.RawName}), "."),
-				Field:          strings.Join(sliceutil.RemoveEmpty([]string{rawKey, e.RawName}), "."),
+				FsTag:          fieldFirestoreKey,
+				Field:          fieldRawKey,
 				FieldType:      typeName,
 				Indexes:        make([]*IndexesInfo, 0),
 				NullableFields: nullableFields,
@@ -332,16 +328,7 @@ func (g *structGenerator) parseTypeImpl(rawKey, firestoreKey string, obj *types.
 				}
 				ui := &UniqueInfo{
 					Field: fieldInfo.Field,
-					FsTag: func() string {
-						ft := fieldInfo.Field
-						if fsTagErr == nil {
-							ft = strings.Split(fsTag.Value(), ",")[0]
-						}
-						if fsTagErr != nil || ft == "" {
-							return fieldInfo.Field
-						}
-						return ft
-					}(),
+					FsTag: fieldInfo.FsTag,
 				}
 				g.param.UniqueInfos = append(g.param.UniqueInfos, ui)
 			}
@@ -362,7 +349,7 @@ func (g *structGenerator) parseTypeImpl(rawKey, firestoreKey string, obj *types.
 		}
 
 		// firestore タグが存在しないか-になっていない
-		if fsTagErr != nil || strings.Split(fsTag.Value(), ",")[0] != "-" {
+		if fsTagErr != nil || fsTag.Name != "-" {
 			return xerrors.New("key field for firestore should have firestore:\"-\" tag")
 		}
 
