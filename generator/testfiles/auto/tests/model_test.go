@@ -724,6 +724,36 @@ func TestFirestoreQuery(t *testing.T) {
 		}
 	})
 
+	t.Run("[]string(10件) by filter", func(tr *testing.T) {
+		param := &model.TaskSearchParam{
+			NameList: model.NewQueryChainer().Filters("a", model.FilterTypeAddSomething).Filters("b", model.FilterTypeAddSomething),
+		}
+
+		tasks, err := taskRepo.Search(ctx, param, nil)
+		if err != nil {
+			tr.Fatalf("%+v", err)
+		}
+
+		if len(tasks) != 10 {
+			tr.Fatalf("unexpected length: %d (expected: %d)", len(tasks), 10)
+		}
+	})
+
+	t.Run("[]string(0件) by filter", func(tr *testing.T) {
+		param := &model.TaskSearchParam{
+			NameList: model.NewQueryChainer().Filters("d", model.FilterTypeAddSomething),
+		}
+
+		tasks, err := taskRepo.Search(ctx, param, nil)
+		if err != nil {
+			tr.Fatalf("%+v", err)
+		}
+
+		if len(tasks) != 0 {
+			tr.Fatalf("unexpected length: %d (expected: %d)", len(tasks), 10)
+		}
+	})
+
 	t.Run("[]Object(10件)", func(tr *testing.T) {
 		param := &model.TaskSearchParam{
 			SliceSubTask: model.NewQueryChainer().ArrayContainsAny([]*model.SubTask{{Name: "slice_struct"}}),

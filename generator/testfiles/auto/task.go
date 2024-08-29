@@ -15,7 +15,7 @@ type Task struct {
 	Done2            bool               `firestore:"done2"`
 	Count            int                `firestore:"count"`
 	Count64          int64              `firestore:"count64"`
-	NameList         []string           `firestore:"nameList"`
+	NameList         []string           `firestore:"nameList" indexer:"e"`
 	Proportion       float64            `firestore:"proportion" indexer:"e"`
 	Flag             map[string]float64 `firestore:"flag"`
 	SliceSubTask     []*SubTask         `firestore:"slice_sub_task"`
