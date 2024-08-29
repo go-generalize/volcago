@@ -184,6 +184,7 @@ func (repo *taskRepository) saveIndexes(subject *Task) error {
 		idx.AddBiunigrams(TaskIndexLabelDescLike, string(subject.Desc))
 		idx.AddPrefixes(TaskIndexLabelDescPrefix, string(subject.Desc))
 		idx.AddSuffixes(TaskIndexLabelDescSuffix, string(subject.Desc))
+		idx.AddSomething(TaskIndexLabelNameListEqual, subject.NameList)
 		idx.AddSomething(TaskIndexLabelProportionEqual, subject.Proportion)
 		idx.Add(TaskIndexLabelNestedSubTask_NameEqual, string(subject.NestedSubTask.Name))
 		idx.Add(TaskIndexLabelNestedSubTask_NestedSubSubTask_NameEqual, string(subject.NestedSubTask.NestedSubSubTask.Name))
@@ -1103,6 +1104,25 @@ func (repo *taskRepository) searchByParam(v interface{}, param *TaskSearchParam)
 		for _, chain := range param.NameList.QueryGroup {
 			query = query.Where("nameList", chain.Operator, chain.Value)
 		}
+		if direction := param.NameList.OrderByDirection; direction > 0 {
+			query = query.OrderBy("nameList", direction)
+			query = param.NameList.BuildCursorQuery(query)
+		}
+		value, ok := param.NameList.Filter.Value.(string)
+		// The value of the "indexer" tag = "e"
+		for _, filter := range param.NameList.Filter.FilterTypes {
+			switch filter {
+			// Treat `Add` or otherwise as `Equal`.
+			case FilterTypeAdd:
+				fallthrough
+			default:
+				if !ok {
+					filters.AddSomething(TaskIndexLabelNameListEqual, param.NameList.Filter.Value)
+					continue
+				}
+				filters.Add(TaskIndexLabelNameListEqual, value)
+			}
+		}
 	}
 	if param.Proportion != nil {
 		for _, chain := range param.Proportion.QueryGroup {
@@ -1142,6 +1162,24 @@ func (repo *taskRepository) searchByParam(v interface{}, param *TaskSearchParam)
 	if param.SliceSubTask != nil {
 		for _, chain := range param.SliceSubTask.QueryGroup {
 			query = query.Where("slice_sub_task", chain.Operator, chain.Value)
+		}
+		if direction := param.SliceSubTask.OrderByDirection; direction > 0 {
+			query = query.OrderBy("slice_sub_task", direction)
+			query = param.SliceSubTask.BuildCursorQuery(query)
+		}
+		value, ok := param.SliceSubTask.Filter.Value.(string)
+		for _, filter := range param.SliceSubTask.Filter.FilterTypes {
+			switch filter {
+			// Treat `Add` or otherwise as `Equal`.
+			case FilterTypeAdd:
+				fallthrough
+			default:
+				if !ok {
+					filters.AddSomething(TaskIndexLabelSliceSubTaskEqual, param.SliceSubTask.Filter.Value)
+					continue
+				}
+				filters.Add(TaskIndexLabelSliceSubTaskEqual, value)
+			}
 		}
 	}
 	if param.NestedSubTask.Name != nil {

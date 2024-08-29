@@ -933,6 +933,10 @@ func (repo *taskRepository) searchByParam(v interface{}, param *TaskSearchParam)
 		for _, chain := range param.NameList.QueryGroup {
 			query = query.Where("nameList", chain.Operator, chain.Value)
 		}
+		if direction := param.NameList.OrderByDirection; direction > 0 {
+			query = query.OrderBy("nameList", direction)
+			query = param.NameList.BuildCursorQuery(query)
+		}
 	}
 	if param.Proportion != nil {
 		for _, chain := range param.Proportion.QueryGroup {
