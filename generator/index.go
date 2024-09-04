@@ -27,18 +27,9 @@ func isUseIndexer(filters []string, p1, p2 string) bool {
 	return false
 }
 
-func (g *structGenerator) appendIndexer(tags *structtag.Tags, fsTagBase string, fieldInfo *FieldInfo) (*FieldInfo, error) {
+func (g *structGenerator) appendIndexer(tags *structtag.Tags, fieldInfo *FieldInfo) (*FieldInfo, error) {
 	filters := make([]string, 0)
 	if tags != nil {
-		if tag, err := validateFirestoreTag(tags); err != nil {
-			return nil, err
-		} else if tag != "" {
-			fieldInfo.FsTag = tag
-			if fsTagBase != "" {
-				fieldInfo.FsTag = fsTagBase + "." + tag
-			}
-		}
-
 		idr, err := tags.Get("indexer")
 		if err == nil {
 			fieldInfo.IndexerTag = idr.Value()

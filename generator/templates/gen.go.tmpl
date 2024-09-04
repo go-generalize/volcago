@@ -79,8 +79,8 @@ type {{ .RepositoryInterfaceName }} interface {
 	// get by unique field
 {{- $metaFiledsEnabled := .MetaFieldsEnabled }}
 {{-     range $ui := .UniqueInfos }}
-	GetBy{{ $ui.Field }}(ctx context.Context, {{ ToLower $ui.FsTag }} string{{ if $metaFiledsEnabled }}, opts ...GetOption{{ end }}) (*{{ $structNameRef }}, error)
-	GetBy{{ $ui.Field }}WithTx(tx *firestore.Transaction, {{ ToLower $ui.FsTag }} string{{ if $metaFiledsEnabled }}, opts ...GetOption{{ end }}) (*{{ $structNameRef }}, error)
+	GetBy{{ ToCamel $ui.Field }}(ctx context.Context, {{ ToLowerCamel $ui.FsTag }} string{{ if $metaFiledsEnabled }}, opts ...GetOption{{ end }}) (*{{ $structNameRef }}, error)
+	GetBy{{ ToCamel $ui.Field }}WithTx(tx *firestore.Transaction, {{ ToLowerCamel $ui.FsTag }} string{{ if $metaFiledsEnabled }}, opts ...GetOption{{ end }}) (*{{ $structNameRef }}, error)
 {{-     end }}
 {{- end }}
 }
@@ -1391,14 +1391,14 @@ if q == nil {
 {{- $metaFiledsEnabled := .MetaFieldsEnabled }}
 {{- 	range $ui := .UniqueInfos }}
 
-// GetBy{{ $ui.Field }} - get by {{ $ui.Field }}
-func (repo *{{ $repositoryStructName }}) GetBy{{ $ui.Field }}(ctx context.Context, {{ ToLower $ui.FsTag }} string{{ if $metaFiledsEnabled }}, opts ...GetOption{{ end }}) (*{{ $structNameRef }}, error) {
-	return repo.getByXXX(ctx, "{{ $ui.FsTag }}", {{ ToLower $ui.FsTag }}{{ if $metaFiledsEnabled }}, opts...{{ end }})
+// GetBy{{ ToCamel $ui.Field }} - get by {{ ToCamel $ui.Field }}
+func (repo *{{ $repositoryStructName }}) GetBy{{ ToCamel $ui.Field }}(ctx context.Context, {{ ToLowerCamel $ui.FsTag }} string{{ if $metaFiledsEnabled }}, opts ...GetOption{{ end }}) (*{{ $structNameRef }}, error) {
+	return repo.getByXXX(ctx, "{{ $ui.FsTag }}", {{ ToLowerCamel $ui.FsTag }}{{ if $metaFiledsEnabled }}, opts...{{ end }})
 }
 
-// GetBy{{ $ui.Field }}WithTx - get by {{ $ui.Field }} in transaction
-func (repo *{{ $repositoryStructName }}) GetBy{{ $ui.Field }}WithTx(tx *firestore.Transaction, {{ ToLower $ui.FsTag }} string{{ if $metaFiledsEnabled }}, opts ...GetOption{{ end }}) (*{{ $structNameRef }}, error) {
-	return repo.getByXXX(tx, "{{ $ui.FsTag }}", {{ ToLower $ui.FsTag }}{{ if $metaFiledsEnabled }}, opts...{{ end }})
+// GetBy{{ ToCamel $ui.Field }}WithTx - get by {{ ToCamel $ui.Field }} in transaction
+func (repo *{{ $repositoryStructName }}) GetBy{{ ToCamel $ui.Field }}WithTx(tx *firestore.Transaction, {{ ToLowerCamel $ui.FsTag }} string{{ if $metaFiledsEnabled }}, opts ...GetOption{{ end }}) (*{{ $structNameRef }}, error) {
+	return repo.getByXXX(tx, "{{ $ui.FsTag }}", {{ ToLowerCamel $ui.FsTag }}{{ if $metaFiledsEnabled }}, opts...{{ end }})
 }
 {{- 	end }}
 

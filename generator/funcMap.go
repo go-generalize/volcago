@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-utils/cont"
 	"github.com/go-utils/plural"
+	"github.com/iancoleman/strcase"
 	"github.com/samber/lo"
 )
 
@@ -314,6 +315,12 @@ func (g *structGenerator) getFuncMap() template.FuncMap {
 		},
 		"ToLower": func(s string) string {
 			return strings.ToLower(s)
+		},
+		"ToCamel": func(s string) string {
+			return strcase.ToCamel(s)
+		},
+		"ToLowerCamel": func(s string) string {
+			return strcase.ToLowerCamel(s)
 		},
 	}
 }
