@@ -11,7 +11,6 @@ require (
 	github.com/go-utils/gopackages v0.1.0
 	github.com/go-utils/plural v0.0.1
 	github.com/go-utils/xim v0.1.2
-	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.6.0
 	github.com/iancoleman/strcase v0.3.0
 	github.com/samber/lo v1.46.0
@@ -19,7 +18,7 @@ require (
 	golang.org/x/xerrors v0.0.0-20240716161551-93cc26a95ae9
 	google.golang.org/api v0.189.0
 	google.golang.org/genproto v0.0.0-20240730163845-b1a4ccb954bf
-	google.golang.org/grpc v1.65.0
+	google.golang.org/grpc v1.66.2
 )
 
 require (
