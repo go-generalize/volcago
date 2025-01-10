@@ -1,12 +1,14 @@
 package misc
 
 import (
+	"reflect"
 	"testing"
 	"time"
 
 	"cloud.google.com/go/firestore"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/samber/lo"
 	"google.golang.org/genproto/googleapis/type/latlng"
 )
 
@@ -24,6 +26,7 @@ type article struct {
 	User      user   `json:"user"      firestore:"user"`
 	Page      string `json:"page"      firestore:"page"`
 	Published bool   `json:"published" firestore:"published"`
+	Price     *int   `json:"price"     firestore:"price"`
 	Meta
 }
 
@@ -43,6 +46,7 @@ type articleUpdateParam struct {
 	User      interface{}
 	Page      interface{}
 	Published interface{}
+	Price     interface{}
 	CreatedAt interface{}
 	CreatedBy interface{}
 	UpdatedAt interface{}
@@ -50,6 +54,208 @@ type articleUpdateParam struct {
 	DeletedAt interface{}
 	DeletedBy interface{}
 	Version   interface{}
+}
+
+func Test_IsReserveType(t *testing.T) {
+	type args struct {
+		value reflect.Value
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			args: args{
+				value: reflect.ValueOf(1),
+			},
+			want: true,
+		},
+		{
+			args: args{
+				value: reflect.ValueOf(lo.ToPtr(2)),
+			},
+			want: true,
+		},
+		{
+			args: args{
+				value: reflect.ValueOf(int8(3)),
+			},
+			want: true,
+		},
+		{
+			args: args{
+				value: reflect.ValueOf(lo.ToPtr(int8(4))),
+			},
+			want: true,
+		},
+		{
+			args: args{
+				value: reflect.ValueOf(int16(5)),
+			},
+			want: true,
+		},
+		{
+			args: args{
+				value: reflect.ValueOf(lo.ToPtr(int16(6))),
+			},
+			want: true,
+		},
+		{
+			args: args{
+				value: reflect.ValueOf(int32(7)),
+			},
+			want: true,
+		},
+		{
+			args: args{
+				value: reflect.ValueOf(lo.ToPtr(int32(8))),
+			},
+			want: true,
+		},
+		{
+			args: args{
+				value: reflect.ValueOf(int64(9)),
+			},
+			want: true,
+		},
+		{
+			args: args{
+				value: reflect.ValueOf(lo.ToPtr(int64(10))),
+			},
+			want: true,
+		},
+		{
+			args: args{
+				value: reflect.ValueOf(uint(11)),
+			},
+			want: true,
+		},
+		{
+			args: args{
+				value: reflect.ValueOf(lo.ToPtr(uint(12))),
+			},
+			want: true,
+		},
+		{
+			args: args{
+				value: reflect.ValueOf(uint8(13)),
+			},
+			want: true,
+		},
+		{
+			args: args{
+				value: reflect.ValueOf(lo.ToPtr(uint8(14))),
+			},
+			want: true,
+		},
+		{
+			args: args{
+				value: reflect.ValueOf(uint16(15)),
+			},
+			want: true,
+		},
+		{
+			args: args{
+				value: reflect.ValueOf(lo.ToPtr(uint16(16))),
+			},
+			want: true,
+		},
+		{
+			args: args{
+				value: reflect.ValueOf(uint32(17)),
+			},
+			want: true,
+		},
+		{
+			args: args{
+				value: reflect.ValueOf(lo.ToPtr(uint16(18))),
+			},
+			want: true,
+		},
+		{
+			args: args{
+				value: reflect.ValueOf(uint64(19)),
+			},
+			want: true,
+		},
+		{
+			args: args{
+				value: reflect.ValueOf(lo.ToPtr(uint64(20))),
+			},
+			want: true,
+		},
+		{
+			args: args{
+				value: reflect.ValueOf(float32(100.1)),
+			},
+			want: true,
+		},
+		{
+			args: args{
+				value: reflect.ValueOf(lo.ToPtr(float32(100.2))),
+			},
+			want: true,
+		},
+		{
+			args: args{
+				value: reflect.ValueOf(100.3),
+			},
+			want: true,
+		},
+		{
+			args: args{
+				value: reflect.ValueOf(lo.ToPtr(100.4)),
+			},
+			want: true,
+		},
+		{
+			args: args{
+				value: reflect.ValueOf(true),
+			},
+			want: true,
+		},
+		{
+			args: args{
+				value: reflect.ValueOf(lo.ToPtr(false)),
+			},
+			want: true,
+		},
+		{
+			args: args{
+				value: reflect.ValueOf("string"),
+			},
+			want: true,
+		},
+		{
+			args: args{
+				value: reflect.ValueOf(lo.ToPtr("string ptr")),
+			},
+			want: true,
+		},
+		{
+			args: args{
+				value: reflect.ValueOf(article{}),
+			},
+			want: false,
+		},
+		{
+			args: args{
+				value: reflect.ValueOf(lo.ToPtr(article{})),
+			},
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // escape: Using the variable on range scope `tt` in loop literal
+		t.Run(tt.name, func(t *testing.T) {
+			got := isReservedType(tt.args.value)
+			if diff := cmp.Diff(got, tt.want); diff != "" {
+				t.Errorf("updateBuilder() = %v, want %v\n%s", got, tt.want, diff)
+			}
+		})
+	}
 }
 
 func Test_updateBuilder(t *testing.T) {
@@ -84,6 +290,7 @@ func Test_updateBuilder(t *testing.T) {
 						},
 					},
 					Page:      "section",
+					Price:     2,
 					Published: false,
 					CreatedAt: unix,
 					CreatedBy: "operator",
@@ -98,6 +305,7 @@ func Test_updateBuilder(t *testing.T) {
 				"user.address.LatLng": {FieldPath: firestore.FieldPath{"user", "address", "LatLng"}, Value: latLng},
 				"Page":                {FieldPath: firestore.FieldPath{"page"}, Value: "section"},
 				"Published":           {FieldPath: firestore.FieldPath{"published"}, Value: false},
+				"Price":               {FieldPath: firestore.FieldPath{"price"}, Value: 2},
 				"CreatedAt":           {FieldPath: firestore.FieldPath{"createdAt"}, Value: unix},
 				"CreatedBy":           {FieldPath: firestore.FieldPath{"createdBy"}, Value: "operator"},
 				"UpdatedAt":           {FieldPath: firestore.FieldPath{"updatedAt"}, Value: unix},
@@ -149,6 +357,7 @@ func Test_updater(t *testing.T) {
 						},
 					},
 					Page:      "section",
+					Price:     2,
 					Published: false,
 					CreatedAt: unix,
 					CreatedBy: "operator",
@@ -160,6 +369,7 @@ func Test_updater(t *testing.T) {
 				{FieldPath: firestore.FieldPath{"createdAt"}, Value: unix},
 				{FieldPath: firestore.FieldPath{"createdBy"}, Value: "operator"},
 				{FieldPath: firestore.FieldPath{"page"}, Value: "section"},
+				{FieldPath: firestore.FieldPath{"price"}, Value: 2},
 				{FieldPath: firestore.FieldPath{"published"}, Value: false},
 				{FieldPath: firestore.FieldPath{"updatedAt"}, Value: unix},
 				{FieldPath: firestore.FieldPath{"user", "address", "LatLng"}, Value: latLng},
@@ -213,6 +423,7 @@ func Test_tagMap(t *testing.T) {
 				"DeletedAt":           "deletedAt",
 				"DeletedBy":           "deletedBy",
 				"Page":                "page",
+				"Price":               "price",
 				"Published":           "published",
 				"UpdatedAt":           "updatedAt",
 				"UpdatedBy":           "updatedBy",
