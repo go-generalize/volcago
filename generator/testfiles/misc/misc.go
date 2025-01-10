@@ -109,6 +109,9 @@ func updateBuilder(v, param interface{}) map[string]firestore.Update {
 		}
 
 		pfv := pv.FieldByName(ft.Name)
+		if pfv.Interface() == nil && !isReservedType(fv) && fv.Kind() == reflect.Ptr {
+			pfv.Set(reflect.New(fv.Type().Elem()))
+		}
 
 		switch fv.Kind() {
 		case reflect.Ptr:
