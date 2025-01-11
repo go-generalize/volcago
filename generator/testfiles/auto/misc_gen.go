@@ -72,11 +72,11 @@ func tagMap(v interface{}) map[string]string {
 		if firestoreTag, ok := ft.Tag.Lookup("firestore"); ok {
 			tag = strings.Split(firestoreTag, ",")[0]
 		}
-		switch fv.Kind() {
-		case reflect.Ptr:
-			ptrType := reflect.PtrTo(fv.Type()).Elem()
+		if fv.Kind() == reflect.Ptr {
+			ptrType := reflect.PointerTo(fv.Type()).Elem()
 			fv = reflect.New(ptrType.Elem())
-			fallthrough
+		}
+		switch fv.Kind() {
 		case reflect.Struct:
 			if isReservedType(fv) {
 				break
@@ -141,11 +141,12 @@ func updateBuilder(v, param interface{}) map[string]firestore.Update {
 			pfv.Set(reflect.New(fv.Type().Elem()))
 		}
 
-		switch fv.Kind() {
-		case reflect.Ptr:
-			ptrType := reflect.PtrTo(fv.Type()).Elem()
+		if fv.Kind() == reflect.Ptr {
+			ptrType := reflect.PointerTo(fv.Type()).Elem()
 			fv = reflect.New(ptrType.Elem())
-			fallthrough
+		}
+
+		switch fv.Kind() {
 		case reflect.Struct:
 			if isReservedType(fv) {
 				break

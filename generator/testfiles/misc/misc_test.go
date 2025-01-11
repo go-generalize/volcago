@@ -28,11 +28,12 @@ type article struct {
 }
 
 type user struct {
-	Name     string     `json:"name"     firestore:"name"`
-	Age      int        `json:"age"      firestore:"age"`
-	BirthDay *time.Time `json:"birthDay" firestore:"birthDay"`
-	IsAdult  bool       `json:"isAdult"  firestore:"isAdult"`
-	Address  address    `json:"address"  firestore:"address"`
+	Name       string     `json:"name"     firestore:"name"`
+	Age        int        `json:"age"      firestore:"age"`
+	BirthDay   *time.Time `json:"birthDay" firestore:"birthDay"`
+	IsAdult    bool       `json:"isAdult"  firestore:"isAdult"`
+	Address    address    `json:"address"  firestore:"address"`
+	Occupation *string    `json:"occupation" firestore:"occupation"`
 }
 
 type address struct {
@@ -64,6 +65,7 @@ func Test_updateBuilder(t *testing.T) {
 		Latitude:  35.678803,
 		Longitude: 139.756263,
 	}
+	occupation := "engineer"
 
 	tests := []struct {
 		name string
@@ -82,6 +84,7 @@ func Test_updateBuilder(t *testing.T) {
 						Address: address{
 							LatLng: latLng,
 						},
+						Occupation: &occupation,
 					},
 					Page:      "section",
 					Published: false,
@@ -96,6 +99,7 @@ func Test_updateBuilder(t *testing.T) {
 				"user.Age":            {FieldPath: firestore.FieldPath{"user", "age"}, Value: age},
 				"user.BirthDay":       {FieldPath: firestore.FieldPath{"user", "birthDay"}, Value: &unix},
 				"user.address.LatLng": {FieldPath: firestore.FieldPath{"user", "address", "LatLng"}, Value: latLng},
+				"user.Occupation":     {FieldPath: firestore.FieldPath{"user", "occupation"}, Value: &occupation},
 				"Page":                {FieldPath: firestore.FieldPath{"page"}, Value: "section"},
 				"Published":           {FieldPath: firestore.FieldPath{"published"}, Value: false},
 				"CreatedAt":           {FieldPath: firestore.FieldPath{"createdAt"}, Value: unix},
@@ -222,6 +226,7 @@ func Test_tagMap(t *testing.T) {
 				"user.IsAdult":        "user.isAdult",
 				"user.Name":           "user.name",
 				"user.address.LatLng": "user.address.LatLng",
+				"user.Occupation":     "user.occupation",
 			},
 		},
 	}
