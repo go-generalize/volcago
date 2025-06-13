@@ -872,7 +872,12 @@ func TestFirestoreQuery(t *testing.T) {
 			qb.GreaterThan("count", 3)
 			qb.LessThan("count", 8)
 
-			tasks, err := taskRepo.Search(ctx, nil, qb.Query())
+			q, err := qb.Query()
+			if err != nil {
+				ttr.Fatalf("%+v", err)
+			}
+
+			tasks, err := taskRepo.Search(ctx, nil, q)
 			if err != nil {
 				ttr.Fatalf("%+v", err)
 			}
@@ -885,7 +890,12 @@ func TestFirestoreQuery(t *testing.T) {
 			qb := model.NewQueryBuilder(taskRepo.GetCollection())
 			qb.NotEqual("count", 1)
 
-			tasks, err := taskRepo.Search(ctx, nil, qb.Query())
+			q, err := qb.Query()
+			if err != nil {
+				ttr.Fatalf("%+v", err)
+			}
+
+			tasks, err := taskRepo.Search(ctx, nil, q)
 			if err != nil {
 				ttr.Fatalf("%+v", err)
 			}
@@ -898,7 +908,12 @@ func TestFirestoreQuery(t *testing.T) {
 			qb := model.NewQueryBuilder(taskRepo.GetCollection())
 			qb.NotIn("count", []int{1, 2, 3, 4, 5})
 
-			tasks, err := taskRepo.Search(ctx, nil, qb.Query())
+			q, err := qb.Query()
+			if err != nil {
+				ttr.Fatalf("%+v", err)
+			}
+
+			tasks, err := taskRepo.Search(ctx, nil, q)
 			if err != nil {
 				ttr.Fatalf("%+v", err)
 			}
