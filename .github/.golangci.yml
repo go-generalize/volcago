@@ -50,8 +50,6 @@ linters:
     - unused
     # 前後の余計な空白を検出
     - whitespace
-    # shadowチェックを有効にする場合（オプション）
-    - shadow
 
 issues:
   exclude:
