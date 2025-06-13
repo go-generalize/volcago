@@ -10,7 +10,10 @@ linters-settings:
     ignore-generated-header: false
     confidence: 0.3
   govet:
-    check-shadowing: true
+    settings:
+      # 必要に応じてshadowチェックは別途enableする
+      printf: true
+      assign: true
   lll:
     line-length: 120
   misspell:
@@ -52,6 +55,8 @@ linters:
     - unused
     # 前後の余計な空白を検出
     - whitespace
+    # shadowチェックを有効にする場合（オプション）
+    - shadow
 
 issues:
   exclude:
@@ -65,7 +70,4 @@ issues:
         - staticcheck
       text: "SA1019: xerrors."
 
-service:
-  golangci-lint-version: 1.49.x
-  prepare:
-    - echo "here I can run custom commands, but no preparation needed for this repo"
+version: '2'
