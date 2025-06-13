@@ -9,11 +9,6 @@ linters-settings:
   revive:
     ignore-generated-header: false
     confidence: 0.3
-  govet:
-    settings:
-      # 必要に応じてshadowチェックは別途enableする
-      printf: true
-      assign: true
   lll:
     line-length: 120
   misspell:
@@ -69,5 +64,3 @@ issues:
     - linters:
         - staticcheck
       text: "SA1019: xerrors."
-
-version: '2'
