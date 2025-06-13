@@ -61,8 +61,12 @@ func NewQueryBuilder(collection *firestore.CollectionRef) *QueryBuilder {
 }
 
 // Query - return firestore.Query
-func (qb *QueryBuilder) Query() *firestore.Query {
-	return &qb.q
+func (qb *QueryBuilder) Query() (*firestore.Query, error) {
+	if err := qb.Check(); err != nil {
+		return nil, xerrors.Errorf("query check failed: %w", err)
+	}
+
+	return &qb.q, nil
 }
 
 // Check - condition check
