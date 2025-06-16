@@ -9,8 +9,6 @@ linters-settings:
   revive:
     ignore-generated-header: false
     confidence: 0.3
-  govet:
-    check-shadowing: true
   lll:
     line-length: 120
   misspell:
@@ -64,8 +62,3 @@ issues:
     - linters:
         - staticcheck
       text: "SA1019: xerrors."
-
-service:
-  golangci-lint-version: 1.49.x
-  prepare:
-    - echo "here I can run custom commands, but no preparation needed for this repo"

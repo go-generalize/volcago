@@ -894,7 +894,12 @@ func TestFirestoreQuery(t *testing.T) {
 			qb.GreaterThan("count", 3)
 			qb.LessThan("count", 8)
 
-			tasks, err := taskRepo.Search(ctx, nil, qb.Query())
+			q, err := qb.Query()
+			if err != nil {
+				ttr.Fatalf("%+v", err)
+			}
+
+			tasks, err := taskRepo.Search(ctx, nil, q)
 			if err != nil {
 				ttr.Fatalf("%+v", err)
 			}
@@ -907,7 +912,12 @@ func TestFirestoreQuery(t *testing.T) {
 			qb := model.NewQueryBuilder(taskRepo.GetCollection())
 			qb.NotEqual("count", 1)
 
-			tasks, err := taskRepo.Search(ctx, nil, qb.Query())
+			q, err := qb.Query()
+			if err != nil {
+				ttr.Fatalf("%+v", err)
+			}
+
+			tasks, err := taskRepo.Search(ctx, nil, q)
 			if err != nil {
 				ttr.Fatalf("%+v", err)
 			}
@@ -920,7 +930,12 @@ func TestFirestoreQuery(t *testing.T) {
 			qb := model.NewQueryBuilder(taskRepo.GetCollection())
 			qb.NotIn("count", []int{1, 2, 3, 4, 5})
 
-			tasks, err := taskRepo.Search(ctx, nil, qb.Query())
+			q, err := qb.Query()
+			if err != nil {
+				ttr.Fatalf("%+v", err)
+			}
+
+			tasks, err := taskRepo.Search(ctx, nil, q)
 			if err != nil {
 				ttr.Fatalf("%+v", err)
 			}
@@ -932,9 +947,13 @@ func TestFirestoreQuery(t *testing.T) {
 		tr.Run("search by document id", func(ttr *testing.T) {
 			qb := model.NewQueryBuilder(taskRepo.GetCollection())
 			qb.Equal(firestore.DocumentID, taskRepo.GetDocRef(tks[0].ID))
-			qb.Desc(firestore.DocumentID)
 
-			tasks, err := taskRepo.Search(ctx, nil, qb.Query())
+			q, err := qb.Query()
+			if err != nil {
+				ttr.Fatalf("%+v", err)
+			}
+
+			tasks, err := taskRepo.Search(ctx, nil, q)
 			if err != nil {
 				ttr.Fatalf("%+v", err)
 			}
@@ -1392,7 +1411,12 @@ func TestFirestoreOfLockRepo(t *testing.T) {
 			tr.Fatal(err)
 		}
 
-		locks, err := lockRepo.Search(ctx, nil, qb.Query())
+		q, err := qb.Query()
+		if err != nil {
+			tr.Fatalf("%+v", err)
+		}
+
+		locks, err := lockRepo.Search(ctx, nil, q)
 		if err != nil {
 			tr.Fatalf("%+v", err)
 		}
@@ -1407,6 +1431,7 @@ func TestFirestoreOfLockRepo(t *testing.T) {
 	})
 
 	t.Run("UseQueryChainer", func(tr *testing.T) {
+		time.Local = time.UTC
 		l := &model.Lock{
 			Text: "Hello",
 			Flag: nil,

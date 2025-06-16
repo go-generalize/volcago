@@ -1,4 +1,4 @@
-name: reviewdog
+name: golangci-lint
 
 on: [pull_request]
 
@@ -16,7 +16,9 @@ jobs:
           go-version: 1.22
 
       - name: golangci-lint
-        uses: reviewdog/action-golangci-lint@v2.6
+        uses: golangci/golangci-lint-action@v6
         with:
-          github_token: ${{ secrets.github_token }}
-          golangci_lint_flags: "--config=.github/.golangci.yml"
+          version: v1.59.1
+          args: --config=.github/.golangci.yml
+          # GitHub上でのアノテーション表示
+          only-new-issues: true
